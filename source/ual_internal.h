@@ -16,6 +16,8 @@
 #include <string>
 #include <vector>
 
+const uint16_t IX_INVALID = ( 1 << 11 ) - 1;
+
 struct ual_buffer
 {
     ual_buffer();

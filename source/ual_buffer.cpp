@@ -61,7 +61,7 @@ ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count )
 {
     if ( out_count )
     {
-        *out_count = ub->c.size();
+        *out_count = ub->c.size() - 1;
     }
     return ub->c.data();
 }

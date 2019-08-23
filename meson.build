@@ -18,7 +18,8 @@ headers = [
 
 sources = [
     'source/ual_buffer.cpp',
-    'source/ual_paragraph.cpp'
+    'source/ual_paragraph.cpp',
+    'ucdn/ucdn.c'
 ]
 
 ualyze = library(
