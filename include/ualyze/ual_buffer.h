@@ -50,11 +50,18 @@ std::u16string_view ual_buffer_text( ual_buffer* ub, size_t lower, size_t upper 
     hard line breaks - \n, \r, \r\n, \v, \f, U+0085 NEXT LINE, U+2028 LINE
     SEPARATOR, or U+2029 PARAGRAPH SEPARATOR.
 
-    All indexes into the text are relative to the current paragraph.  Spans
-    of text are always a half-open interval [lower, upper).
+    All indexes into the text produced by other analysis stages are relative
+    to the current paragraph.  Spans of text are always a half-open interval
+    lower <= index < upper.
 */
 
-bool ual_next_paragraph( ual_buffer* ub );
+struct ual_paragraph
+{
+    ual_index lower;
+    ual_index upper;
+};
+
+bool ual_next_paragraph( ual_buffer* ub, ual_paragraph* out_paragraph );
 std::u16string_view ual_paragraph_text( ual_buffer* ub );
 
 /*
