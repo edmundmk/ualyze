@@ -56,7 +56,9 @@ LB9 :
     ID x ZWJ
     IN x ZWJ
     HY x ZWJ
+    HL_HY x ZWJ
     BA x ZWJ
+    HL_BA x ZWJ
     BB x ZWJ
     B2 x ZWJ
     CM x ZWJ
@@ -67,6 +69,7 @@ LB9 :
     JV x ZWJ
     JT x ZWJ
     RI x ZWJ
+    RI_PAIR x ZWJ
     EB x ZWJ
     EM x ZWJ
     CB x ZWJ
@@ -87,7 +90,9 @@ LB9 :
     ID x CM
     IN x CM
     HY x CM
+    HL_HY x CM
     BA x CM
+    HL_BA x CM
     BB x CM
     B2 x CM
     CM x CM
@@ -98,6 +103,7 @@ LB9 :
     JV x CM
     JT x CM
     RI x CM
+    RI_PAIR x CM
     EB x CM
     EM x CM
     CB x CM
@@ -118,7 +124,9 @@ LB9 :
     ID CM -> ID
     IN CM -> IN
     HY CM -> HY
+    HL_HY CM -> HL_HY
     BA CM -> BA
+    HL_BA CM -> HL_BA
     BB CM -> BB
     B2 CM -> B2
     CM CM -> CM
@@ -129,6 +137,7 @@ LB9 :
     JV CM -> JV
     JT CM -> JT
     RI CM -> RI
+    RI_PAIR CM -> RI_PAIR
     EB CM -> EB
     EM CM -> EM
     CB CM -> CB
@@ -177,6 +186,7 @@ LB12a :
     JV x GJ
     JT x GJ
     RI x GJ
+    RI_PAIR x GJ
     EB x GJ
     EM x GJ
     CB x GJ
@@ -315,6 +325,7 @@ LB25 :
     PR x OP
     PR x NU
     HY x NU
+    HL_HY x NU
     IS x NU
     NU x NU
     SY x NU
