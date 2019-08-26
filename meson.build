@@ -17,6 +17,7 @@ headers = [
 ]
 
 sources = [
+    'source/ual_break.cpp',
     'source/ual_buffer.cpp',
     'source/ual_paragraph.cpp',
     'ucdn/ucdn.c'
