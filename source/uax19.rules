@@ -1,0 +1,388 @@
+--
+--  uax19.rules
+--
+--  Line breaking algorithm, from UAX #19
+--
+
+
+-- Treat all ambiguous ideographs as narrow.
+LBTa :
+    AI -> AL
+
+-- Treat conditional Japanese starter as NS for strict breaking.
+LBTb :
+    CJ -> NS
+
+-- Treat misplaced surrogate and invalid characters as AL.
+LBTc :
+    SG -> AL
+    XX -> AL
+
+
+-- Do not break before spaces or zero width space.
+LB7 :
+    x SP
+    x ZW
+
+-- Break before any character following a zero-width space, even if one or
+-- more spaces intervene.
+LB8 :
+    ZW SP -> ZW_SP
+    ZW_SP SP -> ZW_SP
+    ZW -
+    ZW_SP -
+
+-- Do not break after a zero width joiner.
+LB8a :
+    ZWJ x
+
+-- Do not break a combining character sequence; treat it as if it has the line
+-- breaking class of the base character.
+LB9 :
+    OP x ZWJ
+    CL x ZWJ
+    CP x ZWJ
+    QU x ZWJ
+    GL x ZWJ
+    NS x ZWJ
+    EX x ZWJ
+    SY x ZWJ
+    IS x ZWJ
+    PR x ZWJ
+    PO x ZWJ
+    NU x ZWJ
+    AL x ZWJ
+    HL x ZWJ
+    ID x ZWJ
+    IN x ZWJ
+    HY x ZWJ
+    BA x ZWJ
+    BB x ZWJ
+    B2 x ZWJ
+    CM x ZWJ
+    WJ x ZWJ
+    H2 x ZWJ
+    H3 x ZWJ
+    JL x ZWJ
+    JV x ZWJ
+    JT x ZWJ
+    RI x ZWJ
+    EB x ZWJ
+    EM x ZWJ
+    CB x ZWJ
+    OP x CM
+    CL x CM
+    CP x CM
+    QU x CM
+    GL x CM
+    NS x CM
+    EX x CM
+    SY x CM
+    IS x CM
+    PR x CM
+    PO x CM
+    NU x CM
+    AL x CM
+    HL x CM
+    ID x CM
+    IN x CM
+    HY x CM
+    BA x CM
+    BB x CM
+    B2 x CM
+    CM x CM
+    WJ x CM
+    H2 x CM
+    H3 x CM
+    JL x CM
+    JV x CM
+    JT x CM
+    RI x CM
+    EB x CM
+    EM x CM
+    CB x CM
+    OP CM -> OP
+    CL CM -> CL
+    CP CM -> CP
+    QU CM -> QU
+    GL CM -> GL
+    NS CM -> NS
+    EX CM -> EX
+    SY CM -> SY
+    IS CM -> IS
+    PR CM -> PR
+    PO CM -> PO
+    NU CM -> NU
+    AL CM -> AL
+    HL CM -> HL
+    ID CM -> ID
+    IN CM -> IN
+    HY CM -> HY
+    BA CM -> BA
+    BB CM -> BB
+    B2 CM -> B2
+    CM CM -> CM
+    WJ CM -> WJ
+    H2 CM -> H2
+    H3 CM -> H3
+    JL CM -> JL
+    JV CM -> JV
+    JT CM -> JT
+    RI CM -> RI
+    EB CM -> EB
+    EM CM -> EM
+    CB CM -> CB
+
+-- Treat any remaining combining mark or ZWJ as AL
+LB10 :
+    CM -> AL
+    ZWJ -> AL
+
+-- Do not break before or after Word joiner and related characters.
+LB11 :
+    x WJ
+    WJ x
+
+-- Do not break after NBSP and related characters.
+LB12 :
+    GL x
+
+-- Do not break before NBSP and related characters, except after spaces
+-- and hyphens.
+LB12a :
+    OP x GJ
+    CL x GJ
+    CP x GJ
+    QU x GJ
+    GL x GJ
+    NS x GJ
+    EX x GJ
+    SY x GJ
+    IS x GJ
+    PR x GJ
+    PO x GJ
+    NU x GJ
+    AL x GJ
+    HL x GJ
+    ID x GJ
+    IN x GJ
+    BB x GJ
+    B2 x GJ
+    ZW x GJ
+    CM x GJ
+    WJ x GJ
+    H2 x GJ
+    H3 x GJ
+    JL x GJ
+    JV x GJ
+    JT x GJ
+    RI x GJ
+    EB x GJ
+    EM x GJ
+    CB x GJ
+
+-- Do not break before ‘]’ or ‘!’ or ‘;’ or ‘/’, even after spaces.
+LB13 :
+    x CL
+    x CP
+    x EX
+    x IS
+    x SY
+
+-- Do not break after ‘[’, even after spaces.
+LB14 :
+    OP SP -> OP_SP
+    OP_SP SP -> OP_SP
+    OP x
+    OP_SP x
+
+-- Do not break within ‘”[’, even with intervening spaces.
+LB15 :
+    QU SP -> QU_SP
+    QU_SP SP -> QU_SP
+    QU x OP
+    QU_SP x OP
+
+-- Do not break between closing punctuation and a nonstarter, even with
+-- intervening spaces.
+LB16 :
+    CL SP -> CL_SP
+    CP SP -> CP_SP
+    CL_SP SP -> CL_SP
+    CP_SP SP -> CP_SP
+    CL x NS
+    CP x NS
+    CL_SP x NS
+    CP_SP x NS
+
+-- Do not break within ‘——’, even with intervening spaces.
+LB17 :
+    B2 SP -> B2_SP
+    B2_SP SP -> B2_SP
+    B2 x B2
+    B2_SP x B2
+
+-- Break after spaces.
+LB18 :
+    SP -
+    ZW_SP -
+    OP_SP -
+    QU_SP -
+    CL_SP -
+    CP_SP -
+    B2_SP -
+
+-- Do not break before or after quotation marks, such as ‘ ” ’.
+LB19 :
+    x QU
+    QU x
+
+-- Break before and after unresolved CB.
+LB20 :
+    - CB
+    CB -
+
+-- Do not break before hyphen-minus, other hyphens, fixed-width spaces,
+-- small kana, and other non-starters, or after acute accents.
+LB21 :
+    x BA
+    x HY
+    x NS
+    BB x
+
+-- Don't break after Hebrew + Hyphen.
+LB21a :
+    HL HY -> HL_HY
+    HL BA -> HL_BA
+    HL_HY x
+    HL_BA x
+
+-- Don’t break between Solidus and Hebrew letters.
+LB21b :
+    SY x HL
+
+-- Do not break between two ellipses, or between letters, numbers or
+-- exclamations and ellipsis.
+LB22 :
+    AL x IN
+    HL x IN
+    EX x IN
+    ID x IN
+    EB x IN
+    EM x IN
+    IN x IN
+    NU x IN
+
+-- Do not break between digits and letters.
+LB23 :
+    AL x NU
+    HL x NU
+    NU x AL
+    NU x HL
+
+-- Do not break between numeric prefixes and ideographs, or between
+-- ideographs and numeric postfixes.
+LB23a :
+    PR x ID
+    PR x EB
+    PR x EM
+    ID x PO
+    EB x PO
+    EM x PO
+
+-- Do not break between numeric prefix/postfix and letters, or between
+-- letters and prefix/postfix.
+LB24 :
+    PR x AL
+    PO x AL
+    PR x HL
+    PO x HL
+    AL x PR
+    HL x PR
+    AL x PO
+    HL x PO
+
+-- Do not break between the following pairs of classes relevant to numbers:
+LB25 :
+    CL x PO
+    CP x PO
+    CL x PR
+    CP x PR
+    NU x PO
+    NU x PR
+    PO x OP
+    PO x NU
+    PR x OP
+    PR x NU
+    HY x NU
+    IS x NU
+    NU x NU
+    SY x NU
+
+-- Do not break a Korean syllable.
+LB26 :
+    JL x JL
+    JL x JV
+    JL x H2
+    HL x H3
+    JV x JV
+    H2 x JV
+    JV x JT
+    H2 x JT
+    JT x JT
+    H3 x JT
+
+-- Treat a Korean Syllable Block the same as ID.
+LB27 :
+    JL x IN
+    JV x IN
+    JT x IN
+    H2 x IN
+    H3 x IN
+    JL x PO
+    JV x PO
+    JT x PO
+    H2 x PO
+    H3 x PO
+    PR x JL
+    PR x JV
+    PR x JT
+    PR x H2
+    PR x H3
+
+-- Do not break between alphabetics.
+LB28 :
+    AL x AL
+    AL x HL
+    HL x HL
+    HL x AL
+
+-- Do not break between numeric punctuation and alphabetics.
+LB29 :
+    IS x AL
+    IS x HL
+
+-- Do not break between letters, numbers, or ordinary symbols and opening
+-- or closing parentheses.
+LB30 :
+    AL x OP
+    HL x OP
+    NU x OP
+    CP x AL
+    CP x HL
+    CP X NU
+
+-- Break between two regional indicator symbols if and only if there are an
+-- even number of regional indicators preceding the position of the break.
+LB30a :
+    RI RI -> RI_PAIR
+    RI x RI
+
+-- Do not break between an emoji base and an emoji modifier.
+LB30b :
+    EB x EM
+
+-- Break everywhere else.
+LB31 :
+    -
+

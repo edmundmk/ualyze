@@ -1,0 +1,60 @@
+--
+--  uax29p3.rules
+--
+--  Extended grapheme cluster boundaries, from UAX #29
+--
+
+-- Do not break between a CR and LF. Otherwise, break before and after controls.
+GB3 :
+    CR x LF
+GB4 :
+    CONTROL -
+    CR -
+    CR -
+    LF -
+GB5 :
+    - CONTROL
+    - CR
+    - LF
+
+-- Do not break Hangul syllable sequences.
+GB6 :
+    L x L
+    L x V
+    L x LV
+    L x LVT
+GB7 :
+    LV x V
+    LV x T
+    V x V
+    V x T
+GB8 :
+    LVT x T
+    T x T
+
+-- Do not break before extending characters or ZWJ
+GB9 :
+    x EXTEND
+    x ZWJ
+
+-- Do not break before SpacingMarks, or after Prepend characters
+GB9a :
+    x SPACINGMARK
+GB9b :
+    PREPEND x
+
+-- Do not break within emoji modifier sequences or emoji zwj sequences
+GB11 :
+    EP EXTEND -> EP
+    EP ZWJ -> EP_ZWJ
+    EP_ZWJ x EP
+
+-- Do not break within emoji flag sequences.
+GB12 :
+    RI RI -> RI_PAIR
+    RI x RI
+
+-- Otherwise, break everywhere
+GB999 :
+    -
+
