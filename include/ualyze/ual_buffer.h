@@ -28,7 +28,11 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <string_view>
+#include <uchar.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
     All analysis happens on text in a ual_buffer.  Text is always UTF-16.
@@ -37,13 +41,19 @@
 typedef uint32_t ual_index;
 typedef struct ual_buffer ual_buffer;
 
+typedef struct ual_string_view
+{
+    const char16_t* data;
+    size_t size;
+} ual_string_view;
+
 ual_buffer* ual_buffer_create();
 void ual_buffer_retain( ual_buffer* ub );
 void ual_buffer_release( ual_buffer* ub );
 
 void ual_buffer_clear();
-void ual_buffer_append( ual_buffer* ub, std::u16string_view text );
-std::u16string_view ual_buffer_text( ual_buffer* ub, size_t lower, size_t upper );
+void ual_buffer_append( ual_buffer* ub, ual_string_view text );
+ual_string_view ual_buffer_text( ual_buffer* ub, size_t lower, size_t upper );
 
 /*
     Analysis proceeds one paragraph at a time.  Paragraphs are delimited by
@@ -55,14 +65,14 @@ std::u16string_view ual_buffer_text( ual_buffer* ub, size_t lower, size_t upper 
     lower <= index < upper.
 */
 
-struct ual_paragraph
+typedef struct ual_paragraph
 {
     ual_index lower;
     ual_index upper;
-};
+} ual_paragraph;
 
 bool ual_next_paragraph( ual_buffer* ub, ual_paragraph* out_paragraph );
-std::u16string_view ual_paragraph_text( ual_buffer* ub );
+ual_string_view ual_paragraph_text( ual_buffer* ub );
 
 /*
     Direct access to the analysis buffer.  Only valid for the currently
@@ -70,13 +80,17 @@ std::u16string_view ual_paragraph_text( ual_buffer* ub );
     bidi analysis, or contains breaking flags after break analysis.
 */
 
-struct ual_char
+typedef struct ual_char
 {
     uint16_t ix : 11;   // private
     uint16_t bc : 5;    // bidi class or break flags
-};
+} ual_char;
 
 ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

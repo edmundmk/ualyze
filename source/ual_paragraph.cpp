@@ -9,7 +9,7 @@
 //
 
 #include "ual_internal.h"
-#include <stdexcept>
+#include <assert.h>
 #include "ucdn.h"
 
 
@@ -18,7 +18,8 @@ bool ual_next_paragraph( ual_buffer* ub, ual_paragraph* out_paragraph )
     const UCDRecord* ucdn = ucdn_record_table();
     if ( ucdn_record_table_size() >= IX_INVALID )
     {
-        throw std::out_of_range( "ucdn record table is too large" );
+        assert( ! "ual_next_paragraph : ucdn record table is too large" );
+        return false;
     }
 
     ub->c.clear();
@@ -86,11 +87,12 @@ bool ual_next_paragraph( ual_buffer* ub, ual_paragraph* out_paragraph )
     {
         *out_paragraph = ub->p;
     }
+
     return true;
 }
 
 
-std::u16string_view ual_paragraph_text( ual_buffer* ub )
+ual_string_view ual_paragraph_text( ual_buffer* ub )
 {
     return ual_buffer_text( ub, ub->p.lower, ub->p.upper );
 }

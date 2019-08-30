@@ -28,6 +28,10 @@
 
 #include "ual_buffer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
     Perform cluster and line breaking analysis.  After analysis, the char
     buffer will have break flags set at the start of each cluster, and at
@@ -43,6 +47,10 @@ const uint16_t UAL_BREAK_LINE       = 1 << 1;
 const uint16_t UAL_BREAK_SPACES     = 1 << 2;
 
 void ual_break_analyze( ual_buffer* ub );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

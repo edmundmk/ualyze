@@ -9,6 +9,7 @@
 //
 
 #include "ual_internal.h"
+#include <assert.h>
 
 
 ual_buffer::ual_buffer()
@@ -46,14 +47,16 @@ void ual_buffer_clear( ual_buffer* ub )
     ub->s.clear();
 }
 
-void ual_buffer_append( ual_buffer* ub, std::u16string_view text )
+void ual_buffer_append( ual_buffer* ub, ual_string_view text )
 {
-    ub->s.append( text );
+    ub->s.append( text.data, text.size );
 }
 
-std::u16string_view ual_buffer_text( ual_buffer* ub, size_t lower, size_t upper )
+ual_string_view ual_buffer_text( ual_buffer* ub, size_t lower, size_t upper )
 {
-    return ub->s.substr( lower, upper - lower );
+    assert( lower <= upper );
+    assert( upper <= ub->s.size() );
+    return { ub->s.data() + lower, upper - lower };
 }
 
 

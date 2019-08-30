@@ -28,21 +28,29 @@
 
 #include "ual_buffer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
     Perform bidi analysis on a paragraph.  Will clobber the break flags.
     The result of bidi analysis is a set of bidi runs containing characters
     with the same bidi level.
 */
 
-struct ual_bidi_run
+typedef struct ual_bidi_run
 {
     ual_index lower;
     ual_index upper;
     uint32_t bidi_level;
-};
+} ual_bidi_run;
 
 size_t ual_bidi_analyze( ual_buffer* ub );
 ual_bidi_run* ual_bidi_runs( ual_buffer* ub, size_t* out_count );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

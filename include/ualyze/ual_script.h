@@ -28,20 +28,28 @@
 
 #include "ual_buffer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
     Builds a list of spans indicating runs of the same script.  The script
     identifier is a harfbuzz script tag.
 */
 
-struct ual_script_span
+typedef struct ual_script_span
 {
     ual_index lower;
     ual_index upper;
     uint32_t script;
-};
+} ual_script_span;
 
 size_t ual_script_analyze( ual_buffer* ub );
 ual_script_span* ual_script_spans( ual_buffer* ub, size_t* out_count );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
