@@ -18,6 +18,9 @@ LBTc :
     SG -> AL
     XX -> AL
 
+-- Do not break at start of text.
+LB2 :
+    SOT x
 
 -- Do not break before spaces or zero width space.
 LB7 :

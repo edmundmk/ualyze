@@ -10,7 +10,6 @@ GB3 :
 GB4 :
     CONTROL -
     CR -
-    CR -
     LF -
 GB5 :
     - CONTROL
