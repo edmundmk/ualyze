@@ -11,7 +11,6 @@
 #include "ual_internal.h"
 #include <assert.h>
 
-
 ual_buffer::ual_buffer()
     :   refcount( 1 )
     ,   p{ 0, 0 }
@@ -21,7 +20,6 @@ ual_buffer::ual_buffer()
 ual_buffer::~ual_buffer()
 {
 }
-
 
 ual_buffer* ual_buffer_create()
 {
@@ -41,7 +39,6 @@ void ual_buffer_release( ual_buffer* ub )
     }
 }
 
-
 void ual_buffer_clear( ual_buffer* ub )
 {
     ub->s.clear();
@@ -58,7 +55,6 @@ ual_string_view ual_buffer_text( ual_buffer* ub, size_t lower, size_t upper )
     assert( upper <= ub->s.size() );
     return { ub->s.data() + lower, upper - lower };
 }
-
 
 ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count )
 {

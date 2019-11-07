@@ -12,7 +12,6 @@
 #include <assert.h>
 #include "ucdn.h"
 
-
 bool ual_next_paragraph( ual_buffer* ub, ual_paragraph* out_paragraph )
 {
     const UCDRecord* ucdn = ucdn_record_table();
@@ -90,7 +89,6 @@ bool ual_next_paragraph( ual_buffer* ub, ual_paragraph* out_paragraph )
 
     return true;
 }
-
 
 ual_string_view ual_paragraph_text( ual_buffer* ub )
 {
