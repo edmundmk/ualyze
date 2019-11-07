@@ -35,7 +35,7 @@ void ual_buffer_retain( ual_buffer* ub )
 
 void ual_buffer_release( ual_buffer* ub )
 {
-    if ( --ub->refcount == 0 )
+    if ( ub && --ub->refcount == 0 )
     {
         delete ub;
     }

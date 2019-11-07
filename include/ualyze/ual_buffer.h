@@ -39,13 +39,14 @@ extern "C" {
 */
 
 typedef uint32_t ual_index;
-typedef struct ual_buffer ual_buffer;
 
 typedef struct ual_string_view
 {
     const char16_t* data;
     size_t size;
 } ual_string_view;
+
+typedef struct ual_buffer ual_buffer;
 
 ual_buffer* ual_buffer_create();
 void ual_buffer_retain( ual_buffer* ub );
