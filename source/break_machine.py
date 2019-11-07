@@ -125,6 +125,8 @@ while len( build_stack ):
                 continue
 
             if action == '-' or action == 'x':
+                if rhs != '.' and rhs not in token:
+                    print( "invalid token on rhs:", rhs )
                 if brk_action == '?':
                     brk_action = action
             else:
@@ -136,6 +138,32 @@ while len( build_stack ):
     states[ build_state ] = actions
     state_list.append( ( [ build_state ], actions ) )
 
+# Merge identical states.
+states = {}
+
+i = 0
+while i < len( state_list ):
+    slist, actions = state_list[ i ]
+
+    j = i+1
+    while j < len( state_list ):
+
+        s, a = state_list[ j ]
+        if a == actions:
+            slist += s
+            del state_list[ j ]
+        else:
+            j += 1
+
+    for state in slist:
+        states[ state ] = state_list[ i ]
+
+    i += 1
+
+i = 0
+for state, actions in state_list:
+    state.insert( 0, i )
+    i += 1
 
 for state, actions in state_list:
     print( state, actions )
