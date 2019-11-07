@@ -28,7 +28,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <uchar.h>
 
 #ifdef __cplusplus
 extern "C" {
