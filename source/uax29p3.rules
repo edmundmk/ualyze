@@ -4,6 +4,26 @@
 --  Extended grapheme cluster boundaries, from UAX #29
 --
 
+-- Classes
+CR
+LF
+CONTROL
+EXTEND
+ZWJ
+RI
+PREPEND
+SPACINGMARK
+L
+V
+T
+LV
+LVT
+XX
+EP
+
+-- Start in CONTROL state.
+-> CONTROL
+
 -- Do not break between a CR and LF. Otherwise, break before and after controls.
 GB3 :
     CR x LF

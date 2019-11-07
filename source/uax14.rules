@@ -1,9 +1,56 @@
 --
---  uax19.rules
+--  uax14.rules
 --
 --  Line breaking algorithm, from UAX #19
 --
 
+-- Classes
+OP
+CL
+CP
+QU
+GL
+NS
+EX
+SY
+IS
+PR
+PO
+NU
+AL
+HL
+ID
+IN
+HY
+BA
+BB
+B2
+ZW
+CM
+WJ
+H2
+H3
+JL
+JV
+JT
+RI
+AI
+BK
+CB
+CJ
+CR
+LF
+NL
+SA
+SG
+SP
+XX
+ZWJ
+EB
+EM
+
+-- Start in SOT state.
+-> SOT
 
 -- Treat all ambiguous ideographs as narrow.
 LBTa :
