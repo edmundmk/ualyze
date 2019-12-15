@@ -9,5 +9,15 @@
 #  full license information.
 #
 
+# Read file, stripping comments.
+lines = []
+with open( sys.argv[ 1 ], 'r' ) as f:
+    for line in f:
+        comment_index = line.find( '--' )
+        if comment_index != -1:
+            line = line[:comment_index]
+    lines.append( line )
+
+
 
 
