@@ -26,9 +26,10 @@ ual_buffer* ual_buffer_create()
     return new ual_buffer();
 }
 
-void ual_buffer_retain( ual_buffer* ub )
+ual_buffer* ual_buffer_retain( ual_buffer* ub )
 {
     ++ub->refcount;
+    return ub;
 }
 
 void ual_buffer_release( ual_buffer* ub )

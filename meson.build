@@ -40,3 +40,10 @@ ualyze = library(
 
 install_headers( headers, subdir : 'ualyze' )
 
+ualtest = executable(
+    'ualtest',
+    sources : [ 'tests/ualtest.cpp' ],
+    include_directories : include_directories( 'include' ),
+    link_with : ualyze
+)
+

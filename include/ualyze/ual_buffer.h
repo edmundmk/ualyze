@@ -46,7 +46,7 @@ typedef struct ual_string_view
 typedef struct ual_buffer ual_buffer;
 
 ual_buffer* ual_buffer_create();
-void ual_buffer_retain( ual_buffer* ub );
+ual_buffer* ual_buffer_retain( ual_buffer* ub );
 void ual_buffer_release( ual_buffer* ub );
 
 void ual_buffer_clear();
