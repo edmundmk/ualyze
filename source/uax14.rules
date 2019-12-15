@@ -53,21 +53,36 @@ EM
 -> SOT
 
 -- Treat all ambiguous ideographs as narrow.
-LBTa :
+LB1a :
     AI -> AL
 
--- Treat conditional Japanese starter as NS for strict breaking.
-LBTb :
-    CJ -> NS
-
 -- Treat misplaced surrogate and invalid characters as AL.
-LBTc :
+LB1b :
     SG -> AL
     XX -> AL
+
+-- Treat south east asian context-dependent characters as AL (unless resolved otherwise).
+LB1c :
+    SA -> AL
+
+-- Treat conditional Japanese starter as NS for strict breaking.
+LB1d :
+    CJ -> NS
 
 -- Do not break at start of text.
 LB2 :
     SOT x
+
+-- Do not break between CR and LF.
+LB5 :
+    CR x LF
+
+-- Do not break before hard line breaks.
+LB6 :
+    x BK
+    x CR
+    x LF
+    x NL
 
 -- Do not break before spaces or zero width space.
 LB7 :
@@ -431,7 +446,7 @@ LB30 :
     NU x OP
     CP x AL
     CP x HL
-    CP X NU
+    CP x NU
 
 -- Break between two regional indicator symbols if and only if there are an
 -- even number of regional indicators preceding the position of the break.

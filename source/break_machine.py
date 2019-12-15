@@ -160,24 +160,14 @@ while i < len( state_list ):
 
 i = 0
 for state, actions in state_list:
-    if len( state ) <= 1:
-        name = state[ 0 ]
-    else:
-        name = state[ 0 ] + "_PLUS"
-    state[:] = [ i, name, state[:] ]
+    state[:] = [ i, '_'.join( state ), state[:] ]
     i += 1
 
 with open( sys.argv[ 2 ], 'w' ) as f:
     print( "enum\n{", file=f )
     for state, actions in state_list:
         index, name, merged_states = state
-
-        if len( merged_states ) <= 1:
-            comment = ""
-        else:
-            comment = " /* " + ' '.join( merged_states ) + " */"
-
-        print( f"    STATE_{ name } = { index },{ comment }", file=f )
+        print( f"    STATE_{ name } = { index },", file=f )
 
     print( "};\n", file=f )
 

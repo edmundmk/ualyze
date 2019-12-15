@@ -34,12 +34,13 @@ extern "C" {
 
 /*
     Perform cluster and line breaking analysis.  After analysis, the char
-    buffer will have break flags set at the start of each cluster, and at
-    each break opportunity (at the character that would start the new line).
+    buffer will have break flags set at the start of each cluster, and at each
+    break opportunity (at the character that would start the new line).
 
-    For each break opportunity, a trailing space flag is set at the space
-    character that starts a contiguous run of space characters before the
-    break, or at the break opportunity itself if the run is empty.
+    For each break opportunity, a space flag is set at the space character that
+    starts a contiguous run of space characters before it.  Space characters
+    are those in Unicode category Zs as well as line break categories BK, CR,
+    LF, and NL (i.e. hard line break characters).
 */
 
 const uint16_t UAL_BREAK_CLUSTER    = 1 << 0;
