@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #
 #  break_machine.py
 #
@@ -29,13 +30,14 @@
 #
 
 import sys
+import os
 
 token = []
 rules = []
 rname = ''
 start = ''
 
-with open( sys.argv[ 1 ], 'rb' ) as f:
+with open( sys.argv[ 1 ], 'r' ) as f:
     for line in f:
 
         # Get rid of comment.
@@ -85,10 +87,6 @@ with open( sys.argv[ 1 ], 'rb' ) as f:
             if i < len( tokens ):
                 right = tokens[ i ]
             rules.append( ( rname, left, right, action ) )
-
-print( token )
-for rule in rules:
-    print( rule )
 
 states = {}
 state_list = []
@@ -162,9 +160,44 @@ while i < len( state_list ):
 
 i = 0
 for state, actions in state_list:
-    state.insert( 0, i )
+    if len( state ) <= 1:
+        name = state[ 0 ]
+    else:
+        name = state[ 0 ] + "_PLUS"
+    state[:] = [ i, name, state[:] ]
     i += 1
 
-for state, actions in state_list:
-    print( state, actions )
+with open( sys.argv[ 2 ], 'w' ) as f:
+    print( "enum\n{", file=f )
+    for state, actions in state_list:
+        index, name, merged_states = state
+
+        if len( merged_states ) <= 1:
+            comment = ""
+        else:
+            comment = " /* " + ' '.join( merged_states ) + " */"
+
+        print( f"    STATE_{ name } = { index },{ comment }", file=f )
+
+    print( "};\n", file=f )
+
+    name = os.path.splitext( os.path.basename( sys.argv[ 1 ] ) )[ 0 ].upper()
+    print( f"static const ACTION { name }[ { len( state_list ) } ][ { len( token ) } ] =\n{{", file=f )
+    for state, actions in state_list:
+        index, name, merged_states = state
+
+        print( f"    /* { ' '.join( merged_states ) } */\n    {{", file=f )
+        for i in range( len( token ) ):
+            allow_break, next_state = actions[ i ]
+
+            if allow_break == '-':
+                allow_break = "BREAK"
+            else:
+                allow_break = "NO_BREAK"
+            next_state = states[ next_state ][ 0 ][ 1 ]
+
+            print( f"        /* { token[ i ] } -> */ { allow_break }( STATE_{ next_state } ),", file=f )
+        print( "    },", file=f )
+
+    print( "};\n", file=f )
 

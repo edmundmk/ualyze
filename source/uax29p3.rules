@@ -10,7 +10,7 @@ LF
 CONTROL
 EXTEND
 ZWJ
-RI
+REGIONAL_INDICATOR
 PREPEND
 SPACINGMARK
 L
@@ -19,7 +19,7 @@ T
 LV
 LVT
 XX
-EP
+EXTENDED_PICTOGRAPHIC
 
 -- Start in CONTROL state.
 -> CONTROL
@@ -64,14 +64,14 @@ GB9b :
 
 -- Do not break within emoji modifier sequences or emoji zwj sequences
 GB11 :
-    EP EXTEND -> EP
-    EP ZWJ -> EP_ZWJ
-    EP_ZWJ x EP
+    EXTENDED_PICTOGRAPHIC EXTEND -> EXTENDED_PICTOGRAPHIC
+    EXTENDED_PICTOGRAPHIC ZWJ -> EP_ZWJ
+    EP_ZWJ x EXTENDED_PICTOGRAPHIC
 
 -- Do not break within emoji flag sequences.
 GB12 :
-    RI RI -> RI_PAIR
-    RI x RI
+    REGIONAL_INDICATOR REGIONAL_INDICATOR -> RI_PAIR
+    REGIONAL_INDICATOR x REGIONAL_INDICATOR
 
 -- Otherwise, break everywhere
 GB999 :

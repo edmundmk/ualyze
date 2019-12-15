@@ -23,6 +23,14 @@ sources = [
     'ucdn/ucdn.c'
 ]
 
+break_machine = generator(
+    find_program( 'source/break_machine.py' ),
+    output : '@BASENAME@.h',
+    arguments : [ '@INPUT@', '@OUTPUT@' ]
+)
+
+sources += break_machine.process( 'source/uax14.rules', 'source/uax29p3.rules' )
+
 ualyze = library(
     'ualyze',
     sources : sources,
