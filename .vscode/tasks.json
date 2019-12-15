@@ -1,0 +1,57 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "windows": {
+        "options": {
+            "shell": {
+                "executable": "C:\\Windows\\System32\\cmd.exe",
+                "args": [ "/c vcvars64.bat & powershell.exe" ]
+            }
+        }
+    },
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "linux": { "options": { "env": { "PKG_CONFIG_PATH": "${env:HOME}/usr/local/lib/pkgconfig" } } },
+            "command": "if [ ! -e build/build/build.ninja ]; then meson --prefix ${workspaceFolder}/build build/build; fi; ninja -C build/build install",
+            "windows": { "command": "if ( -not ( test-path build\\build\\build.ninja ) ) { meson --prefix ${workspaceFolder}\\build build\\build }; ninja -C build\\build install" },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [ "$msCompile", "$gcc" ]
+        },
+        {
+            "label": "clean",
+            "type": "shell",
+            "command": "rm -r build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "test",
+            "type": "shell",
+            "command": "if [ ! -e build/build/build.ninja ]; then meson --prefix ${workspaceFolder}/build build/build; fi; ninja -C build/build test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

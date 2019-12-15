@@ -39,9 +39,9 @@ extern "C" {
 
 typedef struct ual_script_span
 {
-    ual_index lower;
-    ual_index upper;
-    uint32_t script;
+    unsigned lower;
+    unsigned upper;
+    unsigned script;
 } ual_script_span;
 
 size_t ual_script_analyze( ual_buffer* ub );

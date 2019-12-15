@@ -37,8 +37,6 @@ extern "C" {
     All analysis happens on text in a ual_buffer.  Text is always UTF-16.
 */
 
-typedef uint32_t ual_index;
-
 typedef struct ual_string_view
 {
     const char16_t* data;
@@ -67,8 +65,8 @@ ual_string_view ual_buffer_text( ual_buffer* ub, size_t lower, size_t upper );
 
 typedef struct ual_paragraph
 {
-    ual_index lower;
-    ual_index upper;
+    size_t lower;
+    size_t upper;
 } ual_paragraph;
 
 bool ual_next_paragraph( ual_buffer* ub, ual_paragraph* out_paragraph );

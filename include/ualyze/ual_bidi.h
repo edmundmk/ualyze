@@ -40,9 +40,9 @@ extern "C" {
 
 typedef struct ual_bidi_run
 {
-    ual_index lower;
-    ual_index upper;
-    uint32_t bidi_level;
+    unsigned lower;
+    unsigned upper;
+    unsigned bidi_level;
 } ual_bidi_run;
 
 size_t ual_bidi_analyze( ual_buffer* ub );
