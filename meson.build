@@ -9,17 +9,14 @@
 
 project( 'ualyze', 'cpp', 'c', default_options : [ 'cpp_std=c++11' ] )
 
-headers = [
-    'include/ualyze.h',
-]
+ucdn_dep = subproject( 'ucdn' ).get_variable( 'ucdn_dep' )
 
 sources = [
     'source/ual_bidi_paragraph_level.cpp',
     'source/ual_break.cpp',
     'source/ual_buffer.cpp',
     'source/ual_paragraph.cpp',
-    'source/ual_script.cpp',
-    'ucdn/ucdn.c'
+    'source/ual_script.cpp'
 ]
 
 break_machine = generator(
@@ -33,11 +30,12 @@ sources += break_machine.process( 'source/uax14.rules', 'source/uax29p3.rules' )
 ualyze = library(
     'ualyze',
     sources : sources,
-    include_directories : include_directories( 'include', 'ucdn' ),
+    include_directories : include_directories( 'include' ),
+    dependencies : ucdn_dep,
     install : true
 )
 
-install_headers( headers )
+install_headers( 'include/ualyze.h' )
 
 ualtest = executable(
     'ualtest',

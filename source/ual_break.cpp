@@ -10,7 +10,7 @@
 
 #include "ualyze.h"
 #include "ual_buffer.h"
-#include <ucdn/ucdn.h>
+#include "ucdn.h"
 
 /*
     Include state machines.

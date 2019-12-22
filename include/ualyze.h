@@ -88,14 +88,15 @@ ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count );
 
 /*
     Builds a list of spans indicating runs of the same script.  The script
-    identifier is a harfbuzz script tag.
+    code is a 4-character identifier from ISO 15924, with the first character
+    in the high byte (this is the same as Harfbuzz).
 */
 
 typedef struct ual_script_span
 {
     unsigned lower;
     unsigned upper;
-    unsigned script;
+    uint32_t script;
 } ual_script_span;
 
 size_t ual_script_analyze( ual_buffer* ub );

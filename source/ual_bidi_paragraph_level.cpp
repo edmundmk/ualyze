@@ -10,7 +10,7 @@
 
 #include "ualyze.h"
 #include "ual_buffer.h"
-#include <ucdn/ucdn.h>
+#include "ucdn.h"
 
 unsigned ual_bidi_paragraph_level( ual_buffer* ub )
 {
