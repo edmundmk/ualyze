@@ -8,8 +8,8 @@
 //  full license information.
 //
 
-#include "ual_internal.h"
-#include "ual_bidi.h"
+#include "ualyze.h"
+#include "ual_buffer.h"
 #include <ucdn/ucdn.h>
 
 unsigned ual_bidi_paragraph_level( ual_buffer* ub )

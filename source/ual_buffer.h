@@ -1,5 +1,5 @@
 //
-//  ual_internal.h
+//  ual_buffer.h
 //
 //  Created by Edmund Kapusniak on 23/08/2019.
 //  Copyright © 2019 Edmund Kapusniak.
@@ -8,15 +8,20 @@
 //  full license information.
 //
 
+#ifndef UAL_BUFFER_H
+#define UAL_BUFFER_H
 
-#ifndef UAL_INTERNAL_H
-#define UAL_INTERNAL_H
-
-#include "ual_buffer.h"
+#include "ualyze.h"
 #include <string>
 #include <vector>
 
 const uint16_t IX_INVALID = ( 1 << 11 ) - 1;
+
+struct ual_bracket
+{
+    uint32_t closing_bracket : 21;
+    uint32_t script : 11;
+};
 
 struct ual_buffer
 {
@@ -32,6 +37,10 @@ struct ual_buffer
     ual_paragraph p;
 
     // Bracket stack.
+    std::vector< ual_bracket > bracket_stack;
+
+    // Span results.
+    std::vector< ual_script_span > script_spans;
 };
 
 #endif

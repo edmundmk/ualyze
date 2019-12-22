@@ -8,7 +8,7 @@
 //  full license information.
 //
 
-#include "ual_internal.h"
+#include "ual_buffer.h"
 #include <assert.h>
 
 ual_buffer::ual_buffer()

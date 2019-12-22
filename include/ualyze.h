@@ -1,7 +1,7 @@
 //
-//  ual_buffer.h
+//  ualyze.h
 //
-//  Created by Edmund Kapusniak on 22/08/2019.
+//  Created by Edmund Kapusniak on 22/12/2019.
 //  Copyright © 2019 Edmund Kapusniak.
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a
@@ -23,8 +23,8 @@
 //  DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef UAL_BUFFER_H
-#define UAL_BUFFER_H
+#ifndef UALYZE_H
+#define UALYZE_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -85,6 +85,60 @@ typedef struct ual_char
 } ual_char;
 
 ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count );
+
+/*
+    Builds a list of spans indicating runs of the same script.  The script
+    identifier is a harfbuzz script tag.
+*/
+
+typedef struct ual_script_span
+{
+    unsigned lower;
+    unsigned upper;
+    unsigned script;
+} ual_script_span;
+
+size_t ual_script_analyze( ual_buffer* ub );
+ual_script_span* ual_script_spans( ual_buffer* ub, size_t* out_count );
+
+/*
+    Find bidi paragraph level.
+*/
+
+unsigned ual_bidi_paragraph_level( ual_buffer* ub );
+
+/*
+    Perform bidi analysis on a paragraph.  Will clobber the break flags.
+    The result of bidi analysis is a set of bidi runs containing characters
+    with the same bidi level.
+*/
+
+typedef struct ual_bidi_run
+{
+    unsigned lower;
+    unsigned upper;
+    unsigned bidi_level;
+} ual_bidi_run;
+
+unsigned ual_bidi_analyze( ual_buffer* ub );
+ual_bidi_run* ual_bidi_runs( ual_buffer* ub, size_t* out_count );
+
+/*
+    Perform cluster and line breaking analysis.  After analysis, the char
+    buffer will have break flags set at the start of each cluster, and at each
+    break opportunity (at the character that would start the new line).
+
+    For each break opportunity, a space flag is set at the space character that
+    starts a contiguous run of space characters before it.  Space characters
+    are those in Unicode category Zs as well as line break categories BK, CR,
+    LF, and NL (i.e. hard line break characters).
+*/
+
+const uint16_t UAL_BREAK_CLUSTER    = 1 << 0;
+const uint16_t UAL_BREAK_LINE       = 1 << 1;
+const uint16_t UAL_BREAK_SPACES     = 1 << 2;
+
+void ual_break_analyze( ual_buffer* ub );
 
 #ifdef __cplusplus
 }

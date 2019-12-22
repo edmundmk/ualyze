@@ -27,7 +27,11 @@
                 "focus": false,
                 "panel": "shared"
             },
-            "problemMatcher": [ "$msCompile", "$gcc" ]
+            "problemMatcher":
+            [
+                "$msCompile",
+                { "base": "$gcc", "fileLocation": [ "relative", "${workspaceFolder}/build/build" ] }
+            ]
         },
         {
             "label": "clean",

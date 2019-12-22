@@ -8,8 +8,8 @@
 //  full license information.
 //
 
-#include "ual_internal.h"
-#include "ual_break.h"
+#include "ualyze.h"
+#include "ual_buffer.h"
 #include <ucdn/ucdn.h>
 
 /*

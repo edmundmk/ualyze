@@ -11,8 +11,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <vector>
-#include <ualyze/ual_buffer.h>
-#include <ualyze/ual_break.h>
+#include <ualyze.h>
 
 int main( int argc, char* argv[] )
 {
