@@ -201,7 +201,7 @@ static size_t match_bracket( ual_buffer* ub, char32_t uc )
     first character with a real script (skipping brackets).
 */
 
-static uint32_t lookahead( ual_buffer* ub, size_t index )
+static unsigned lookahead( ual_buffer* ub, size_t index )
 {
     const UCDRecord* ucdn = ucdn_record_table();
 
@@ -259,7 +259,7 @@ static uint32_t lookahead( ual_buffer* ub, size_t index )
         // If we're at the original bracket level, have actual script.
         if ( ub->bracket_stack.size() <= bracket_level )
         {
-            return SCRIPT_CODE[ script ];
+            return script;
         }
 
         // Otherwise, remember first actual script, even inside brackets.
@@ -271,8 +271,7 @@ static uint32_t lookahead( ual_buffer* ub, size_t index )
 
     // Failed to find a character with an actual script in these brackets.
     ub->bracket_stack.resize( bracket_level );
-    if ( fallback == UCDN_SCRIPT_COMMON ) fallback = UCDN_SCRIPT_LATIN;
-    return SCRIPT_CODE[ fallback ];
+    return fallback != UCDN_SCRIPT_COMMON ? fallback : UCDN_SCRIPT_LATIN;
 }
 
 size_t ual_script_analyze( ual_buffer* ub )
