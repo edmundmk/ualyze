@@ -1,0 +1,3 @@
+[submodule "subprojects/ucdn"]
+	path = subprojects/ucdn
+	url = git@github.com:edmundmk/ucdn.git
