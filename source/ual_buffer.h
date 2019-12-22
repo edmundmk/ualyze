@@ -43,5 +43,7 @@ struct ual_buffer
     std::vector< ual_script_span > script_spans;
 };
 
+char32_t ual_codepoint( ual_buffer* ub, size_t index );
+
 #endif
 

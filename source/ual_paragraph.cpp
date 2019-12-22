@@ -27,7 +27,6 @@ bool ual_next_paragraph( ual_buffer* ub, ual_paragraph* out_paragraph )
     // Check if we're already at the end of the string.
     if ( ub->p.lower >= ub->s.size() )
     {
-        ub->c.push_back( { IX_INVALID, 0 } );
         if ( out_paragraph )
         {
             *out_paragraph = ub->p;

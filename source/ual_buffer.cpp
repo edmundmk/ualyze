@@ -66,3 +66,32 @@ ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count )
     return ub->c.data();
 }
 
+char32_t ual_codepoint( ual_buffer* ub, size_t index )
+{
+    index += ub->p.lower;
+    char32_t uc = ub->s[ index++ ];
+
+    // Check for surrogate.
+    if ( ( uc & 0xF800 ) == 0xD800 )
+    {
+        // Get next code unit.
+        char32_t ul = index < ub->s.size() ? ub->s[ index++ ] : 0;
+
+        // Check for high/low surrogate pair.
+        bool have_hi_surrogate = ( uc & 0xFC00 ) == 0xD800;
+        bool have_lo_surrogate = ( ul & 0xFC00 ) == 0xDC00;
+        if ( have_hi_surrogate && have_lo_surrogate )
+        {
+            // Decode surrogate pair.
+            uc = 0x010000 + ( ( uc & 0x3FF ) << 10 ) + ( ul & 0x3FF );
+        }
+        else
+        {
+            // Treat lone surrogates as U+FFFD REPLACEMENT CHARACTER.
+            uc = 0xFFFD;
+        }
+    }
+
+    return uc;
+}
+

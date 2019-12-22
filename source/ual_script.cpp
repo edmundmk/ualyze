@@ -20,7 +20,7 @@
 #define MAKE_SCRIPT_CODE( x, c ) c
 #endif
 
-static uint32_t SCRIPT_CODE[] =
+static const uint32_t SCRIPT_CODE[] =
 {
     MAKE_SCRIPT_CODE( LATIN, 'Latn' ),
     MAKE_SCRIPT_CODE( COMMON, 'Zyyy' ),
@@ -178,12 +178,101 @@ static uint32_t SCRIPT_CODE[] =
 };
 
 /*
+    Attempt to match a closing bracket with one on the bracket stack.
+*/
+
+static size_t match_bracket( ual_buffer* ub, char32_t uc )
+{
+    size_t i = ub->bracket_stack.size();
+    while ( i-- )
+    {
+        const ual_bracket& b = ub->bracket_stack[ i ];
+        if ( b.closing_bracket == uc )
+        {
+            return i;
+        }
+    }
+
+    return SIZE_MAX;
+}
+
+/*
     Lookahead past characters with common and inherited script to find
     first character with a real script (skipping brackets).
 */
 
 static uint32_t lookahead( ual_buffer* ub, size_t index )
 {
+    const UCDRecord* ucdn = ucdn_record_table();
+
+    size_t bracket_level = ub->bracket_stack.size();
+    unsigned fallback = UCDN_SCRIPT_COMMON;
+
+    size_t length = ub->c.size();
+    for ( ; index < length; ++index )
+    {
+        const ual_char& c = ub->c[ index ];
+        if ( c.ix == IX_INVALID )
+        {
+            continue;
+        }
+
+        uint32_t script = ucdn[ c.ix ].script;
+
+        if ( script == UCDN_SCRIPT_COMMON )
+        {
+            // Check for bracket.  Assume all brackets are in BMP.
+            char32_t uc = ual_codepoint( ub, index );
+            int bracket_type = ucdn_paired_bracket_type( uc );
+
+            if ( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_OPEN )
+            {
+                // Opening bracket.
+                char32_t closing_bracket = ucdn_paired_bracket( uc );
+                ub->bracket_stack.push_back( { closing_bracket, script } );
+            }
+
+            if ( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_CLOSE )
+            {
+                size_t bracket_match = match_bracket( ub, uc );
+                if ( bracket_match < ub->bracket_stack.size() )
+                {
+                    if ( bracket_match >= bracket_level )
+                    {
+                        ub->bracket_stack.resize( bracket_match );
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            continue;
+        }
+
+        // Ignore inherited characters.
+        if ( script == UCDN_SCRIPT_INHERITED )
+        {
+            continue;
+        }
+
+        // If we're at the original bracket level, have actual script.
+        if ( ub->bracket_stack.size() <= bracket_level )
+        {
+            return SCRIPT_CODE[ script ];
+        }
+
+        // Otherwise, remember first actual script, even inside brackets.
+        if ( fallback == UCDN_SCRIPT_COMMON )
+        {
+            fallback = script;
+        }
+    }
+
+    // Failed to find a character with an actual script in these brackets.
+    ub->bracket_stack.resize( bracket_level );
+    if ( fallback == UCDN_SCRIPT_COMMON ) fallback = UCDN_SCRIPT_LATIN;
+    return SCRIPT_CODE[ fallback ];
 }
 
 size_t ual_script_analyze( ual_buffer* ub )
