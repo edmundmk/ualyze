@@ -33,6 +33,12 @@ extern "C" {
 #endif
 
 /*
+    Find bidi paragraph level.
+*/
+
+unsigned ual_bidi_paragraph_level( ual_buffer* ub );
+
+/*
     Perform bidi analysis on a paragraph.  Will clobber the break flags.
     The result of bidi analysis is a set of bidi runs containing characters
     with the same bidi level.
@@ -45,7 +51,7 @@ typedef struct ual_bidi_run
     unsigned bidi_level;
 } ual_bidi_run;
 
-size_t ual_bidi_analyze( ual_buffer* ub );
+unsigned ual_bidi_analyze( ual_buffer* ub );
 ual_bidi_run* ual_bidi_runs( ual_buffer* ub, size_t* out_count );
 
 #ifdef __cplusplus

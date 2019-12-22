@@ -91,9 +91,6 @@ bool ual_next_paragraph( ual_buffer* ub, ual_paragraph* out_paragraph )
 
     // Index is first character of next paragraph (or end of string).
     ub->p.upper = i;
-
-    // Add past-the-end char to simplify algorithms.
-    ub->c.push_back( { IX_INVALID, 0 } );
     if ( out_paragraph )
     {
         *out_paragraph = ub->p;

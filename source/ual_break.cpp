@@ -43,7 +43,7 @@ void ual_break_analyze( ual_buffer* ub )
     size_t space_index = NO_SPACE;
     bool was_space = false;
 
-    size_t length = ub->c.size() - 1;
+    size_t length = ub->c.size();
     for ( size_t i = 0; i < length; ++i )
     {
         // Get character, skip surrogates.
@@ -98,6 +98,10 @@ void ual_break_analyze( ual_buffer* ub )
         was_space = is_space;
     }
 
-    ub->c[ length ].bc |= UAL_BREAK_CLUSTER;
+    // Set last space index, if any.
+    if ( space_index != NO_SPACE )
+    {
+        ub->c[ space_index ].bc |= UAL_BREAK_SPACES;
+    }
 }
 
