@@ -16,11 +16,13 @@
 #include <vector>
 
 const uint16_t IX_INVALID = ( 1 << 11 ) - 1;
+const size_t MAX_BRACKET_STACK_DEPTH = 64;
 
 struct ual_bracket
 {
-    uint32_t closing_bracket : 21;
-    uint32_t script : 11;
+    unsigned index;
+    unsigned closing_bracket : 21;
+    unsigned script : 11;
 };
 
 struct ual_buffer
@@ -37,13 +39,17 @@ struct ual_buffer
     ual_paragraph p;
 
     // Bracket stack.
-    std::vector< ual_bracket > bracket_stack;
+    ual_bracket bracket_stack[ MAX_BRACKET_STACK_DEPTH ];
+    size_t bracket_stack_pointer;
 
     // Span results.
     std::vector< ual_script_span > script_spans;
 };
 
 char32_t ual_codepoint( ual_buffer* ub, size_t index );
+
+bool ual_push_bracket( ual_buffer* ub, const ual_bracket& bracket );
+void ual_trim_bracket_stack( ual_buffer* ub, size_t index );
 
 #endif
 

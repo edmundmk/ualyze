@@ -14,6 +14,7 @@
 ual_buffer::ual_buffer()
     :   refcount( 1 )
     ,   p{ 0, 0 }
+    ,   bracket_stack_pointer( 0 )
 {
 }
 
@@ -93,5 +94,25 @@ char32_t ual_codepoint( ual_buffer* ub, size_t index )
     }
 
     return uc;
+}
+
+bool ual_push_bracket( ual_buffer* ub, const ual_bracket& bracket )
+{
+    if ( ub->bracket_stack_pointer < MAX_BRACKET_STACK_DEPTH )
+    {
+        ub->bracket_stack[ ub->bracket_stack_pointer ] = bracket;
+        ub->bracket_stack_pointer += 1;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void ual_trim_bracket_stack( ual_buffer* ub, size_t index )
+{
+    assert( index <= ub->bracket_stack_pointer );
+    ub->bracket_stack_pointer = index;
 }
 
