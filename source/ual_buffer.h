@@ -20,9 +20,8 @@ const size_t MAX_BRACKET_STACK_DEPTH = 64;
 
 struct ual_bracket
 {
-    unsigned index;
-    unsigned closing_bracket : 21;
-    unsigned script : 11;
+    uint32_t closing_bracket : 21;
+    uint32_t script : 11;
 };
 
 struct ual_buffer

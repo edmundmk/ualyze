@@ -181,7 +181,7 @@ static const uint32_t SCRIPT_CODE[] =
     Attempt to match a closing bracket with one on the bracket stack.
 */
 
-static unsigned match_bracket( ual_buffer* ub, size_t bracket_level, char32_t uc )
+static unsigned match_bracket( ual_buffer* ub, size_t bracket_level, char32_t uc, unsigned curr_script )
 {
     size_t i = ub->bracket_stack_pointer;
     while ( i-- > bracket_level )
@@ -195,7 +195,7 @@ static unsigned match_bracket( ual_buffer* ub, size_t bracket_level, char32_t uc
         }
     }
 
-    return UCDN_SCRIPT_COMMON;
+    return curr_script;
 }
 
 /*
@@ -219,11 +219,11 @@ static unsigned lookahead( ual_buffer* ub, size_t index )
             continue;
         }
 
-        uint32_t c_script = ucdn[ c.ix ].script;
+        uint32_t char_script = ucdn[ c.ix ].script;
 
-        if ( c_script == UCDN_SCRIPT_COMMON )
+        if ( char_script == UCDN_SCRIPT_COMMON )
         {
-            // Check for bracket.  Assume all brackets are in BMP.
+            // Check for bracket.
             char32_t uc = ual_codepoint( ub, index );
             int bracket_type = ucdn_paired_bracket_type( uc );
 
@@ -231,90 +231,114 @@ static unsigned lookahead( ual_buffer* ub, size_t index )
             {
                 // Opening bracket.
                 char32_t closing_bracket = ucdn_paired_bracket( uc );
-                ual_push_bracket( ub, { closing_bracket, c_script } );
+                ual_push_bracket( ub, { closing_bracket, UCDN_SCRIPT_COMMON } );
             }
-
-            if ( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_CLOSE )
+            else if ( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_CLOSE )
             {
-                c_script = match_bracket( ub, bracket_level, uc );
-                if ( c_script != UCDN_SCRIPT_COMMON )
-                {
-                    break;
-                }
+                // Closing bracket.
+                match_bracket( ub, bracket_level, uc, UCDN_SCRIPT_COMMON );
             }
 
             continue;
         }
-
-        // Ignore inherited characters.
-        if ( c_script == UCDN_SCRIPT_INHERITED )
+        else if ( char_script == UCDN_SCRIPT_INHERITED )
         {
             continue;
         }
 
-        // If we're at the original bracket level, have actual script.
-
-        if ( ub->bracket_stack.size() <= bracket_level )
+        // If we're at the original bracket level, we have actual script.
+        if ( ub->bracket_stack_pointer <= bracket_level )
         {
-            return c->script;
+            return char_script;
         }
 
         // Otherwise, remember first actual script, even inside brackets.
         if ( fallback == UCDN_SCRIPT_COMMON )
         {
-            fallback = script;
+            fallback = char_script;
         }
     }
 
     // Failed to find a character with an actual script in these brackets.
-    ub->bracket_stack.resize( bracket_level );
-    return fallback != UCDN_SCRIPT_COMMON ? fallback : UCDN_SCRIPT_LATIN;
+    ual_trim_bracket_stack( ub, bracket_level );
+    return fallback;
 }
 
 size_t ual_script_analyze( ual_buffer* ub )
 {
     const UCDRecord* ucdn = ucdn_record_table();
 
-    //
-
+    // Lookahead to find first non-common script.
+    unsigned next_script = lookahead( ub, 0 );
+    if ( next_script == UCDN_SCRIPT_COMMON )
+    {
+        next_script = UCDN_SCRIPT_LATIN;
+    }
 
     // We don't know what script this is yet.
     unsigned lower = 0;
-    unsigned script = UCDN_SCRIPT_COMMON;
+    unsigned span_script = next_script;
 
     size_t length = ub->c.size();
-    for ( size_t i = 0; i < length; ++i )
+    for ( size_t index = 0; index < length; ++index )
     {
         // Get character, skip surrogates.
-        ual_char& c = ub->c[ i ];
+        ual_char& c = ub->c[ index ];
         if ( c.ix == IX_INVALID )
         {
             continue;
         }
 
         // Look up script for character.
-        unsigned c_script = ucdn[ c.ix ].script;
+        unsigned char_script = ucdn[ c.ix ].script;
 
-        // Deal with common script, including brackets.
-
-
-
-        // Deal with inherited script.
-        if ( c_script == UCDN_SCRIPT_INHERITED )
+        if ( char_script == UCDN_SCRIPT_COMMON )
         {
-            c_script = script;
+            // Common character, use script of previous character.
+            char_script = next_script;
+
+            // Check for bracket.
+            char32_t uc = ual_codepoint( ub, index );
+            int bracket_type = ucdn_paired_bracket_type( uc );
+
+            if ( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_OPEN )
+            {
+                // Opening bracket.
+                char32_t closing_bracket = ucdn_paired_bracket( uc );
+                ual_push_bracket( ub, { closing_bracket, char_script } );
+
+                // Lookahead to find script of next character.
+                next_script = lookahead( ub, index + 1 );
+            }
+            else if ( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_CLOSE )
+            {
+                // Closing bracket.
+                char_script = match_bracket( ub, 0, uc, char_script );
+                next_script = char_script;
+            }
+        }
+        else if ( char_script == UCDN_SCRIPT_INHERITED )
+        {
+            // Inherit script of previous character.
+            char_script = next_script;
+        }
+        else
+        {
+            // Strong script, use for subsequent common/inherited characters.
+            next_script = char_script;
         }
 
         // If script has changed, push a new span.
-        if ( c_script != script )
+        if ( char_script != span_script )
         {
-            ub->script_spans.push_back( { lower, i, script } );
-            script = c_script;
+            ub->script_spans.push_back( { lower, (unsigned)index, SCRIPT_CODE[ span_script ] } );
+            lower = index;
+            span_script = char_script;
         }
     }
 
     // Push final script span.
-    ub->script_spans.push_back( { lower, length, script } );
+    ub->script_spans.push_back( { lower, (unsigned)length, SCRIPT_CODE[ span_script ] } );
     return ub->script_spans.size();
 }
 
