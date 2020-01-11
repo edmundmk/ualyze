@@ -43,6 +43,9 @@ struct ual_buffer
 
     // Span results.
     std::vector< ual_script_span > script_spans;
+
+    // Bidi results.
+    std::vector< ual_bidi_run > bidi_runs;
 };
 
 char32_t ual_codepoint( ual_buffer* ub, size_t index );

@@ -28,6 +28,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -90,12 +91,15 @@ ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count );
     Builds a list of spans indicating runs of the same script.  The script
     code is a 4-character identifier from ISO 15924, with the first character
     in the high byte (this is the same as Harfbuzz).
+
+    Each script span starts at the lower index and ends at the lower index of
+    the next span in the array.  There are count - 1 spans.  The final entry in
+    the span array holds only the index of the end of the paragraph.
 */
 
 typedef struct ual_script_span
 {
     unsigned lower;
-    unsigned upper;
     uint32_t script;
 } ual_script_span;
 
@@ -112,12 +116,17 @@ unsigned ual_bidi_paragraph_level( ual_buffer* ub );
     Perform bidi analysis on a paragraph.  Will clobber the break flags.
     The result of bidi analysis is a set of bidi runs containing characters
     with the same bidi level.
+
+    Each bidi run starts at the lower index and ends at the lower index of
+    the next run in the array.  There are count - 1 runs.  The final entry in
+    the run array holds only the index of the end of the paragraph.
+
+    Returns the paragraph level.
 */
 
 typedef struct ual_bidi_run
 {
     unsigned lower;
-    unsigned upper;
     unsigned bidi_level;
 } ual_bidi_run;
 

@@ -331,14 +331,15 @@ size_t ual_script_analyze( ual_buffer* ub )
         // If script has changed, push a new span.
         if ( char_script != span_script )
         {
-            ub->script_spans.push_back( { lower, (unsigned)index, SCRIPT_CODE[ span_script ] } );
+            ub->script_spans.push_back( { lower, SCRIPT_CODE[ span_script ] } );
             lower = index;
             span_script = char_script;
         }
     }
 
     // Push final script span.
-    ub->script_spans.push_back( { lower, (unsigned)length, SCRIPT_CODE[ span_script ] } );
+    ub->script_spans.push_back( { lower, SCRIPT_CODE[ span_script ] } );
+    ub->script_spans.push_back( { (unsigned)length, 0 } );
     return ub->script_spans.size();
 }
 
