@@ -9,6 +9,7 @@
 //
 
 #include "ualyze.h"
+#include <assert.h>
 #include "ual_buffer.h"
 #include "ucdn.h"
 
@@ -178,19 +179,58 @@ static const uint32_t SCRIPT_CODE[] =
 };
 
 /*
-    Attempt to match a closing bracket with one on the bracket stack.
+    Bracket stack.
 */
 
-static unsigned match_bracket( ual_buffer* ub, size_t bracket_level, char32_t uc, unsigned curr_script )
+const size_t MAX_BRACKET_STACK_DEPTH = 64;
+
+struct ual_script_bracket
 {
-    size_t i = ub->bracket_stack_pointer;
+    uint32_t closing_bracket : 21;
+    uint32_t script : 11;
+};
+
+struct ual_script_brstack
+{
+    ual_script_bracket* base;
+    size_t pointer;
+};
+
+static ual_script_brstack make_brstack( ual_buffer* ub )
+{
+    return { (ual_script_bracket*)ual_stack_bytes( ub, MAX_BRACKET_STACK_DEPTH, sizeof( ual_script_bracket ) ), 0 };
+}
+
+static void trim_brstack( ual_script_brstack* stack, size_t index )
+{
+    assert( index <= stack->pointer );
+    stack->pointer = index;
+}
+
+static bool push_bracket( ual_script_brstack* stack, const ual_script_bracket& bracket )
+{
+    if ( stack->pointer < MAX_BRACKET_STACK_DEPTH )
+    {
+        stack->base[ stack->pointer ] = bracket;
+        stack->pointer += 1;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+static unsigned match_bracket( ual_script_brstack* stack, size_t bracket_level, char32_t uc, unsigned curr_script )
+{
+    size_t i = stack->pointer;
     while ( i-- > bracket_level )
     {
-        const ual_bracket& b = ub->bracket_stack[ i ];
+        const ual_script_bracket& b = stack->base[ i ];
         if ( b.closing_bracket == uc )
         {
             unsigned script = b.script;
-            ual_trim_bracket_stack( ub, i );
+            trim_brstack( stack, i );
             return script;
         }
     }
@@ -203,11 +243,11 @@ static unsigned match_bracket( ual_buffer* ub, size_t bracket_level, char32_t uc
     first character with a real script (skipping brackets).
 */
 
-static unsigned lookahead( ual_buffer* ub, size_t index )
+static unsigned lookahead( ual_buffer* ub, ual_script_brstack* stack, size_t index )
 {
     const UCDRecord* ucdn = ucdn_record_table();
 
-    size_t bracket_level = ub->bracket_stack_pointer;
+    size_t bracket_level = stack->pointer;
     unsigned fallback = UCDN_SCRIPT_COMMON;
 
     size_t length = ub->c.size();
@@ -231,12 +271,12 @@ static unsigned lookahead( ual_buffer* ub, size_t index )
             {
                 // Opening bracket.
                 char32_t closing_bracket = ucdn_paired_bracket( uc );
-                ual_push_bracket( ub, { closing_bracket, UCDN_SCRIPT_COMMON } );
+                push_bracket( stack, { closing_bracket, UCDN_SCRIPT_COMMON } );
             }
             else if ( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_CLOSE )
             {
                 // Closing bracket.
-                match_bracket( ub, bracket_level, uc, UCDN_SCRIPT_COMMON );
+                match_bracket( stack, bracket_level, uc, UCDN_SCRIPT_COMMON );
             }
 
             continue;
@@ -247,7 +287,7 @@ static unsigned lookahead( ual_buffer* ub, size_t index )
         }
 
         // If we're at the original bracket level, we have actual script.
-        if ( ub->bracket_stack_pointer <= bracket_level )
+        if ( stack->pointer <= bracket_level )
         {
             return char_script;
         }
@@ -260,7 +300,7 @@ static unsigned lookahead( ual_buffer* ub, size_t index )
     }
 
     // Failed to find a character with an actual script in these brackets.
-    ual_trim_bracket_stack( ub, bracket_level );
+    trim_brstack( stack, bracket_level );
     return fallback;
 }
 
@@ -268,8 +308,11 @@ size_t ual_script_analyze( ual_buffer* ub )
 {
     const UCDRecord* ucdn = ucdn_record_table();
 
+    // Get stack.
+    ual_script_brstack stack = make_brstack( ub );
+
     // Lookahead to find first non-common script.
-    unsigned next_script = lookahead( ub, 0 );
+    unsigned next_script = lookahead( ub, &stack, 0 );
     if ( next_script == UCDN_SCRIPT_COMMON )
     {
         next_script = UCDN_SCRIPT_LATIN;
@@ -305,15 +348,15 @@ size_t ual_script_analyze( ual_buffer* ub )
             {
                 // Opening bracket.
                 char32_t closing_bracket = ucdn_paired_bracket( uc );
-                ual_push_bracket( ub, { closing_bracket, char_script } );
+                push_bracket( &stack, { closing_bracket, char_script } );
 
                 // Lookahead to find script of next character.
-                next_script = lookahead( ub, index + 1 );
+                next_script = lookahead( ub, &stack, index + 1 );
             }
             else if ( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_CLOSE )
             {
                 // Closing bracket.
-                char_script = match_bracket( ub, 0, uc, char_script );
+                char_script = match_bracket( &stack, 0, uc, char_script );
                 next_script = char_script;
             }
         }
