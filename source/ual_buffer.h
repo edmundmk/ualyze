@@ -17,6 +17,18 @@
 
 const uint16_t IX_INVALID = ( 1 << 11 ) - 1;
 
+const unsigned BOUNDARY_SEQ = 1;
+const unsigned NEXT_INVALID = ( 1 << 20 ) - 1;
+
+struct ual_level_run
+{
+    unsigned start;         // index of first character in run.
+    unsigned level  : 8;    // bidi level of run.
+    unsigned sos    : 2;    // sos type
+    unsigned eos    : 2;    // eos type
+    unsigned next   : 20;   // index of next level run in isolating run sequence.
+};
+
 struct ual_buffer
 {
     ual_buffer();
@@ -37,6 +49,7 @@ struct ual_buffer
     std::vector< ual_script_span > script_spans;
 
     // Bidi results.
+    std::vector< ual_level_run > level_runs;
     std::vector< ual_bidi_run > bidi_runs;
 };
 

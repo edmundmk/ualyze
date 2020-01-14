@@ -85,7 +85,28 @@ static bidi_complexity bidi_lookup( ual_buffer* ub )
 
 static unsigned bidi_solitary( ual_buffer* ub )
 {
-    return 0;
+    unsigned paragraph_level = 0;
+    unsigned boundary_class = UCDN_BIDI_CLASS_L;
+
+    size_t length = ub->c.size();
+    for ( size_t index = 0; index < length; ++index )
+    {
+        const ual_char& c = ub->c[ index ];
+        if ( c.bc == UCDN_BIDI_CLASS_L )
+        {
+            break;
+        }
+        if ( c.bc == UCDN_BIDI_CLASS_AL || c.bc == UCDN_BIDI_CLASS_R )
+        {
+            paragraph_level = 1;
+            boundary_class = UCDN_BIDI_CLASS_R;
+            break;
+        }
+    }
+
+    ub->level_runs.push_back( { 0, paragraph_level, boundary_class, boundary_class, NEXT_INVALID } );
+    ub->level_runs.push_back( { length, 0, BOUNDARY_SEQ, BOUNDARY_SEQ, NEXT_INVALID } );
+    return paragraph_level;
 }
 
 /*
@@ -96,8 +117,25 @@ static unsigned bidi_solitary( ual_buffer* ub )
     Return the paragraph embedding level.
 */
 
+enum ual_bidi_override_isolate
+{
+    BIDI_EMBEDDING_L,       // within the scope of an LRO.
+    BIDI_EMBEDDING_R,       // within the scope of an RLO.
+    BIDI_EMBEDDING_NEUTRAL, // within the scope of an LRE or RLE.
+    BIDI_ISOLATE,           // within the scope of an FSI, LRI, or RLI.
+};
+
+struct ual_bidi_exentry
+{
+    unsigned level  : 8;    // bidi level.
+    unsigned oi     : 4;    // override or isolate.
+    unsigned prev   : 20;   // index of previous level run.
+};
+
 static unsigned bidi_explicit( ual_buffer* ub )
 {
+
+
     return 0;
 }
 
@@ -111,7 +149,15 @@ static void bidi_weak( ual_buffer* ub )
 }
 
 /*
-    Perform rules N0 to N2, including bracket pair identification.
+    Perform rule N0, identifying bracket pairs and resolving types.
+*/
+
+static void bidi_brackets( ual_buffer* ub )
+{
+}
+
+/*
+    Perform rules N1 and N2, resolving types for runs of neutrals.
 */
 
 static void bidi_neutral( ual_buffer* ub )
@@ -124,6 +170,7 @@ static void bidi_neutral( ual_buffer* ub )
 
 unsigned ual_bidi_analyze( ual_buffer* ub )
 {
+    ub->level_runs.clear();
     ub->bidi_runs.clear();
 
     // Look up initial bidi classes.
@@ -149,6 +196,7 @@ unsigned ual_bidi_analyze( ual_buffer* ub )
 
     // Perform weak and neutral processing.
     bidi_weak( ub );
+    bidi_brackets( ub );
     bidi_neutral( ub );
 
     // Generate output runs from resolved bidi classes.
