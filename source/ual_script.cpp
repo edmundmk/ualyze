@@ -186,8 +186,8 @@ const size_t MAX_BRACKET_STACK_DEPTH = 64;
 
 struct ual_script_bracket
 {
-    uint32_t closing_bracket : 21;
-    uint32_t script : 11;
+    char32_t closing_bracket;
+    unsigned script;
 };
 
 struct ual_script_brstack

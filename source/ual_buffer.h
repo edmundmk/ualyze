@@ -22,11 +22,11 @@ const unsigned NEXT_INVALID = ( 1 << 20 ) - 1;
 
 struct ual_level_run
 {
-    unsigned start;         // index of first character in run.
-    unsigned level  : 8;    // bidi level of run.
-    unsigned sos    : 2;    // sos type
-    unsigned eos    : 2;    // eos type
-    unsigned inext  : 20;   // index of next level run in isolating run sequence.
+    unsigned start;     // index of first character in run.
+    unsigned inext;     // index of next level run in isolating run sequence
+    uint8_t level;      // bidi level of run.
+    uint8_t sos;        // sos type
+    uint8_t eos;        // eos type
 };
 
 struct ual_buffer

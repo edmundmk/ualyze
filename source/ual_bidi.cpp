@@ -122,11 +122,10 @@ const unsigned BIDI_EXSTACK_LIMIT = BIDI_MAX_DEPTH + 2;
 
 static_assert( UCDN_BIDI_CLASS_L == 0 );
 static_assert( UCDN_BIDI_CLASS_R == 3 );
-const unsigned BC_INVALID_BOUNDARY = 1;
 
-const unsigned BIDI_INVALID_LEVEL_RUN = 0xFFFFF;
+const unsigned BIDI_INVALID_LEVEL_RUN = ~(unsigned)0;
 
-enum ual_bidi_override_isolate
+enum ual_bidi_override_isolate : uint8_t
 {
     BIDI_EMBEDDING_L,       // within the scope of an LRO.
     BIDI_EMBEDDING_R,       // within the scope of an RLO.
@@ -136,9 +135,9 @@ enum ual_bidi_override_isolate
 
 struct ual_bidi_exentry
 {
-    unsigned level  : 8;    // bidi level.
-    unsigned oi     : 4;    // override or isolate.
-    unsigned irun   : 20;   // index of previous level run.
+    unsigned irun;                  // index of previous level run.
+    uint8_t level;                  // bidi level.
+    ual_bidi_override_isolate oi;   // override or isolate.
 };
 
 struct ual_bidi_exstack
@@ -237,7 +236,7 @@ static unsigned bidi_explicit( ual_buffer* ub )
 
     // Calculate paragraph embedding level and the base stack entry.
     unsigned paragraph_level = first_strong_level( ub, 0, false );
-    ual_bidi_exentry stack_entry = { paragraph_level, BIDI_EMBEDDING_NEUTRAL, BIDI_INVALID_LEVEL_RUN };
+    ual_bidi_exentry stack_entry = { BIDI_INVALID_LEVEL_RUN, paragraph_level, BIDI_EMBEDDING_NEUTRAL };
 
     // Embedding/isolate state.
     size_t overflow_isolate_count = 0;
@@ -306,7 +305,7 @@ static unsigned bidi_explicit( ual_buffer* ub )
             // directional status stack.
             assert( stack.pointer < BIDI_EXSTACK_LIMIT );
             stack.base[ stack.pointer++ ] = stack_entry;
-            stack_entry = { level, oi, BIDI_INVALID_LEVEL_RUN };
+            stack_entry = { BIDI_INVALID_LEVEL_RUN, level, oi };
         }
         break;
 
@@ -379,7 +378,7 @@ static unsigned bidi_explicit( ual_buffer* ub )
             // status onto the directional status stack.
             assert( stack.pointer < BIDI_EXSTACK_LIMIT );
             stack.base[ stack.pointer++ ] = stack_entry;
-            stack_entry = { level, BIDI_ISOLATE, (unsigned)ub->level_runs.size() };
+            stack_entry = { (unsigned)ub->level_runs.size(), level, BIDI_ISOLATE };
         }
         break;
 
@@ -433,19 +432,19 @@ static unsigned bidi_explicit( ual_buffer* ub )
             // We know this character is not removed, so the current level
             // run ends here.
             unsigned run_eos = boundary_class( run_level, clevel );
-            ub->level_runs.push_back( { run_start, run_level, run_sos, run_eos, 0 } );
+            ub->level_runs.push_back( { run_start, 0, run_level, run_sos, run_eos } );
 
             // This PDI matches an isolate initiator and therefore
             // the next level run continues an isolating run sequence.
             run_isolate_count = valid_isolate_count;
-            run_sos = BC_INVALID_BOUNDARY;
+            run_sos = BC_INVALID;
             run_start = index;
             run_level = clevel;
 
             // Link the previous run to the run we're about to build.
             ual_level_run* prun = &ub->level_runs.at( irun );
             assert( prun->inext == 0 );
-            assert( prun->eos = BC_INVALID_BOUNDARY );
+            assert( prun->eos = BC_INVALID );
             prun->inext = (unsigned)ub->level_runs.size();
 
             continue;
@@ -479,7 +478,7 @@ static unsigned bidi_explicit( ual_buffer* ub )
         // embedding level.
         if ( c.bc != UCDN_BIDI_CLASS_BN && clevel != run_level )
         {
-            unsigned run_eos = BC_INVALID_BOUNDARY;
+            unsigned run_eos = BC_INVALID;
             if ( valid_isolate_count <= run_isolate_count )
             {
                 // This run ends its isolating run sequence.
@@ -487,7 +486,7 @@ static unsigned bidi_explicit( ual_buffer* ub )
             }
 
             // Add run that ends at this character.
-            ub->level_runs.push_back( { run_start, run_level, run_sos, run_eos, 0 } );
+            ub->level_runs.push_back( { run_start, 0, run_level, run_sos, run_eos } );
 
             // Next run definitely doesn't start with a matching PDI, as
             // that case is handled above.
@@ -500,7 +499,7 @@ static unsigned bidi_explicit( ual_buffer* ub )
 
     // Close final sequence.
     unsigned run_eos = boundary_class( run_level, paragraph_level );
-    ub->level_runs.push_back( { run_start, run_level, run_sos, run_eos, 0 } );
+    ub->level_runs.push_back( { run_start, 0, run_level, run_sos, run_eos } );
 
     // Close unterminated isolating run sequences.
     while ( valid_isolate_count > 0 )
@@ -521,24 +520,229 @@ static unsigned bidi_explicit( ual_buffer* ub )
         // Update run to close it.
         ual_level_run* prun = &ub->level_runs.at( irun );
         assert( prun->inext == 0 );
-        assert( prun->eos = BC_INVALID_BOUNDARY );
+        assert( prun->eos = BC_INVALID );
         prun->eos = boundary_class( prun->level, paragraph_level );
     }
 
     // Add a final 'run' to simplify lookup of level runs.
-    ub->level_runs.push_back( { index, paragraph_level, BC_INVALID_BOUNDARY, BC_INVALID_BOUNDARY, 0 } );
+    ub->level_runs.push_back( { index, 0, paragraph_level, BC_INVALID, BC_INVALID } );
 
     // Done.
     return paragraph_level;
 }
 
 /*
-    Perform rules W1 to W7 on the characters in each level run.  We do a single
-    pass through the string.
+    Perform rules W1 to W7 on the characters in each level run.
+
+    We do a single pass through the string.
+
+    Both rule W2 and rule W7 require the type of the previous strong character.
+    No weak rule changes the previous strong type - W1 changes the current
+    character to the previous one, while W3 is super-predictable.  Therefore
+    we can keep track of the previous strong type and hand it over to the next
+    level run in an isolating run sequence.
 */
+
+static unsigned lookahead( ual_buffer* ub, size_t i, size_t upper )
+{
+    // Find class of next character, skipping over surrogates and removed
+    // characters, or BIDI_CLASS_INVALID at the end of the level run.
+    for ( ++i; i < upper; ++i )
+    {
+        unsigned bc = ub->c.at( i ).bc;
+        if ( bc == BC_INVALID || bc == UCDN_BIDI_CLASS_BN )
+        {
+            continue;
+        }
+
+        return bc;
+    }
+
+    return BC_INVALID;
+}
 
 static void bidi_weak( ual_buffer* ub )
 {
+    size_t length = ub->level_runs.size() - 1;
+    for ( size_t i = 0; i < length; ++i )
+    {
+        ual_level_run* prun = &ub->level_runs[ i ];
+        ual_level_run* nrun = &ub->level_runs[ i + 1 ];
+
+        // Previous strong class.
+        unsigned prev_strong = prun->sos;
+
+        // Previous classes after applying rules.
+        unsigned prev_w1 = prun->sos;
+        unsigned prev_w3 = prun->sos;
+        unsigned prev_w5 = prun->sos;
+
+        // Index of first ET in sequence to be updated if we encounter an EN.
+        const size_t INVALID_INDEX = (size_t)-1;
+        size_t index_et = INVALID_INDEX;
+
+        // Update each of the characters in the run.
+        for ( size_t i = prun->start; i < nrun->start; ++i )
+        {
+            ual_char& c = ub->c.at( i );
+            if ( c.bc == BC_INVALID || c.bc == UCDN_BIDI_CLASS_BN )
+            {
+                continue;
+            }
+
+            // TODO: Switch on type first to reduce branching.
+
+            // W1. Update class of NSM to class of previous.
+            if ( c.bc == UCDN_BIDI_CLASS_NSM )
+            {
+                if ( prev_w1 != UCDN_BIDI_CLASS_FSI
+                    && prev_w1 != UCDN_BIDI_CLASS_LRI
+                    && prev_w1 != UCDN_BIDI_CLASS_RLI
+                    && prev_w1 != UCDN_BIDI_CLASS_PDI )
+                {
+                    c.bc = prev_w1;
+                }
+                else
+                {
+                    c.bc = UCDN_BIDI_CLASS_ON;
+                }
+            }
+
+            prev_w1 = c.bc;
+
+            // W2. Keep track of strong left context.  Change EN to AN if
+            // the strong left context is AL.
+            if ( c.bc == UCDN_BIDI_CLASS_R || c.bc == UCDN_BIDI_CLASS_L || c.bc == UCDN_BIDI_CLASS_AL )
+            {
+                prev_strong = c.bc;
+            }
+            if ( c.bc == UCDN_BIDI_CLASS_EN && prev_strong == UCDN_BIDI_CLASS_AL )
+            {
+                c.bc = UCDN_BIDI_CLASS_AN;
+            }
+
+            // W3. Change AL to R.
+            if ( c.bc == UCDN_BIDI_CLASS_AL )
+            {
+                c.bc = UCDN_BIDI_CLASS_R;
+            }
+
+            unsigned self_w3 = c.bc;
+
+            // W4. A single ES between two ENs changes to EN. A single CS
+            // between two AN/ENs changes to AN/EN.
+            if ( c.bc == UCDN_BIDI_CLASS_ES && prev_w3 == UCDN_BIDI_CLASS_EN
+                    && lookahead( ub, i, nrun->start ) == UCDN_BIDI_CLASS_EN )
+            {
+                c.bc = UCDN_BIDI_CLASS_EN;
+            }
+            if ( c.bc == UCDN_BIDI_CLASS_CS && prev_w3 == UCDN_BIDI_CLASS_EN
+                    && lookahead( ub, i, nrun->start ) == UCDN_BIDI_CLASS_EN )
+            {
+                c.bc = UCDN_BIDI_CLASS_EN;
+            }
+            if ( c.bc == UCDN_BIDI_CLASS_CS && prev_w3 == UCDN_BIDI_CLASS_AN
+                    && lookahead( ub, i, nrun->start ) == UCDN_BIDI_CLASS_AN )
+            {
+                c.bc = UCDN_BIDI_CLASS_AN;
+            }
+
+            prev_w3 = self_w3;
+
+            // W5. A sequence of ETs adjacent to EN becomes EN.
+            if ( c.bc == UCDN_BIDI_CLASS_ET )
+            {
+                if ( prev_w5 == UCDN_BIDI_CLASS_EN )
+                {
+                    c.bc = UCDN_BIDI_CLASS_EN;
+                }
+                else
+                {
+                    if ( index_et == INVALID_INDEX )
+                    {
+                        index_et = i;
+                    }
+
+                    // Postpone further updates until end of ET sequence.
+                    continue;
+                }
+            }
+            else if ( index_et != INVALID_INDEX )
+            {
+                unsigned change_to;
+                if ( c.bc == UCDN_BIDI_CLASS_EN )
+                {
+                    // W6. A sequence of ETs adjacent to EN becomes EN.
+                    change_to = UCDN_BIDI_CLASS_EN;
+
+                    // W7. Change EN to L if the left context is L.
+                    if ( prev_strong == UCDN_BIDI_CLASS_L )
+                    {
+                        change_to = UCDN_BIDI_CLASS_L;
+                    }
+                }
+                else
+                {
+                    // W6. Otherwise, ETs become ON.
+                    change_to = UCDN_BIDI_CLASS_ON;
+                }
+
+                while ( index_et < i )
+                {
+                    ual_char& et = ub->c.at( index_et++ );
+                    if ( et.bc == BC_INVALID || et.bc == UCDN_BIDI_CLASS_BN )
+                    {
+                        continue;
+                    }
+
+                    assert( et.bc = UCDN_BIDI_CLASS_ET );
+                    et.bc = change_to;
+                }
+
+                index_et = INVALID_INDEX;
+            }
+
+            prev_w5 = c.bc;
+
+            // W6. Otherwise, ET, ES, or CS become ON.
+            assert( c.bc != UCDN_BIDI_CLASS_ET );
+            if ( c.bc == UCDN_BIDI_CLASS_ES || c.bc == UCDN_BIDI_CLASS_CS )
+            {
+                c.bc = UCDN_BIDI_CLASS_ON;
+            }
+
+            // W7. Change EN to L if the left context is L.
+            if ( c.bc == UCDN_BIDI_CLASS_EN && prev_strong == UCDN_BIDI_CLASS_L )
+            {
+                c.bc = UCDN_BIDI_CLASS_L;
+            }
+
+        }
+
+        // Deal with case where the level run ends with an ET.
+        if ( index_et != INVALID_INDEX )
+        {
+            while ( index_et < nrun->start )
+            {
+                ual_char& et = ub->c.at( index_et++ );
+                if ( et.bc == BC_INVALID || et.bc == UCDN_BIDI_CLASS_BN )
+                {
+                    continue;
+                }
+
+                assert( et.bc = UCDN_BIDI_CLASS_ET );
+                et.bc = UCDN_BIDI_CLASS_ON;
+            }
+        }
+
+        // If this run is not the last one in the isolating run sequence, set
+        // sos on the next run in the sequence to provide left context.
+        if ( prun->inext )
+        {
+            ual_level_run* pnext = &ub->level_runs.at( prun->inext );
+            pnext->sos = prev_strong;
+        }
+    }
 }
 
 /*
