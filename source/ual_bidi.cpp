@@ -546,13 +546,21 @@ static unsigned bidi_explicit( ual_buffer* ub )
 /*
     Perform rules W1 to W7 on the characters in each level run.
 
-    We do a single pass through the string.
+    We make a single pass through the string.  This works because:
+
+        - Level runs in an isolating run sequence which do not terminate the
+          isolating run sequence must end with an isolate initiator.
+        - Level runs in an isolating run sequence which continue the isolating
+          run sequence must begin with a PDI.
+        - Neither isolate initiators nor PDI are removed by rule X9.
+        - Therefore the lookahead in rule W5 must terminate before or at the
+          end of a single level run.
 
     Both rule W2 and rule W7 require the type of the previous strong character.
     No weak rule changes the previous strong type - W1 changes the current
     character to the previous one, while W3 is super-predictable.  Therefore
     we can keep track of the previous strong type and hand it over to the next
-    level run in an isolating run sequence.
+    level run in the isolating run sequence.
 */
 
 static unsigned lookahead( ual_buffer* ub, size_t i, size_t upper )
@@ -759,7 +767,104 @@ static void bidi_weak( ual_buffer* ub )
 
 /*
     Perform rule N0, identifying bracket pairs and resolving types.
+
+    The only types remaining are:
+
+        strong L    -> L
+        strong R    -> R, EN, AN
+        neutral     -> B, S, WS, ON, FSI, LRI, RLI, PDI
+        removed     -> BN, INVALID
+
+    A strong type which matches the embedding direction is /e/.  One which
+    is opposite the embedding direction is /o/.
+
+    Rule N0 considers matched pairs of brackets in order:
+
+      - If the brackets contain /e/, brackets become /e/.
+      - If the brackets contain /o/, brackets become the preceding strong type.
+      - Otherwise, brackets remain neutral.
+
+    We avoid building an explicit list of bracket pairs, because I feel like
+    a string with a lot of brackets may well be plausible.  So we match
+    brackets and resolve their types at the same time.
+
+    Per isolating run sequence:
+
+      - Track preceding strong type.  It can also be /e-guess/.
+      - When /e/, top bracket contains /e/, strong type is /e/.
+      - When /o/, top bracket contains /o/, strong type is /o/.
+      - When ON and not a bracket, set to B.
+
+    When we open a bracket:
+
+      - Push strong type with bracket.
+      - Strong type becomes /e-guess/.
+      - Current bracket doesn't contain /e/ or /o/ yet.
+
+    When we match a bracket:
+
+        Bracket does not contain /e/ or /o/:
+          - Brackets become B, to avoid reprocessing them.
+
+        Bracket contains /e/:
+        Bracket contains /o/ and bracket strong type is /e/:
+          - Brackets become /e/.
+          - Strong type is /e/.
+          - If bracket contains /e/, so does new top.
+          - If bracket contains /o/, so does new top.
+
+        Bracket contains /o/ and bracket strong type is /e-guess/:
+          - Leave bracket as ON, in case it needs reprocessed.
+          - Strong type is /e-guess/.
+          - New top contains /o/.
+          - New top is a rewind point.
+
+        Bracket contains /o/ and bracket strong type is /o/:
+          - Brackets become /o/.
+          - Strong type is /o/.
+          - If top is a rewind point, rewind and reprocess.
+
+    When we mismatch a bracket:
+
+        Always:
+          - If strong type is /e-guess/, pop strong type with bracket.
+          - If bracket contains /e/, so does new top.
+          - If bracket contains /o/, so does new top.
+          - Set bracket to B to avoid reprocessing it.
+
+        If mismatched bracket was a rewind point and popped strong is /o/:
+          - Resume from here.
+
+        If mismatched bracket was a rewind point and popped strong is /e-guess/:
+          - New top is a rewind point.
+
+    When we rewind, we only need to update guessed brackets to /o/.  When we
+    hit a strong type which isolates further brackets from the rewind point,
+    then we can continue from where we rewound from.
 */
+
+enum ual_bidi_eo_strong
+{
+    BIDI_E,
+    BIDI_O,
+    BIDI_E_GUESS,
+};
+
+struct ual_bidi_brentry
+{
+    unsigned index;                     // index of opening bracket.
+    unsigned closing_bracket    : 24;   // codepoint of closing bracket.
+    unsigned prev_strong        : 2;    // previous strong /e/, /o/, /e-guess/.
+    unsigned contains_e         : 1;    // bracket pair contains e.
+    unsigned contains_o         : 1;    // bracket pair contains o.
+    unsigned rewind_point       : 1;    // bracket contains at least one internal pair guessed as e based on this bracket.
+};
+
+struct ual_bidi_brstack
+{
+    ual_bidi_brentry* base;
+    size_t pointer;
+};
 
 static void bidi_brackets( ual_buffer* ub )
 {
@@ -767,6 +872,21 @@ static void bidi_brackets( ual_buffer* ub )
 
 /*
     Perform rules N1 and N2, resolving types for runs of neutrals.
+
+    The only types remaining in the string are:
+
+        strong L    -> L
+        strong R    -> R, EN, AN
+        strong /e/  -> ON
+        neutral     -> B, S, WS, FSI, LRI, RLI, PDI
+        removed     -> BN, INVALID
+
+    ON is treated as a strong type matching embedding direction, either L or R.
+    The only remaining ON characters are guessed brackets.
+
+    We resolve to the following non-neutral types:
+
+        L, R, AN, EN, INVALID
 */
 
 static void bidi_neutral( ual_buffer* ub )
