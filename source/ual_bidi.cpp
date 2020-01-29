@@ -9,6 +9,7 @@
 //
 
 #include "ualyze.h"
+#include <assert.h>
 #include "ual_buffer.h"
 #include "ucdn.h"
 
