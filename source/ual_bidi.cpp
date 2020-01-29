@@ -13,7 +13,21 @@
 #include "ual_buffer.h"
 #include "ucdn.h"
 
+/*
+    Invalid bidi class.
+*/
+
 const uint16_t BC_INVALID = 31;
+
+/*
+    sos/eos types.  BC_SEQUENCE represents a link to next/previous run in the
+    isolating run sequence.
+*/
+
+static_assert( UCDN_BIDI_CLASS_L == 0 );
+static_assert( UCDN_BIDI_CLASS_R == 1 );
+static_assert( UCDN_BIDI_CLASS_AL == 2 );
+const unsigned BC_SEQUENCE = 3;
 
 /*
     Look up bidi classes for each codepoint in a paragraph.  The class of
@@ -22,9 +36,9 @@ const uint16_t BC_INVALID = 31;
 
 enum bidi_complexity
 {
-    BIDI_ALL_LEFT, // Paragraph is left-to-right.
-    BIDI_SOLITARY, // No directional embeddings, overrides, or isolates.
-    BIDI_EXPLICIT, // Requires full processing.
+    BIDI_ALL_LEFT,  // Paragraph is left-to-right.
+    BIDI_SOLITARY,  // No directional embeddings, overrides, or isolates.
+    BIDI_EXPLICIT,  // Requires full processing.
 };
 
 static bidi_complexity bidi_lookup( ual_buffer* ub )
@@ -105,8 +119,8 @@ static unsigned bidi_solitary( ual_buffer* ub )
         }
     }
 
-    ub->level_runs.push_back( { 0, paragraph_level, boundary_class, boundary_class, NEXT_INVALID } );
-    ub->level_runs.push_back( { length, 0, BOUNDARY_SEQ, BOUNDARY_SEQ, NEXT_INVALID } );
+    ub->level_runs.push_back( { 0, paragraph_level, boundary_class, boundary_class, 0 } );
+    ub->level_runs.push_back( { length, BC_INVALID, BC_SEQUENCE, BC_SEQUENCE, 0 } );
     return paragraph_level;
 }
 
@@ -121,12 +135,9 @@ static unsigned bidi_solitary( ual_buffer* ub )
 const unsigned BIDI_MAX_DEPTH = 125;
 const unsigned BIDI_EXSTACK_LIMIT = BIDI_MAX_DEPTH + 2;
 
-static_assert( UCDN_BIDI_CLASS_L == 0 );
-static_assert( UCDN_BIDI_CLASS_R == 3 );
-
 const unsigned BIDI_INVALID_LEVEL_RUN = ~(unsigned)0;
 
-enum ual_bidi_override_isolate : uint8_t
+enum ual_bidi_override_isolate
 {
     BIDI_EMBEDDING_L,       // within the scope of an LRO.
     BIDI_EMBEDDING_R,       // within the scope of an RLO.
@@ -136,9 +147,9 @@ enum ual_bidi_override_isolate : uint8_t
 
 struct ual_bidi_exentry
 {
-    unsigned irun;                  // index of previous level run.
-    uint8_t level;                  // bidi level.
-    ual_bidi_override_isolate oi;   // override or isolate.
+    unsigned level  : 8;    // bidi level.
+    unsigned oi     : 4;    // override or isolate status.
+    unsigned iprev  : 20;   // index of previous level run (for BIDI_ISOLATE).
 };
 
 struct ual_bidi_exstack
@@ -306,7 +317,7 @@ static unsigned bidi_explicit( ual_buffer* ub )
             // directional status stack.
             assert( stack.pointer < BIDI_EXSTACK_LIMIT );
             stack.base[ stack.pointer++ ] = stack_entry;
-            stack_entry = { BIDI_INVALID_LEVEL_RUN, level, oi };
+            stack_entry = { level, oi, BIDI_INVALID_LEVEL_RUN };
         }
         break;
 
@@ -379,7 +390,7 @@ static unsigned bidi_explicit( ual_buffer* ub )
             // status onto the directional status stack.
             assert( stack.pointer < BIDI_EXSTACK_LIMIT );
             stack.base[ stack.pointer++ ] = stack_entry;
-            stack_entry = { (unsigned)ub->level_runs.size(), level, BIDI_ISOLATE };
+            stack_entry = { level, BIDI_ISOLATE, (unsigned)ub->level_runs.size() };
         }
         break;
 
@@ -433,7 +444,7 @@ static unsigned bidi_explicit( ual_buffer* ub )
             // We know this character is not removed, so the current level
             // run ends here.
             unsigned run_eos = boundary_class( run_level, clevel );
-            ub->level_runs.push_back( { run_start, 0, run_level, run_sos, run_eos } );
+            ub->level_runs.push_back( { run_start, run_level, run_sos, run_eos, 0 } );
 
             // This PDI matches an isolate initiator and therefore
             // the next level run continues an isolating run sequence.
@@ -462,7 +473,7 @@ static unsigned bidi_explicit( ual_buffer* ub )
         default:
         {
             // Override character class if we are in the scope of an override.
-            ual_bidi_override_isolate oi = stack_entry.oi;
+            ual_bidi_override_isolate oi = (ual_bidi_override_isolate)stack_entry.oi;
             if ( oi == BIDI_EMBEDDING_L )
             {
                 c.bc = UCDN_BIDI_CLASS_L;
@@ -487,7 +498,7 @@ static unsigned bidi_explicit( ual_buffer* ub )
             }
 
             // Add run that ends at this character.
-            ub->level_runs.push_back( { run_start, 0, run_level, run_sos, run_eos } );
+            ub->level_runs.push_back( { run_start, run_level, run_sos, run_eos, 0 } );
 
             // Next run definitely doesn't start with a matching PDI, as
             // that case is handled above.
@@ -500,7 +511,7 @@ static unsigned bidi_explicit( ual_buffer* ub )
 
     // Close final sequence.
     unsigned run_eos = boundary_class( run_level, paragraph_level );
-    ub->level_runs.push_back( { run_start, 0, run_level, run_sos, run_eos } );
+    ub->level_runs.push_back( { run_start, run_level, run_sos, run_eos, 0 } );
 
     // Close unterminated isolating run sequences.
     while ( valid_isolate_count > 0 )
@@ -514,19 +525,19 @@ static unsigned bidi_explicit( ual_buffer* ub )
 
         // Pop to get to the level of the isolate initiator.
         valid_isolate_count -= 1;
-        unsigned irun = stack_entry.irun;
+        unsigned iprev = stack_entry.iprev;
         assert( stack.pointer > 0 );
         stack_entry = stack.base[ --stack.pointer ];
 
         // Update run to close it.
-        ual_level_run* prun = &ub->level_runs.at( irun );
-        assert( prun->inext == 0 );
-        assert( prun->eos = BC_INVALID );
-        prun->eos = boundary_class( prun->level, paragraph_level );
+        ual_level_run* pprev = &ub->level_runs.at( iprev );
+        assert( pprev->inext == 0 );
+        assert( pprev->eos = BC_INVALID );
+        pprev->eos = boundary_class( pprev->level, paragraph_level );
     }
 
     // Add a final 'run' to simplify lookup of level runs.
-    ub->level_runs.push_back( { index, 0, paragraph_level, BC_INVALID, BC_INVALID } );
+    ub->level_runs.push_back( { index, BC_INVALID, BC_SEQUENCE, BC_SEQUENCE, 0 } );
 
     // Done.
     return paragraph_level;
