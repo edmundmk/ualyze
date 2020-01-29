@@ -182,7 +182,7 @@ static const uint32_t SCRIPT_CODE[] =
     Bracket stack.
 */
 
-const size_t MAX_BRACKET_STACK_DEPTH = 64;
+const size_t SCRIPT_BRSTACK_LIMIT = 64;
 
 struct ual_script_bracket
 {
@@ -198,7 +198,7 @@ struct ual_script_brstack
 
 static ual_script_brstack make_brstack( ual_buffer* ub )
 {
-    return { (ual_script_bracket*)ual_stack_bytes( ub, MAX_BRACKET_STACK_DEPTH, sizeof( ual_script_bracket ) ), 0 };
+    return { (ual_script_bracket*)ual_stack_bytes( ub, SCRIPT_BRSTACK_LIMIT, sizeof( ual_script_bracket ) ), 0 };
 }
 
 static void trim_brstack( ual_script_brstack* stack, size_t index )
@@ -209,7 +209,7 @@ static void trim_brstack( ual_script_brstack* stack, size_t index )
 
 static bool push_bracket( ual_script_brstack* stack, const ual_script_bracket& bracket )
 {
-    if ( stack->pointer < MAX_BRACKET_STACK_DEPTH )
+    if ( stack->pointer < SCRIPT_BRSTACK_LIMIT )
     {
         stack->base[ stack->pointer ] = bracket;
         stack->pointer += 1;

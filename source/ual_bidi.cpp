@@ -133,16 +133,16 @@ static unsigned bidi_solitary( ual_buffer* ub )
 */
 
 const unsigned BIDI_MAX_DEPTH = 125;
-const unsigned BIDI_EXSTACK_LIMIT = BIDI_MAX_DEPTH + 2;
+const size_t BIDI_EXSTACK_LIMIT = BIDI_MAX_DEPTH + 2;
 
 const unsigned BIDI_INVALID_LEVEL_RUN = ~(unsigned)0;
 
 enum ual_bidi_override_isolate
 {
-    BIDI_EMBEDDING_L,       // within the scope of an LRO.
-    BIDI_EMBEDDING_R,       // within the scope of an RLO.
-    BIDI_EMBEDDING_NEUTRAL, // within the scope of an LRE or RLE.
-    BIDI_ISOLATE,           // within the scope of an FSI, LRI, or RLI.
+    BIDI_EMBEDDING_L = UCDN_BIDI_CLASS_L,   // within the scope of an LRO.
+    BIDI_EMBEDDING_R = UCDN_BIDI_CLASS_R,   // within the scope of an RLO.
+    BIDI_EMBEDDING_NEUTRAL,                 // within the scope of an LRE or RLE.
+    BIDI_ISOLATE,                           // within the scope of an FSI, LRI, or RLI.
 };
 
 struct ual_bidi_exentry
@@ -233,10 +233,7 @@ static unsigned next_level( unsigned level, bool odd )
 static unsigned boundary_class( unsigned a, unsigned b )
 {
     unsigned higher = std::max( a, b );
-    if ( higher & 1 )
-        return UCDN_BIDI_CLASS_R;
-    else
-        return UCDN_BIDI_CLASS_L;
+    return higher & 1;
 }
 
 static unsigned bidi_explicit( ual_buffer* ub )
@@ -474,13 +471,9 @@ static unsigned bidi_explicit( ual_buffer* ub )
         {
             // Override character class if we are in the scope of an override.
             ual_bidi_override_isolate oi = (ual_bidi_override_isolate)stack_entry.oi;
-            if ( oi == BIDI_EMBEDDING_L )
+            if ( oi == BIDI_EMBEDDING_L || oi == BIDI_EMBEDDING_R )
             {
-                c.bc = UCDN_BIDI_CLASS_L;
-            }
-            else if ( oi == BIDI_EMBEDDING_R )
-            {
-                c.bc = UCDN_BIDI_CLASS_R;
+                c.bc = oi;
             }
         }
         break;
@@ -843,6 +836,8 @@ static void bidi_weak( ual_buffer* ub )
     then we can continue from where we rewound from.
 */
 
+const size_t BIDI_BRSTACK_LIMIT = 64;
+
 enum ual_bidi_eo_strong
 {
     BIDI_E,
@@ -866,8 +861,127 @@ struct ual_bidi_brstack
     size_t pointer;
 };
 
+static ual_bidi_brstack make_brstack( ual_buffer* ub )
+{
+    return { (ual_bidi_brentry*)ual_stack_bytes( ub, BIDI_BRSTACK_LIMIT, sizeof( ual_bidi_brentry ) ), 0 };
+}
+
 static void bidi_brackets( ual_buffer* ub )
 {
+    // Create stack.
+    ual_bidi_brstack stack = make_brstack( ub );
+
+    // Process each isolating run sequence independently.
+    size_t lruns_length = ub->level_runs.size();
+    for ( size_t irun = 0; irun < lruns_length; ++irun )
+    {
+        ual_level_run* prun = &ub->level_runs[ irun ];
+        ual_level_run* nrun = &ub->level_runs[ irun + 1 ];
+
+        // Skip runs that continue an isolating run sequence.
+        if ( prun->sos == BC_SEQUENCE )
+        {
+            continue;
+        }
+
+        // Get /e/ and /o/ directions.
+        unsigned e = prun->level & 1;
+        unsigned o = ! e;
+        assert( prun->sos == UCDN_BIDI_CLASS_L || prun->eos == UCDN_BIDI_CLASS_R );
+        ual_bidi_eo_strong prev_strong = prun->sos == o ? BIDI_O : BIDI_E;
+
+        // Start with stack with one dummy item.
+        stack.pointer = 0;
+        stack.base[ stack.pointer++ ] = { prun->start, 0, prev_strong, false, false, false };
+        bool contains_e = false;
+        bool contains_o = false;
+
+        // Go through every level run in isolating run sequence.
+        while ( true )
+        {
+
+        // Process characters in level run.
+        for ( unsigned index = prun->start; index < nrun->start; ++index )
+        {
+            ual_char& c = ub->c.at( index );
+            switch ( c.bc )
+            {
+            case UCDN_BIDI_CLASS_L:
+            case UCDN_BIDI_CLASS_R:
+            case UCDN_BIDI_CLASS_EN:
+            case UCDN_BIDI_CLASS_AN:
+            {
+                unsigned direction = c.bc != UCDN_BIDI_CLASS_L;
+                prev_strong = direction == o ? BIDI_O : BIDI_E;
+                contains_e |= prev_strong == BIDI_E;
+                contains_o |= prev_strong == BIDI_O;
+            }
+            break;
+
+            case UCDN_BIDI_CLASS_ON:
+            {
+                // Check for bracket.
+                char32_t uc = ual_codepoint( ub, index );
+                int bracket_type = ucdn_paired_bracket_type( uc );
+
+                if ( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_NONE )
+                {
+                    // Not a bracket.  Convert to B to avoid reprocessing.
+                    c.bc = UCDN_BIDI_CLASS_B;
+                    break;
+                }
+
+                if ( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_OPEN )
+                {
+                    // If the stack is full, ignore this bracket.
+                    if ( stack.pointer >= BIDI_BRSTACK_LIMIT )
+                    {
+                        c.bc = UCDN_BIDI_CLASS_B;
+                        break;
+                    }
+
+                    // Push contains_e and contains_o.
+                    ual_bidi_brentry* top = stack.base + stack.pointer - 1;
+                    top->contains_e = contains_e;
+                    top->contains_o = contains_o;
+
+                    // Push open bracket.
+                    char32_t closing_bracket = ucdn_paired_bracket( uc );
+                    stack.base[ stack.pointer++ ] = { index, closing_bracket, prev_strong, false, false, false };
+                    contains_e = false;
+                    contains_o = false;
+
+                    // Strong type is /e-guess/, assume that we'll find an /e/.
+                    prev_strong = BIDI_E_GUESS;
+                    break;
+                }
+
+                assert( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_CLOSE );
+
+
+
+            }
+            break;
+            }
+        }
+
+        // Move to next run in isolating run sequence.
+        size_t inext = prun->inext;
+        if ( ! inext )
+        {
+            assert( prun->eos != BC_SEQUENCE );
+            break;
+        }
+
+        assert( prun->eos == BC_SEQUENCE );
+        prun = &ub->level_runs.at( inext );
+        nrun = &ub->level_runs.at( inext + 1 );
+
+        // sos was clobbered by weak processing, set back to SEQUENCE.
+        prun->sos = BC_SEQUENCE;
+
+        }
+    }
 }
 
 /*
