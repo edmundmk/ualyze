@@ -37,7 +37,8 @@ bool ual_next_paragraph( ual_buffer* ub, ual_paragraph* out_paragraph )
     // Perform analysis.
     size_t i = ub->p.lower;
     unsigned prev = UCDN_LINEBREAK_CLASS_XX;
-    while ( i < ub->s.size() )
+    size_t length = ub->s.size();
+    while ( i < length )
     {
         // Decode character from UTF-16.
         size_t inext = i;

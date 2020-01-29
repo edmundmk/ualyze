@@ -26,7 +26,7 @@ struct ual_level_run
     unsigned level  : 8;    // bidi level of run.
     unsigned sos    : 2;    // sos type
     unsigned eos    : 2;    // eos type
-    unsigned next   : 20;   // index of next level run in isolating run sequence.
+    unsigned inext  : 20;   // index of next level run in isolating run sequence.
 };
 
 struct ual_buffer
