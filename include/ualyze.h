@@ -127,7 +127,7 @@ unsigned ual_bidi_paragraph_level( ual_buffer* ub );
 typedef struct ual_bidi_run
 {
     unsigned lower;
-    unsigned bidi_level;
+    unsigned level;
 } ual_bidi_run;
 
 unsigned ual_bidi_analyze( ual_buffer* ub );

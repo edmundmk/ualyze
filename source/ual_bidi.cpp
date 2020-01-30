@@ -562,7 +562,7 @@ static unsigned lookahead( ual_buffer* ub, size_t i, size_t upper )
     // characters, or BIDI_CLASS_INVALID at the end of the level run.
     for ( ++i; i < upper; ++i )
     {
-        unsigned bc = ub->c.at( i ).bc;
+        unsigned bc = ub->c[ i ].bc;
         if ( bc == BC_INVALID || bc == UCDN_BIDI_CLASS_BN )
         {
             continue;
@@ -597,7 +597,7 @@ static void bidi_weak( ual_buffer* ub )
         // Update each of the characters in the run.
         for ( size_t i = prun->start; i < nrun->start; ++i )
         {
-            ual_char& c = ub->c.at( i );
+            ual_char& c = ub->c[ i ];
             if ( c.bc == BC_INVALID || c.bc == UCDN_BIDI_CLASS_BN )
             {
                 continue;
@@ -702,7 +702,7 @@ static void bidi_weak( ual_buffer* ub )
 
                 while ( index_et < i )
                 {
-                    ual_char& et = ub->c.at( index_et++ );
+                    ual_char& et = ub->c[ index_et++ ];
                     if ( et.bc == BC_INVALID || et.bc == UCDN_BIDI_CLASS_BN )
                     {
                         continue;
@@ -737,7 +737,7 @@ static void bidi_weak( ual_buffer* ub )
         {
             while ( index_et < nrun->start )
             {
-                ual_char& et = ub->c.at( index_et++ );
+                ual_char& et = ub->c[ index_et++ ];
                 if ( et.bc == BC_INVALID || et.bc == UCDN_BIDI_CLASS_BN )
                 {
                     continue;
@@ -910,7 +910,7 @@ static void rewind_o( ual_buffer* ub, size_t irun, unsigned lower, unsigned uppe
         }
 
         assert( index < upper );
-        ual_char& c = ub->c.at( index );
+        ual_char& c = ub->c[ index ];
         if ( c.bc == UCDN_BIDI_CLASS_ON )
         {
             c.bc = o;
@@ -941,7 +941,7 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
         // Process characters in level run.
         for ( unsigned index = prun->start; index < nrun->start; ++index )
         {
-            ual_char& c = ub->c.at( index );
+            ual_char& c = ub->c[ index ];
             switch ( c.bc )
             {
             case UCDN_BIDI_CLASS_L:
@@ -1025,7 +1025,7 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                     ual_bidi_brentry* entry = stack->ss + stack->sp;
 
                     // Clear opening bracket to B to avoid reprocessing.
-                    ub->c.at( entry->index ).bc = UCDN_BIDI_CLASS_B;
+                    ub->c[ entry->index ].bc = UCDN_BIDI_CLASS_B;
 
                     // Add context up until bracket to our current context.
                     contains_e |= entry->prev_contains_e;
@@ -1057,7 +1057,7 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                 // Process matching bracket.
                 assert( stack->sp == match );
                 ual_bidi_brentry* entry = stack->ss + stack->sp;
-                ual_char& b = ub->c.at( entry->index );
+                ual_char& b = ub->c[ entry->index ];
 
                 // Outer context contains inner one.
                 bool inner_contains_e = contains_e;
@@ -1166,7 +1166,7 @@ static void bidi_brackets( ual_buffer* ub )
 
     We resolve to the following non-neutral types:
 
-        L, R, AN, EN, INVALID
+        L, R, AN, EN, BN, INVALID
 */
 
 enum ual_bidi_neutral_kind
@@ -1195,7 +1195,7 @@ static void bidi_resolve_neutrals( ual_buffer* ub, size_t irun, unsigned lower, 
         }
 
         assert( index < upper );
-        ual_char& c = ub->c.at( index );
+        ual_char& c = ub->c[ index ];
         if ( c.bc != BC_INVALID )
         {
             c.bc = bc;
@@ -1230,7 +1230,7 @@ static void bidi_neutral( ual_buffer* ub )
         // Process characters in level run.
         for ( unsigned index = prun->start; index < nrun->start; ++index )
         {
-            ual_char& c = ub->c.at( index );
+            ual_char& c = ub->c[ index ];
             if ( c.bc == BC_INVALID )
             {
                 continue;
@@ -1337,7 +1337,92 @@ unsigned ual_bidi_analyze( ual_buffer* ub )
     bidi_neutral( ub );
 
     // Generate output runs from resolved bidi classes.
+    size_t length = ub->level_runs.size() - 1;
+    for ( size_t irun = 0; irun < length; ++irun )
+    {
+        ual_level_run* prun = &ub->level_runs[ irun ];
+        ual_level_run* nrun = &ub->level_runs[ irun + 1 ];
 
+        unsigned index = prun->start;
+        unsigned limit = nrun->start;
+
+        while ( index < limit )
+        {
+            unsigned lower = index;
+            unsigned level = prun->level;
+
+            ual_char c = ub->c[ index++ ];
+            if ( level & 1 )
+            {
+                // Embedding level is odd.
+                if ( c.bc == UCDN_BIDI_CLASS_R )
+                {
+                    while ( index < limit &&
+                         ( c.bc == UCDN_BIDI_CLASS_R
+                        || c.bc == UCDN_BIDI_CLASS_BN
+                        || c.bc == BC_INVALID ) )
+                    {
+                        c = ub->c[ index++ ];
+                    }
+                }
+                else
+                {
+                    level += 1;
+                    while ( index < limit &&
+                         ( c.bc == UCDN_BIDI_CLASS_L
+                        || c.bc == UCDN_BIDI_CLASS_EN
+                        || c.bc == UCDN_BIDI_CLASS_AN
+                        || c.bc == UCDN_BIDI_CLASS_BN
+                        || c.bc == BC_INVALID ) )
+                    {
+                        c = ub->c[ index++ ];
+                    }
+                }
+            }
+            else
+            {
+                // Embeddiing level is even.
+                if ( c.bc == UCDN_BIDI_CLASS_L )
+                {
+                    while ( index < limit &&
+                         ( c.bc == UCDN_BIDI_CLASS_L
+                        || c.bc == UCDN_BIDI_CLASS_BN
+                        || c.bc == BC_INVALID ) )
+                    {
+                        c = ub->c[ index++ ];
+                    }
+                }
+                else if ( c.bc == UCDN_BIDI_CLASS_R )
+                {
+                    level += 1;
+                    while ( index < limit &&
+                         ( c.bc == UCDN_BIDI_CLASS_R
+                        || c.bc == UCDN_BIDI_CLASS_BN
+                        || c.bc == BC_INVALID ) )
+                    {
+                        c = ub->c[ index++ ];
+                    }
+                }
+                else
+                {
+                    level += 2;
+                    while ( index < limit &&
+                         ( c.bc == UCDN_BIDI_CLASS_EN
+                        || c.bc == UCDN_BIDI_CLASS_AN
+                        || c.bc == UCDN_BIDI_CLASS_BN
+                        || c.bc == BC_INVALID ) )
+                    {
+                        c = ub->c[ index++ ];
+                    }
+                }
+            }
+
+            ub->bidi_runs.push_back( { lower, level } );
+        }
+    }
+
+    // Add final run with final index.
+    ub->bidi_runs.push_back( { (unsigned)ub->c.size(), paragraph_level } );
 
     // Done.
     return paragraph_level;
