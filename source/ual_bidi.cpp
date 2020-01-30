@@ -909,6 +909,7 @@ static void rewind_o( ual_buffer* ub, size_t irun, unsigned lower, unsigned uppe
             index = prun->start;
         }
 
+        assert( index < upper );
         ual_char& c = ub->c.at( index );
         if ( c.bc == UCDN_BIDI_CLASS_ON )
         {
@@ -1168,8 +1169,136 @@ static void bidi_brackets( ual_buffer* ub )
         L, R, AN, EN, INVALID
 */
 
+enum ual_bidi_neutral_kind
+{
+    NEUTRAL_NONE,
+    NEUTRAL_BN_ONLY,
+    NEUTRAL_SPAN,
+};
+
+static void bidi_resolve_neutrals( ual_buffer* ub, size_t irun, unsigned lower, unsigned upper, unsigned bc )
+{
+    ual_level_run* prun = &ub->level_runs.at( irun );
+    ual_level_run* nrun = &ub->level_runs.at( irun + 1 );
+
+    for ( unsigned index = lower; index < upper; ++index )
+    {
+        while ( index >= nrun->start )
+        {
+            // Move to next level run in isolating run sequence.
+            assert( prun->eos == BC_SEQUENCE );
+            assert( prun->inext != 0 );
+            irun = prun->inext;
+            prun = &ub->level_runs.at( irun );
+            nrun = &ub->level_runs.at( irun + 1 );
+            index = prun->start;
+        }
+
+        assert( index < upper );
+        ual_char& c = ub->c.at( index );
+        if ( c.bc != BC_INVALID )
+        {
+            c.bc = bc;
+        }
+    }
+}
+
 static void bidi_neutral( ual_buffer* ub )
 {
+    // Process each isolating run sequence independently.
+    size_t length = ub->level_runs.size() - 1;
+    for ( size_t irun = 0; irun < length; ++irun )
+    {
+        // Skip runs that continue an isolating runs equence.
+        ual_level_run* prun = &ub->level_runs[ irun ];
+        ual_level_run* nrun = &ub->level_runs[ irun + 1 ];
+        if ( prun->sos == BC_SEQUENCE )
+        {
+            continue;
+        }
+
+        // Get embedding direction /e/, and sos type.
+        unsigned e = prun->level & 1;
+        assert( prun->sos == UCDN_BIDI_CLASS_L || prun->eos == UCDN_BIDI_CLASS_R );
+        unsigned prev_strong = prun->sos;
+
+        // No run of neutrals yet.
+        ual_bidi_neutral_kind neutrals = NEUTRAL_NONE;
+        size_t lirun = irun;
+        unsigned lower = 0;
+
+        // Process characters in level run.
+        for ( unsigned index = prun->start; index < nrun->start; ++index )
+        {
+            ual_char& c = ub->c.at( index );
+            if ( c.bc == BC_INVALID )
+            {
+                continue;
+            }
+
+            switch ( c.bc )
+            {
+            case UCDN_BIDI_CLASS_L:
+            case UCDN_BIDI_CLASS_R:
+            case UCDN_BIDI_CLASS_EN:
+            case UCDN_BIDI_CLASS_AN:
+            {
+                // Strong L or R.
+                unsigned strong = c.bc != UCDN_BIDI_CLASS_L;
+                if ( neutrals == NEUTRAL_SPAN )
+                {
+                    unsigned bc = prev_strong == strong ? strong : e;
+                    bidi_resolve_neutrals( ub, lirun, lower, index, bc );
+                    neutrals = NEUTRAL_NONE;
+                }
+                prev_strong = strong;
+            }
+            break;
+
+            case UCDN_BIDI_CLASS_ON:
+            {
+                // This is a bracket guessed as embedding direction.
+                c.bc = e;
+
+                //  Strong /e/.
+                if ( neutrals == NEUTRAL_SPAN )
+                {
+                    bidi_resolve_neutrals( ub, lirun, lower, index, e );
+                    neutrals = NEUTRAL_NONE;
+                }
+                prev_strong = e;
+            }
+            break;
+
+            case UCDN_BIDI_CLASS_BN:
+            {
+                // Track start of neutrals from BN.
+                if ( neutrals == NEUTRAL_NONE )
+                {
+                    lirun = irun;
+                    lower = index;
+                    neutrals = NEUTRAL_BN_ONLY;
+                }
+            }
+            break;
+
+            default:
+            {
+                // Remaining classes are neutral.
+                if ( neutrals != NEUTRAL_SPAN )
+                {
+                    if ( neutrals == NEUTRAL_NONE )
+                    {
+                        lirun = irun;
+                        lower = index;
+                    }
+                    neutrals = NEUTRAL_SPAN;
+                }
+            }
+            break;
+            }
+        }
+    }
 }
 
 /*
