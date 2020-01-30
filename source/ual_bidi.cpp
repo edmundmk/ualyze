@@ -120,7 +120,7 @@ static unsigned bidi_solitary( ual_buffer* ub )
     }
 
     ub->level_runs.push_back( { 0, paragraph_level, boundary_class, boundary_class, 0 } );
-    ub->level_runs.push_back( { length, BC_INVALID, BC_SEQUENCE, BC_SEQUENCE, 0 } );
+    ub->level_runs.push_back( { (unsigned)length, paragraph_level, BC_SEQUENCE, BC_SEQUENCE, 0 } );
     return paragraph_level;
 }
 
@@ -135,7 +135,7 @@ static unsigned bidi_solitary( ual_buffer* ub )
 const unsigned BIDI_MAX_DEPTH = 125;
 const size_t BIDI_EXSTACK_LIMIT = BIDI_MAX_DEPTH + 2;
 
-const unsigned BIDI_INVALID_LEVEL_RUN = ~(unsigned)0;
+const unsigned BIDI_INVALID_LEVEL_RUN = 0xFFFFF;
 
 enum ual_bidi_override_isolate
 {
@@ -154,8 +154,8 @@ struct ual_bidi_exentry
 
 struct ual_bidi_exstack
 {
-    ual_bidi_exentry* base;
-    size_t pointer;
+    ual_bidi_exentry* ss;
+    size_t sp;
 };
 
 static ual_bidi_exstack make_exstack( ual_buffer* ub )
@@ -245,7 +245,7 @@ static unsigned bidi_explicit( ual_buffer* ub )
 
     // Calculate paragraph embedding level and the base stack entry.
     unsigned paragraph_level = first_strong_level( ub, 0, false );
-    ual_bidi_exentry stack_entry = { BIDI_INVALID_LEVEL_RUN, paragraph_level, BIDI_EMBEDDING_NEUTRAL };
+    ual_bidi_exentry stack_entry = { paragraph_level, BIDI_EMBEDDING_NEUTRAL, BIDI_INVALID_LEVEL_RUN };
 
     // Embedding/isolate state.
     size_t overflow_isolate_count = 0;
@@ -254,7 +254,7 @@ static unsigned bidi_explicit( ual_buffer* ub )
 
     // We are at the start of the string.
     size_t run_isolate_count = 0;
-    size_t run_start = 0;
+    unsigned run_start = 0;
     unsigned run_level = paragraph_level;
     unsigned run_sos = boundary_class( paragraph_level, paragraph_level );
 
@@ -312,8 +312,8 @@ static unsigned bidi_explicit( ual_buffer* ub )
             // Push an entry consisting of the new embedding level, directional
             // override status, and false directional isolate status onto the
             // directional status stack.
-            assert( stack.pointer < BIDI_EXSTACK_LIMIT );
-            stack.base[ stack.pointer++ ] = stack_entry;
+            assert( stack.sp < BIDI_EXSTACK_LIMIT );
+            stack.ss[ stack.sp++ ] = stack_entry;
             stack_entry = { level, oi, BIDI_INVALID_LEVEL_RUN };
         }
         break;
@@ -340,14 +340,14 @@ static unsigned bidi_explicit( ual_buffer* ub )
                 break;
             }
 
-            if ( stack_entry.oi == BIDI_ISOLATE || stack.pointer == 0 )
+            if ( stack_entry.oi == BIDI_ISOLATE || stack.sp == 0 )
             {
                 // The PDF does not match a valid embedding indicator.
                 break;
             }
 
             // Pop the last entry from the directional status stack.
-            stack_entry = stack.base[ --stack.pointer ];
+            stack_entry = stack.ss[ --stack.sp ];
 
             // If this character hadn't been removed, it would be part of
             // the new level run.
@@ -385,8 +385,8 @@ static unsigned bidi_explicit( ual_buffer* ub )
             // Push an entry consisting of the new embedding level, neutral
             // directional override status, and true directional isolate
             // status onto the directional status stack.
-            assert( stack.pointer < BIDI_EXSTACK_LIMIT );
-            stack.base[ stack.pointer++ ] = stack_entry;
+            assert( stack.sp < BIDI_EXSTACK_LIMIT );
+            stack.ss[ stack.sp++ ] = stack_entry;
             stack_entry = { level, BIDI_ISOLATE, (unsigned)ub->level_runs.size() };
         }
         break;
@@ -417,16 +417,16 @@ static unsigned bidi_explicit( ual_buffer* ub )
             // status stack.
             while ( stack_entry.oi != BIDI_ISOLATE )
             {
-                assert( stack.pointer > 0 );
-                stack_entry = stack.base[ --stack.pointer ];
+                assert( stack.sp > 0 );
+                stack_entry = stack.ss[ --stack.sp ];
             }
 
             // Pop the last entry from the directional status stack and
             // decrement the valid isolate count by one.
             valid_isolate_count -= 1;
-            unsigned irun = stack_entry.irun;
-            assert( stack.pointer > 0 );
-            stack_entry = stack.base[ --stack.pointer ];
+            unsigned iprev = stack_entry.iprev;
+            assert( stack.sp > 0 );
+            stack_entry = stack.ss[ --stack.sp ];
 
             // This character is part of the new level run.
             clevel = stack_entry.level;
@@ -446,14 +446,14 @@ static unsigned bidi_explicit( ual_buffer* ub )
             // This PDI matches an isolate initiator and therefore
             // the next level run continues an isolating run sequence.
             run_isolate_count = valid_isolate_count;
-            run_sos = BC_INVALID;
+            run_sos = BC_SEQUENCE;
             run_start = index;
             run_level = clevel;
 
             // Link the previous run to the run we're about to build.
-            ual_level_run* prun = &ub->level_runs.at( irun );
+            ual_level_run* prun = &ub->level_runs.at( iprev );
             assert( prun->inext == 0 );
-            assert( prun->eos = BC_INVALID );
+            assert( prun->eos == BC_SEQUENCE );
             prun->inext = (unsigned)ub->level_runs.size();
 
             continue;
@@ -512,25 +512,25 @@ static unsigned bidi_explicit( ual_buffer* ub )
         // Pop down to the level of the isolate.
         while ( stack_entry.oi != BIDI_ISOLATE )
         {
-            assert( stack.pointer > 0 );
-            stack_entry = stack.base[ --stack.pointer ];
+            assert( stack.sp > 0 );
+            stack_entry = stack.ss[ --stack.sp ];
         }
 
         // Pop to get to the level of the isolate initiator.
         valid_isolate_count -= 1;
         unsigned iprev = stack_entry.iprev;
-        assert( stack.pointer > 0 );
-        stack_entry = stack.base[ --stack.pointer ];
+        assert( stack.sp > 0 );
+        stack_entry = stack.ss[ --stack.sp ];
 
         // Update run to close it.
         ual_level_run* pprev = &ub->level_runs.at( iprev );
         assert( pprev->inext == 0 );
-        assert( pprev->eos = BC_INVALID );
+        assert( pprev->eos == BC_SEQUENCE );
         pprev->eos = boundary_class( pprev->level, paragraph_level );
     }
 
     // Add a final 'run' to simplify lookup of level runs.
-    ub->level_runs.push_back( { index, BC_INVALID, BC_SEQUENCE, BC_SEQUENCE, 0 } );
+    ub->level_runs.push_back( { (unsigned)index, paragraph_level, BC_SEQUENCE, BC_SEQUENCE, 0 } );
 
     // Done.
     return paragraph_level;
@@ -836,7 +836,7 @@ static void bidi_weak( ual_buffer* ub )
     then we can continue from where we rewound from.
 */
 
-const size_t BIDI_BRSTACK_LIMIT = 64;
+const size_t BIDI_BRSTACK_LIMIT = 63;
 
 enum ual_bidi_eo_strong
 {
@@ -857,8 +857,8 @@ struct ual_bidi_brentry
 
 struct ual_bidi_brstack
 {
-    ual_bidi_brentry* base;
-    size_t pointer;
+    ual_bidi_brentry* ss;
+    size_t sp;
 };
 
 static ual_bidi_brstack make_brstack( ual_buffer* ub )
@@ -866,39 +866,30 @@ static ual_bidi_brstack make_brstack( ual_buffer* ub )
     return { (ual_bidi_brentry*)ual_stack_bytes( ub, BIDI_BRSTACK_LIMIT, sizeof( ual_bidi_brentry ) ), 0 };
 }
 
-static void bidi_brackets( ual_buffer* ub )
+static void rewind_o( ual_buffer* ub, size_t irun, size_t index )
 {
-    // Create stack.
-    ual_bidi_brstack stack = make_brstack( ub );
+    // TODO.
+}
 
-    // Process each isolating run sequence independently.
-    size_t lruns_length = ub->level_runs.size();
-    for ( size_t irun = 0; irun < lruns_length; ++irun )
+static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, size_t irun )
+{
+    ual_level_run* prun = &ub->level_runs[ irun ];
+    ual_level_run* nrun = &ub->level_runs[ irun + 1 ];
+
+    // Get /e/ and /o/ directions.
+    unsigned e = prun->level & 1;
+    unsigned o = ! e;
+    assert( prun->sos == UCDN_BIDI_CLASS_L || prun->eos == UCDN_BIDI_CLASS_R );
+    ual_bidi_eo_strong prev_strong = prun->sos == o ? BIDI_O : BIDI_E;
+
+    // Bracket stack is empty, context contains no strong characters.
+    stack->sp = 0;
+    bool contains_e = false;
+    bool contains_o = false;
+
+    // Go through every level run in isolating run sequence.
+    while ( true )
     {
-        ual_level_run* prun = &ub->level_runs[ irun ];
-        ual_level_run* nrun = &ub->level_runs[ irun + 1 ];
-
-        // Skip runs that continue an isolating run sequence.
-        if ( prun->sos == BC_SEQUENCE )
-        {
-            continue;
-        }
-
-        // Get /e/ and /o/ directions.
-        unsigned e = prun->level & 1;
-        unsigned o = ! e;
-        assert( prun->sos == UCDN_BIDI_CLASS_L || prun->eos == UCDN_BIDI_CLASS_R );
-        ual_bidi_eo_strong prev_strong = prun->sos == o ? BIDI_O : BIDI_E;
-
-        // Start with stack with one dummy item.
-        stack.pointer = 0;
-        stack.base[ stack.pointer++ ] = { prun->start, 0, prev_strong, false, false, false };
-        bool contains_e = false;
-        bool contains_o = false;
-
-        // Go through every level run in isolating run sequence.
-        while ( true )
-        {
 
         // Process characters in level run.
         for ( unsigned index = prun->start; index < nrun->start; ++index )
@@ -934,20 +925,20 @@ static void bidi_brackets( ual_buffer* ub )
                 if ( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_OPEN )
                 {
                     // If the stack is full, ignore this bracket.
-                    if ( stack.pointer >= BIDI_BRSTACK_LIMIT )
+                    if ( stack->sp >= BIDI_BRSTACK_LIMIT )
                     {
                         c.bc = UCDN_BIDI_CLASS_B;
                         break;
                     }
 
                     // Push contains_e and contains_o.
-                    ual_bidi_brentry* top = stack.base + stack.pointer - 1;
+                    ual_bidi_brentry* top = stack->ss + stack->sp - 1;
                     top->contains_e = contains_e;
                     top->contains_o = contains_o;
 
                     // Push open bracket.
                     char32_t closing_bracket = ucdn_paired_bracket( uc );
-                    stack.base[ stack.pointer++ ] = { index, closing_bracket, prev_strong, false, false, false };
+                    stack->ss[ stack->sp++ ] = { index, closing_bracket, prev_strong, false, false, false };
                     contains_e = false;
                     contains_o = false;
 
@@ -958,8 +949,110 @@ static void bidi_brackets( ual_buffer* ub )
 
                 assert( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_CLOSE );
 
+                // Search bracket stack for matching bracket.
+                size_t match = stack->sp;
+                while ( match-- )
+                {
+                    ual_bidi_brentry* entry = stack->ss + match;
+                    if ( entry->closing_bracket == uc )
+                    {
+                        break;
+                    }
+                }
 
+                if ( match >= stack->sp )
+                {
+                    // Closing bracket was not matched.
+                    c.bc = UCDN_BIDI_CLASS_B;
+                    break;
+                }
 
+                // All brackets above match are mismatched.
+                while ( --stack->sp > match )
+                {
+                    ual_bidi_brentry* entry = stack->ss + stack->sp;
+
+                    // Clear opening bracket to B to avoid reprocessing.
+                    ub->c.at( entry->index ).bc = UCDN_BIDI_CLASS_B;
+
+                    // Add context up until bracket to our current context.
+                    contains_e |= entry->contains_e;
+                    contains_o |= entry->contains_o;
+
+                    // If strong type is /e-guess/, recover previous strong.
+                    if ( prev_strong == BIDI_E_GUESS )
+                    {
+                        prev_strong = (ual_bidi_eo_strong)entry->prev_strong;
+                    }
+
+                    // Deal with rewind.
+                    if ( entry->rewind_point )
+                    {
+                        if ( entry->prev_strong == BIDI_E_GUESS )
+                        {
+                            // Move rewind point to contained bracket.
+                            assert( stack->sp > 0 );
+                            stack->ss[ stack->sp - 1 ].rewind_point = true;
+                        }
+                        else if ( entry->prev_strong == BIDI_O )
+                        {
+                            // Brackets dependent on this context become /o/.
+                            rewind_o( ub, irun, entry->index );
+                        }
+                    }
+                }
+
+                // Process matching bracket.
+                assert( stack->sp == match );
+                ual_bidi_brentry* entry = stack->ss + stack->sp;
+                ual_char& b = ub->c.at( entry->index );
+
+                // Outer context contains inner one.
+                contains_e |= entry->contains_e;
+                contains_o |= entry->contains_o;
+
+                // Neutral brackets.
+                if ( ! entry->contains_e && ! entry->contains_o )
+                {
+                    b.bc = UCDN_BIDI_CLASS_B;
+                    c.bc = UCDN_BIDI_CLASS_B;
+                    break;
+                }
+
+                // Brackets are /e/.
+                assert( entry->contains_e || entry->contains_o );
+                if ( entry->contains_e || entry->prev_strong == BIDI_E )
+                {
+                    b.bc = e;
+                    c.bc = e;
+                    contains_e = true;
+                    prev_strong = BIDI_E;
+                    break;
+                }
+
+                // Brackets are /e-guess/.
+                assert( entry->contains_o );
+                if ( entry->prev_strong == BIDI_E_GUESS )
+                {
+                    // This pair depends on guessed strong from outer bracket.
+                    assert( stack->sp > 0 );
+                    stack->ss[ stack->sp - 1 ].rewind_point = true;
+
+                    // Later brackets may also depend on the same guess.
+                    prev_strong = BIDI_E_GUESS;
+                }
+
+                // Brackets are /o/.
+                assert( entry->prev_strong == BIDI_O );
+                b.bc = o;
+                c.bc = o;
+                prev_strong = BIDI_O;
+
+                // Guess was wrong.  If any inner pairs depend on it, rewind.
+                if ( entry->rewind_point )
+                {
+                    rewind_o( ub, irun, entry->index );
+                }
             }
             break;
             }
@@ -979,8 +1072,27 @@ static void bidi_brackets( ual_buffer* ub )
 
         // sos was clobbered by weak processing, set back to SEQUENCE.
         prun->sos = BC_SEQUENCE;
+    }
+}
 
+static void bidi_brackets( ual_buffer* ub )
+{
+    // Create stack.
+    ual_bidi_brstack stack = make_brstack( ub );
+
+    // Process each isolating run sequence independently.
+    size_t length = ub->level_runs.size();
+    for ( size_t irun = 0; irun < length; ++irun )
+    {
+        // Skip runs that continue an isolating run sequence.
+        ual_level_run* prun = &ub->level_runs[ irun ];
+        if ( prun->sos == BC_SEQUENCE )
+        {
+            continue;
         }
+
+        // Process this isolating run sequence.
+        bidi_isolating_brackets( ub, &stack, irun );
     }
 }
 

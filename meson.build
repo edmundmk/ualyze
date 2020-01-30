@@ -7,12 +7,13 @@
 #  full license information.
 #
 
-project( 'ualyze', 'cpp', 'c', default_options : [ 'cpp_std=c++11' ] )
+project( 'ualyze', 'cpp', 'c', default_options : [ 'cpp_std=c++17' ] )
 
 ucdn_dep = subproject( 'ucdn' ).get_variable( 'ucdn_dep' )
 
 sources = [
     'source/ual_bidi_paragraph_level.cpp',
+    'source/ual_bidi.cpp',
     'source/ual_break.cpp',
     'source/ual_buffer.cpp',
     'source/ual_paragraph.cpp',

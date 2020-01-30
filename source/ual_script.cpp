@@ -192,8 +192,8 @@ struct ual_script_bracket
 
 struct ual_script_brstack
 {
-    ual_script_bracket* base;
-    size_t pointer;
+    ual_script_bracket* ss;
+    size_t sp;
 };
 
 static ual_script_brstack make_brstack( ual_buffer* ub )
@@ -203,16 +203,16 @@ static ual_script_brstack make_brstack( ual_buffer* ub )
 
 static void trim_brstack( ual_script_brstack* stack, size_t index )
 {
-    assert( index <= stack->pointer );
-    stack->pointer = index;
+    assert( index <= stack->sp );
+    stack->sp = index;
 }
 
 static bool push_bracket( ual_script_brstack* stack, const ual_script_bracket& bracket )
 {
-    if ( stack->pointer < SCRIPT_BRSTACK_LIMIT )
+    if ( stack->sp < SCRIPT_BRSTACK_LIMIT )
     {
-        stack->base[ stack->pointer ] = bracket;
-        stack->pointer += 1;
+        stack->ss[ stack->sp ] = bracket;
+        stack->sp += 1;
         return true;
     }
     else
@@ -223,10 +223,10 @@ static bool push_bracket( ual_script_brstack* stack, const ual_script_bracket& b
 
 static unsigned match_bracket( ual_script_brstack* stack, size_t bracket_level, char32_t uc, unsigned curr_script )
 {
-    size_t i = stack->pointer;
+    size_t i = stack->sp;
     while ( i-- > bracket_level )
     {
-        const ual_script_bracket& b = stack->base[ i ];
+        const ual_script_bracket& b = stack->ss[ i ];
         if ( b.closing_bracket == uc )
         {
             unsigned script = b.script;
@@ -247,7 +247,7 @@ static unsigned lookahead( ual_buffer* ub, ual_script_brstack* stack, size_t ind
 {
     const UCDRecord* ucdn = ucdn_record_table();
 
-    size_t bracket_level = stack->pointer;
+    size_t bracket_level = stack->sp;
     unsigned fallback = UCDN_SCRIPT_COMMON;
 
     size_t length = ub->c.size();
@@ -287,7 +287,7 @@ static unsigned lookahead( ual_buffer* ub, ual_script_brstack* stack, size_t ind
         }
 
         // If we're at the original bracket level, we have actual script.
-        if ( stack->pointer <= bracket_level )
+        if ( stack->sp <= bracket_level )
         {
             return char_script;
         }
