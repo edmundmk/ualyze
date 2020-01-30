@@ -850,8 +850,8 @@ struct ual_bidi_brentry
     unsigned index;                     // index of opening bracket.
     unsigned closing_bracket    : 24;   // codepoint of closing bracket.
     unsigned prev_strong        : 2;    // previous strong /e/, /o/, /e-guess/.
-    unsigned contains_e         : 1;    // bracket pair contains e.
-    unsigned contains_o         : 1;    // bracket pair contains o.
+    unsigned prev_contains_e    : 1;    // before bracket contains e.
+    unsigned prev_contains_o    : 1;    // before bracket contains o.
     unsigned rewind_point       : 1;    // bracket contains at least one internal pair guessed as e based on this bracket.
 };
 
@@ -866,9 +866,55 @@ static ual_bidi_brstack make_brstack( ual_buffer* ub )
     return { (ual_bidi_brentry*)ual_stack_bytes( ub, BIDI_BRSTACK_LIMIT, sizeof( ual_bidi_brentry ) ), 0 };
 }
 
-static void rewind_o( ual_buffer* ub, size_t irun, size_t index )
+static void rewind_o( ual_buffer* ub, size_t irun, unsigned lower, unsigned upper, unsigned o )
 {
-    // TODO.
+    ual_level_run* prun = &ub->level_runs.at( irun );
+    ual_level_run* nrun = &ub->level_runs.at( irun + 1 );
+
+    // Check if bracket has crossed level run boundary.
+    if ( lower < prun->start )
+    {
+        size_t length = ub->level_runs.size() - 1;
+        for ( irun = 0; irun < length; ++irun )
+        {
+            prun = &ub->level_runs[ irun ];
+            nrun = &ub->level_runs[ irun + 1 ];
+
+            if ( prun->start <= lower && nrun->start < upper )
+            {
+                break;
+            }
+        }
+
+        if ( irun >= length )
+        {
+            assert( ! "invalid rewind index" );
+            return;
+        }
+    }
+
+    // I *think* it is sufficient to resolve all ON in the range to /o/.  All
+    // brackets that don't depend on the incorrect guess should already have
+    // been resolved.  But it requires more testing to confirm.
+    for ( unsigned index = lower; index < upper; ++index )
+    {
+        while ( index >= nrun->start )
+        {
+            // Move to next level run in isolating run sequence.
+            assert( prun->eos == BC_SEQUENCE );
+            assert( prun->inext != 0 );
+            irun = prun->inext;
+            prun = &ub->level_runs.at( irun );
+            nrun = &ub->level_runs.at( irun + 1 );
+            index = prun->start;
+        }
+
+        ual_char& c = ub->c.at( index );
+        if ( c.bc == UCDN_BIDI_CLASS_ON )
+        {
+            c.bc = o;
+        }
+    }
 }
 
 static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, size_t irun )
@@ -931,14 +977,19 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                         break;
                     }
 
-                    // Push contains_e and contains_o.
-                    ual_bidi_brentry* top = stack->ss + stack->sp - 1;
-                    top->contains_e = contains_e;
-                    top->contains_o = contains_o;
-
                     // Push open bracket.
                     char32_t closing_bracket = ucdn_paired_bracket( uc );
-                    stack->ss[ stack->sp++ ] = { index, closing_bracket, prev_strong, false, false, false };
+                    stack->ss[ stack->sp++ ] =
+                    {
+                        index,
+                        closing_bracket,
+                        prev_strong,
+                        contains_e,
+                        contains_o,
+                        false
+                    };
+
+                    // After bracket does not contain /e/ or /o/ yet.
                     contains_e = false;
                     contains_o = false;
 
@@ -976,8 +1027,8 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                     ub->c.at( entry->index ).bc = UCDN_BIDI_CLASS_B;
 
                     // Add context up until bracket to our current context.
-                    contains_e |= entry->contains_e;
-                    contains_o |= entry->contains_o;
+                    contains_e |= entry->prev_contains_e;
+                    contains_o |= entry->prev_contains_o;
 
                     // If strong type is /e-guess/, recover previous strong.
                     if ( prev_strong == BIDI_E_GUESS )
@@ -997,7 +1048,7 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                         else if ( entry->prev_strong == BIDI_O )
                         {
                             // Brackets dependent on this context become /o/.
-                            rewind_o( ub, irun, entry->index );
+                            rewind_o( ub, irun, entry->index, index, o );
                         }
                     }
                 }
@@ -1008,11 +1059,13 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                 ual_char& b = ub->c.at( entry->index );
 
                 // Outer context contains inner one.
-                contains_e |= entry->contains_e;
-                contains_o |= entry->contains_o;
+                bool inner_contains_e = contains_e;
+                bool inner_contains_o = contains_o;
+                contains_e |= entry->prev_contains_e;
+                contains_o |= entry->prev_contains_o;
 
                 // Neutral brackets.
-                if ( ! entry->contains_e && ! entry->contains_o )
+                if ( ! inner_contains_e && ! inner_contains_o )
                 {
                     b.bc = UCDN_BIDI_CLASS_B;
                     c.bc = UCDN_BIDI_CLASS_B;
@@ -1020,8 +1073,8 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                 }
 
                 // Brackets are /e/.
-                assert( entry->contains_e || entry->contains_o );
-                if ( entry->contains_e || entry->prev_strong == BIDI_E )
+                assert( inner_contains_e || inner_contains_o );
+                if ( inner_contains_e || entry->prev_strong == BIDI_E )
                 {
                     b.bc = e;
                     c.bc = e;
@@ -1031,7 +1084,7 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                 }
 
                 // Brackets are /e-guess/.
-                assert( entry->contains_o );
+                assert( inner_contains_o );
                 if ( entry->prev_strong == BIDI_E_GUESS )
                 {
                     // This pair depends on guessed strong from outer bracket.
@@ -1051,7 +1104,7 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                 // Guess was wrong.  If any inner pairs depend on it, rewind.
                 if ( entry->rewind_point )
                 {
-                    rewind_o( ub, irun, entry->index );
+                    rewind_o( ub, irun, entry->index, index, o );
                 }
             }
             break;
@@ -1081,7 +1134,7 @@ static void bidi_brackets( ual_buffer* ub )
     ual_bidi_brstack stack = make_brstack( ub );
 
     // Process each isolating run sequence independently.
-    size_t length = ub->level_runs.size();
+    size_t length = ub->level_runs.size() - 1;
     for ( size_t irun = 0; irun < length; ++irun )
     {
         // Skip runs that continue an isolating run sequence.
