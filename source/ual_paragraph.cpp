@@ -43,7 +43,7 @@ bool ual_paragraph_next( ual_buffer* ub, ual_paragraph* out_paragraph )
         if ( ( uc & 0xF800 ) == 0xD800 )
         {
             // Get next code unit.
-            char32_t ul = inext < ub->s.size() ? ub->s[ inext++ ] : 0;
+            char32_t ul = inext < ub->s.size() ? ub->s[ inext + 1 ] : 0;
 
             // Check for high/low surrogate pair.
             bool have_hi_surrogate = ( uc & 0xFC00 ) == 0xD800;
@@ -52,6 +52,7 @@ bool ual_paragraph_next( ual_buffer* ub, ual_paragraph* out_paragraph )
             {
                 // Decode surrogate pair.
                 uc = 0x010000 + ( ( uc & 0x3FF ) << 10 ) + ( ul & 0x3FF );
+                inext += 1;
             }
             else
             {
