@@ -1,6 +1,7 @@
 CLUSTERBREAK
 ,"H","e","l","l","o",","," ","W","o","r","l","d","!"
 
+
 -- Do not break between a CR and an LF.
 
 CHAR cr 000D
@@ -9,4 +10,59 @@ CHAR lf 000A
 CLUSTERBREAK
 ," ",<cr><lf>//,<cr>//,<cr><lf>//,<lf>
 
+
+-- Do not break before extending characters.
+
+CHAR cbelow 0324
+CHAR ctilde FE22
+
+CLUSTERBREAK
+,"u"<cbelow>,"A"<cbelow><ctilde>," "<cbelow>
+
+
+-- Do not break within emoji ZWJ sequences.
+
+CHAR zwj 200D
+CHAR man 01F468
+CHAR woman 01F469
+CHAR heart 2764
+CHAR variation16 FE0F
+CHAR kiss 01F48B
+
+CLUSTERBREAK
+,<man><zwj><heart><variation16><zwj><kiss><zwj><man>,<woman><zwj><heart><variation16><zwj><kiss><zwj><woman>
+
+
+-- Do not break between pairs of regional indicators.
+
+CHAR riB 1F1E7
+CHAR riG 1F1EC
+CHAR riX 1F1FD
+CHAR riS 1F1F8
+
+CLUSTERBREAK
+,<riG><riB>,<riX><riS>,<riS>," ",<riS>
+
+
+-- Do not break Hangul syllable sequences.
+
+CHAR L 1100
+CHAR V 11A2
+CHAR T 11F9
+CHAR LV AC1C
+CHAR LVT AC04
+
+CLUSTERBREAK
+,<L><L><V>,<L><LV><V>,<L><LVT><T>,<L><V><T>,<LV><T>,<LVT>,<V><T><T>," ",<T><T>,<L><V><T>
+
+
+-- Other cases.
+
+CHAR surr D930
+
+CLUSTERBREAK
+,"H","e","l","l","o",","," ","W","o","r","l","d",<surr>
+
+CLUSTERBREAK
+," "," "," "," "
 

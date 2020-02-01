@@ -47,4 +47,5 @@ ualtest = executable(
 test_script = find_program( 'tests/ualtest.py' )
 test( 'paragraph.test', test_script, args : [ ualtest.full_path(), files( 'tests/paragraph.test' ) ] )
 test( 'linebreak.test', test_script, args : [ ualtest.full_path(), files( 'tests/linebreak.test' ) ] )
+test( 'clusterbreak.test', test_script, args : [ ualtest.full_path(), files( 'tests/linebreak.test' ) ] )
 test( 'script.test', test_script, args : [ ualtest.full_path(), files( 'tests/script.test' ) ] )
