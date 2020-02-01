@@ -10,7 +10,6 @@
 
 #include "ual_buffer.h"
 #include <assert.h>
-#include <memory>
 
 ual_buffer::ual_buffer()
     :   refcount( 1 )
@@ -26,21 +25,13 @@ ual_buffer::~ual_buffer()
 
 ual_buffer* ual_buffer_create()
 {
-    // Check record table.
     if ( ucdn_record_table_size() >= IX_INVALID )
     {
         assert( ! "ucdn record table is too large" );
         return nullptr;
     }
 
-    // Allocate enough memory for structure and stack.
-    void* p = malloc( sizeof( ual_buffer ) + STACK_BYTES );
-    if ( ! p )
-    {
-        return nullptr;
-    }
-
-    return new ( p ) ual_buffer();
+    return new ual_buffer();
 }
 
 ual_buffer* ual_buffer_retain( ual_buffer* ub )
@@ -53,8 +44,7 @@ void ual_buffer_release( ual_buffer* ub )
 {
     if ( ub && --ub->refcount == 0 )
     {
-        ub->~ual_buffer();
-        free( ub );
+        delete ub;
     }
 }
 

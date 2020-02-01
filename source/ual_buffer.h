@@ -58,6 +58,9 @@ struct ual_buffer
 
     // Bidi analysis.
 //    size_t bidi_index;
+
+    // Stack bytes.
+    char stack_bytes[ STACK_BYTES ];
 };
 
 char32_t ual_codepoint( ual_buffer* ub, size_t index );
@@ -65,8 +68,8 @@ char32_t ual_codepoint( ual_buffer* ub, size_t index );
 template < typename T, size_t count >
 inline T* ual_stack( ual_buffer* ub )
 {
-    static_assert( sizeof( T ) * count <= STACK_BYTES );
-    return (T*)( ub + 1 );
+    static_assert( sizeof( T ) * count <= sizeof( ub->stack_bytes ) );
+    return (T*)ub->stack_bytes;
 }
 
 #endif
