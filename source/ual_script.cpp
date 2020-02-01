@@ -259,7 +259,7 @@ static unsigned lookahead( ual_buffer* ub, ual_script_brstack* stack, size_t ind
             continue;
         }
 
-        uint32_t char_script = ucdn[ c.ix ].script;
+        unsigned char_script = ucdn[ c.ix ].script;
 
         if ( char_script == UCDN_SCRIPT_COMMON )
         {

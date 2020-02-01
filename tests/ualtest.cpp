@@ -91,6 +91,8 @@ int main( int argc, char* argv[] )
 */
     }
 
+    ual_buffer_release( ub );
+
     // Complete.
     return EXIT_SUCCESS;
 }
