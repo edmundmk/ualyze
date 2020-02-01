@@ -97,9 +97,10 @@ while len( build_stack ):
         continue
 
     # Build this state by processing rules.
-    state = build_state
     actions = []
     for shift in token:
+
+        state = build_state
 
         brk_action = '?'
         next_state = shift
