@@ -395,7 +395,7 @@ bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span )
             else if ( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_CLOSE )
             {
                 // Closing bracket.  Might change script here.
-                cscript = match_bracket( &stack, 0, uc, cscript );
+                cscript = match_bracket( &stack, 0, uc, script );
             }
             else
             {
