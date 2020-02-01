@@ -33,14 +33,7 @@ const unsigned BC_SEQUENCE = 3;
     each codepoint is modified by later stages of the algorithm.
 */
 
-enum bidi_complexity
-{
-    BIDI_ALL_LEFT,  // Paragraph is left-to-right.
-    BIDI_SOLITARY,  // No directional embeddings, overrides, or isolates.
-    BIDI_EXPLICIT,  // Requires full processing.
-};
-
-static bidi_complexity bidi_lookup( ual_buffer* ub )
+static ual_bidi_complexity bidi_lookup( ual_buffer* ub )
 {
     const UCDRecord* ucdn = ub->ucdn;
 
@@ -81,6 +74,8 @@ static bidi_complexity bidi_lookup( ual_buffer* ub )
             break;
         }
     }
+
+    ub->bc_usage = BC_BIDI_CLASS;
 
     if ( left )
         return BIDI_ALL_LEFT;
@@ -159,7 +154,8 @@ struct ual_bidi_exstack
 
 static ual_bidi_exstack make_exstack( ual_buffer* ub )
 {
-    return { (ual_bidi_exentry*)ual_stack_bytes( ub, BIDI_EXSTACK_LIMIT, sizeof( ual_bidi_exentry ) ), 0 };
+    assert( ub->script_analysis.index == INVALID_INDEX );
+    return { ual_stack< ual_bidi_exentry, BIDI_EXSTACK_LIMIT >( ub ), 0 };
 }
 
 static unsigned first_strong_level( ual_buffer* ub, size_t index, bool fsi )
@@ -862,7 +858,8 @@ struct ual_bidi_brstack
 
 static ual_bidi_brstack make_brstack( ual_buffer* ub )
 {
-    return { (ual_bidi_brentry*)ual_stack_bytes( ub, BIDI_BRSTACK_LIMIT, sizeof( ual_bidi_brentry ) ), 0 };
+    assert( ub->script_analysis.index == INVALID_INDEX );
+    return { ual_stack< ual_bidi_brentry, BIDI_BRSTACK_LIMIT >( ub ), 0 };
 }
 
 static void rewind_o( ual_buffer* ub, size_t irun, unsigned lower, unsigned upper, unsigned o )
@@ -1307,17 +1304,17 @@ static void bidi_neutral( ual_buffer* ub )
 unsigned ual_bidi_analyze( ual_buffer* ub )
 {
     ub->level_runs.clear();
-    ub->bidi_runs.clear();
 
     // Look up initial bidi classes.
     unsigned paragraph_level = 0;
-    switch ( bidi_lookup( ub ) )
+    ual_bidi_complexity complexity = bidi_lookup( ub );
+    switch ( complexity )
     {
     case BIDI_ALL_LEFT:
-        // Entire string is left to right.
-        ub->bidi_runs.push_back( { 0, 0 } );
-        ub->bidi_runs.push_back( { (unsigned)ub->c.size(), 0 } );
-        return 0;
+    case BIDI_ALL_DONE:
+        // Entire string is left to right.  No further analysis required.
+        ub->bidi_analysis = { ub->c.size(), paragraph_level, complexity };
+        return paragraph_level;
 
     case BIDI_SOLITARY:
         // There is only one level run at rule X10.
@@ -1335,104 +1332,152 @@ unsigned ual_bidi_analyze( ual_buffer* ub )
     bidi_brackets( ub );
     bidi_neutral( ub );
 
-    // Generate output runs from resolved bidi classes.
-    size_t length = ub->level_runs.size() - 1;
-    for ( size_t irun = 0; irun < length; ++irun )
-    {
-        ual_level_run* prun = &ub->level_runs[ irun ];
-        ual_level_run* nrun = &ub->level_runs[ irun + 1 ];
-
-        unsigned index = prun->start;
-        unsigned limit = nrun->start;
-
-        while ( index < limit )
-        {
-            unsigned lower = index;
-            unsigned level = prun->level;
-
-            ual_char c = ub->c[ index++ ];
-            if ( level & 1 )
-            {
-                // Embedding level is odd.
-                if ( c.bc == UCDN_BIDI_CLASS_R )
-                {
-                    while ( index < limit &&
-                         ( c.bc == UCDN_BIDI_CLASS_R
-                        || c.bc == UCDN_BIDI_CLASS_BN
-                        || c.bc == BC_INVALID ) )
-                    {
-                        c = ub->c[ index++ ];
-                    }
-                }
-                else
-                {
-                    level += 1;
-                    while ( index < limit &&
-                         ( c.bc == UCDN_BIDI_CLASS_L
-                        || c.bc == UCDN_BIDI_CLASS_EN
-                        || c.bc == UCDN_BIDI_CLASS_AN
-                        || c.bc == UCDN_BIDI_CLASS_BN
-                        || c.bc == BC_INVALID ) )
-                    {
-                        c = ub->c[ index++ ];
-                    }
-                }
-            }
-            else
-            {
-                // Embeddiing level is even.
-                if ( c.bc == UCDN_BIDI_CLASS_L )
-                {
-                    while ( index < limit &&
-                         ( c.bc == UCDN_BIDI_CLASS_L
-                        || c.bc == UCDN_BIDI_CLASS_BN
-                        || c.bc == BC_INVALID ) )
-                    {
-                        c = ub->c[ index++ ];
-                    }
-                }
-                else if ( c.bc == UCDN_BIDI_CLASS_R )
-                {
-                    level += 1;
-                    while ( index < limit &&
-                         ( c.bc == UCDN_BIDI_CLASS_R
-                        || c.bc == UCDN_BIDI_CLASS_BN
-                        || c.bc == BC_INVALID ) )
-                    {
-                        c = ub->c[ index++ ];
-                    }
-                }
-                else
-                {
-                    level += 2;
-                    while ( index < limit &&
-                         ( c.bc == UCDN_BIDI_CLASS_EN
-                        || c.bc == UCDN_BIDI_CLASS_AN
-                        || c.bc == UCDN_BIDI_CLASS_BN
-                        || c.bc == BC_INVALID ) )
-                    {
-                        c = ub->c[ index++ ];
-                    }
-                }
-            }
-
-            ub->bidi_runs.push_back( { lower, level } );
-        }
-    }
-
-    // Add final run with final index.
-    ub->bidi_runs.push_back( { (unsigned)ub->c.size(), paragraph_level } );
-
-    // Done.
+    // Set up analysis state.
+    ub->bidi_analysis = { 0, paragraph_level, complexity };
     return paragraph_level;
 }
 
-ual_bidi_run* ual_bidi_runs( ual_buffer* ub, size_t* out_count )
+/*
+    Iterator-style interface for constructing bidi runs from resolved classes.
+*/
+
+void ual_bidi_runs_begin( ual_buffer* ub )
 {
-    if ( out_count )
+    assert( ub->bc_usage == BC_BIDI_CLASS );
+    assert( ub->level_runs.back().start == ub->c.size() );
+
+    ub->bidi_analysis.ilrun = 0;
+    ub->bidi_analysis.index = 0;
+}
+
+bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
+{
+    assert( ub->bc_usage == BC_BIDI_CLASS );
+
+    size_t ilrun = ub->bidi_analysis.ilrun;
+    size_t index = ub->bidi_analysis.index;
+    assert( ilrun != INVALID_INDEX );
+    assert( index != INVALID_INDEX );
+
+    // Run starts at index.
+    out_run->lower = index;
+
+    // Check if we've reached the end.
+    if ( index >= ub->c.size() )
     {
-        *out_count = ub->bidi_runs.size();
+        out_run->upper = index;
+        out_run->level = ub->bidi_analysis.paragraph_level;
+
+        if ( ub->bidi_analysis.complexity == BIDI_ALL_LEFT )
+        {
+            out_run->lower = 0;
+            ub->bidi_analysis.complexity = BIDI_ALL_DONE;
+            return true;
+        }
+
+        return false;
     }
-    return ub->bidi_runs.data();
+
+    // Start at the level of the run.
+    ual_level_run* prun = &ub->level_runs[ ilrun ];
+    ual_level_run* nrun = &ub->level_runs[ ilrun + 1 ];
+
+    assert( prun->start < nrun->start );
+    assert( nrun->start <= ub->c.size() );
+    assert( prun->start <= index );
+    assert( index < nrun->start );
+
+    unsigned level = prun->level;
+
+    ual_char c = ub->c[ index++ ];
+    if ( level & 1 )
+    {
+        // Embedding level is odd.
+        if ( c.bc == UCDN_BIDI_CLASS_R )
+        {
+            while ( index < nrun->start &&
+                 ( c.bc == UCDN_BIDI_CLASS_R
+                || c.bc == UCDN_BIDI_CLASS_BN
+                || c.bc == BC_INVALID ) )
+            {
+                c = ub->c[ index++ ];
+            }
+        }
+        else
+        {
+            level += 1;
+            while ( index < nrun->start &&
+                 ( c.bc == UCDN_BIDI_CLASS_L
+                || c.bc == UCDN_BIDI_CLASS_EN
+                || c.bc == UCDN_BIDI_CLASS_AN
+                || c.bc == UCDN_BIDI_CLASS_BN
+                || c.bc == BC_INVALID ) )
+            {
+                c = ub->c[ index++ ];
+            }
+        }
+    }
+    else
+    {
+        // Embeddiing level is even.
+        if ( c.bc == UCDN_BIDI_CLASS_L )
+        {
+            while ( index < nrun->start &&
+                 ( c.bc == UCDN_BIDI_CLASS_L
+                || c.bc == UCDN_BIDI_CLASS_BN
+                || c.bc == BC_INVALID ) )
+            {
+                c = ub->c[ index++ ];
+            }
+        }
+        else if ( c.bc == UCDN_BIDI_CLASS_R )
+        {
+            level += 1;
+            while ( index < nrun->start &&
+                 ( c.bc == UCDN_BIDI_CLASS_R
+                || c.bc == UCDN_BIDI_CLASS_BN
+                || c.bc == BC_INVALID ) )
+            {
+                c = ub->c[ index++ ];
+            }
+        }
+        else
+        {
+            level += 2;
+            while ( index < nrun->start &&
+                 ( c.bc == UCDN_BIDI_CLASS_EN
+                || c.bc == UCDN_BIDI_CLASS_AN
+                || c.bc == UCDN_BIDI_CLASS_BN
+                || c.bc == BC_INVALID ) )
+            {
+                c = ub->c[ index++ ];
+            }
+        }
+
+    }
+
+    assert( index <= nrun->start );
+    assert( out_run->lower < index );
+
+    // Move to next run.
+    if ( index >= nrun->start )
+    {
+        ilrun += 1;
+    }
+
+    // Save state.
+    ub->bidi_analysis.index = index;
+    ub->bidi_analysis.ilrun = ilrun;
+
+    // Return resulting run.
+    out_run->upper = index;
+    out_run->level = level;
+    return true;
+}
+
+void ual_bidi_runs_end( ual_buffer* ub )
+{
+    ub->bidi_analysis.ilrun = INVALID_INDEX;
+    ub->bidi_analysis.index = INVALID_INDEX;
 }
 

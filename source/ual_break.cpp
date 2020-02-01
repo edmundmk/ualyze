@@ -102,5 +102,7 @@ void ual_break_analyze( ual_buffer* ub )
     {
         ub->c[ space_index ].bc |= UAL_BREAK_SPACES;
     }
+
+    ub->bc_usage = BC_BREAK_FLAGS;
 }
 

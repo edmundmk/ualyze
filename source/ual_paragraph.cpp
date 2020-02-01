@@ -16,6 +16,7 @@ bool ual_next_paragraph( ual_buffer* ub, ual_paragraph* out_paragraph )
     const UCDRecord* ucdn = ub->ucdn;
 
     ub->c.clear();
+    ub->bc_usage = BC_NONE;
     ub->p.lower = ub->p.upper;
 
     // Check if we're already at the end of the string.

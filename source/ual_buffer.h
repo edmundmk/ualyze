@@ -18,7 +18,37 @@
 
 const uint16_t IX_INVALID = ( 1 << 11 ) - 1;
 const size_t INVALID_INDEX = ~(size_t)0;
-const size_t STACK_BYTES = 8 * 64;
+const size_t STACK_BYTES = sizeof( unsigned ) * 128;
+
+enum ual_bc_usage
+{
+    BC_NONE,
+    BC_BREAK_FLAGS,
+    BC_BIDI_CLASS,
+};
+
+struct ual_script_analysis
+{
+    size_t index;
+    unsigned script;
+    unsigned sp;
+};
+
+enum ual_bidi_complexity
+{
+    BIDI_ALL_LEFT,  // Paragraph is left-to-right.
+    BIDI_ALL_DONE,  // Paragraph is left-to-right, but reported it already.
+    BIDI_SOLITARY,  // No directional embeddings, overrides, or isolates.
+    BIDI_EXPLICIT,  // Requires full processing.
+};
+
+struct ual_bidi_analysis
+{
+    size_t ilrun;
+    size_t index;
+    unsigned paragraph_level;
+    ual_bidi_complexity complexity;
+};
 
 struct ual_level_run
 {
@@ -27,13 +57,6 @@ struct ual_level_run
     unsigned sos    : 2;    // sos type (L, R, AL, or BC_SEQUENCE).
     unsigned eos    : 2;    // eos type (L, R, AL, or BC_SEQUENCE).
     unsigned inext  : 20;   // index of next level run in isolating sequence.
-};
-
-struct ual_script_analysis
-{
-    size_t index;
-    unsigned script;
-    unsigned sp;
 };
 
 struct ual_buffer
@@ -50,14 +73,13 @@ struct ual_buffer
     // Text data.
     std::u16string s;
     std::vector< ual_char > c;
-    std::vector< ual_level_run > level_runs;
+    ual_bc_usage bc_usage;
+    ual_paragraph p;
 
     // Current analysis state.
-    ual_paragraph p;
     ual_script_analysis script_analysis;
-
-    // Bidi analysis.
-//    size_t bidi_index;
+    ual_bidi_analysis bidi_analysis;
+    std::vector< ual_level_run > level_runs;
 
     // Stack bytes.
     char stack_bytes[ STACK_BYTES ];

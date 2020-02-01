@@ -152,7 +152,7 @@ typedef struct ual_bidi_run
     unsigned level;
 } ual_bidi_run;
 
-bool ual_bidi_runs_begin( ual_buffer* ub );
+void ual_bidi_runs_begin( ual_buffer* ub );
 bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run );
 void ual_bidi_runs_end( ual_buffer* ub );
 

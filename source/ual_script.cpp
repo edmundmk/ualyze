@@ -185,7 +185,7 @@ const size_t SCRIPT_BRSTACK_LIMIT = 64;
 
 struct ual_script_bracket
 {
-    char32_t closing_bracket;
+    unsigned closing_bracket;
     unsigned script;
 };
 
@@ -197,6 +197,7 @@ struct ual_script_brstack
 
 static ual_script_brstack get_brstack( ual_buffer* ub )
 {
+    assert( ub->script_analysis.index != INVALID_INDEX );
     return { ual_stack< ual_script_bracket, SCRIPT_BRSTACK_LIMIT >( ub ), ub->script_analysis.sp };
 }
 

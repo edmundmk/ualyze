@@ -14,8 +14,10 @@
 ual_buffer::ual_buffer()
     :   refcount( 1 )
     ,   ucdn( ucdn_record_table() )
+    ,   bc_usage( BC_NONE )
     ,   p{ 0, 0 }
     ,   script_analysis{ INVALID_INDEX }
+    ,   bidi_analysis{ INVALID_INDEX, INVALID_INDEX }
 {
 }
 
