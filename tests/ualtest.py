@@ -36,9 +36,9 @@ with open( sys.argv[ 2 ], 'r' ) as f:
             continue
 
         # Check for new test case
-        if line == "SCRIPT":
+        if line == "SCRIPT" or line == "PARAGRAPH":
             cases.append( [ line, "" ] )
-        else:
+        elif line != "":
             cases[ -1 ][ 1 ] += line
 
 # Perform cases.
@@ -101,7 +101,7 @@ for case in cases:
     p[ -1 ][ 0 ][ -1 ] = len( text ) // 2
 
     # Remove empty paragraph
-    if len( p ) == 1 and len( p[ 0 ] ) == 1:
+    if p == [ [ [ 0, 0 ] ] ]:
         p.pop()
 
     # Invoke test case.
@@ -128,7 +128,7 @@ for case in cases:
             q[ -1 ].append( [ info[ 1 ], int( info[ 2 ] ), int( info[ 3 ] ) ] )
             continue
 
-        print( info )
+#        print( info )
 
     if p != q:
         print( kind, text.decode( 'utf-16-le', errors = 'replace' ) )

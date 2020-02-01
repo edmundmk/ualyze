@@ -1,0 +1,55 @@
+CHAR lf 000A
+CHAR vt 000B
+CHAR ff 000C
+CHAR cr 000D
+CHAR nel 0085
+CHAR lsep 2028
+CHAR psep 2029
+CHAR surr0 D8E4
+CHAR surr1 D932
+
+PARAGRAPH
+"Hello, World!"
+
+PARAGRAPH
+"Hello, "<cr>//"World!"<cr>
+
+PARAGRAPH
+"Hello, "<lf>//"World!"<cr>
+
+PARAGRAPH
+"Hello, "<vt>//"World!"<cr>
+
+PARAGRAPH
+"Hello, "<ff>//"World!"<cr>
+
+PARAGRAPH
+"Hello, "<nel>//"World!"<cr>
+
+PARAGRAPH
+"Hello, "<lsep>//"World!"<cr>
+
+PARAGRAPH
+"Hello, "<psep>//"World!"<cr>
+
+PARAGRAPH
+"Hello, "<cr><lf>//"World!"<cr><lf>
+
+PARAGRAPH
+"Hello, "<lf>//<cr>//"World!"<cr><lf>
+
+PARAGRAPH
+"Hello, "<lf>//"World!"<cr><lf>
+
+PARAGRAPH
+"Hello,"<surr0><cr><lf>//"World!"<cr><lf>
+
+PARAGRAPH
+"Hello, World!"<surr1>
+
+PARAGRAPH
+<lf>//<lf>//<lf>//<cr><lf>//<cr>//<cr><lf>//<lsep>//<vt>
+
+PARAGRAPH
+""
+
