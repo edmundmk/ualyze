@@ -16,8 +16,8 @@
 */
 
 #define ACTION signed char
-#define BREAK( x ) +x
-#define NO_BREAK( x ) -x
+#define BREAK( x ) -x
+#define NO_BREAK( x ) +x
 
 #include "uax14.h"
 #include "uax29p3.h"
@@ -65,6 +65,7 @@ const ual_char* ual_break_analyze( ual_buffer* ub, size_t* out_count )
         }
 
         // Read state machine.
+        fprintf( stderr, "index: %zu lb_class: %u lb_state:%i -> %i\n", i, lb_class, lb_state, UAX14[ lb_state ][ lb_class ] );
         lb_state = UAX14[ lb_state ][ lb_class ];
         cb_state = UAX29P3[ cb_state ][ cb_class ];
 
