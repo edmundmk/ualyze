@@ -16,7 +16,7 @@
 */
 
 #define ACTION signed char
-#define BREAK( x ) -x
+#define BREAK( x ) -x-1
 #define NO_BREAK( x ) +x
 
 #include "uax14.h"
@@ -73,7 +73,7 @@ const ual_char* ual_break_analyze( ual_buffer* ub, size_t* out_count )
         if ( lb_state < 0 )
         {
             bc |= UAL_BREAK_LINE;
-            lb_state = -lb_state;
+            lb_state = -lb_state-1;
 
             if ( was_space )
             {
