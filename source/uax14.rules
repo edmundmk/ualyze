@@ -224,37 +224,37 @@ LB12 :
 -- Do not break before NBSP and related characters, except after spaces
 -- and hyphens.
 LB12a :
-    OP x GJ
-    CL x GJ
-    CP x GJ
-    QU x GJ
-    GL x GJ
-    NS x GJ
-    EX x GJ
-    SY x GJ
-    IS x GJ
-    PR x GJ
-    PO x GJ
-    NU x GJ
-    AL x GJ
-    HL x GJ
-    ID x GJ
-    IN x GJ
-    BB x GJ
-    B2 x GJ
-    ZW x GJ
-    CM x GJ
-    WJ x GJ
-    H2 x GJ
-    H3 x GJ
-    JL x GJ
-    JV x GJ
-    JT x GJ
-    RI x GJ
-    RI_PAIR x GJ
-    EB x GJ
-    EM x GJ
-    CB x GJ
+    OP x GL
+    CL x GL
+    CP x GL
+    QU x GL
+    GL x GL
+    NS x GL
+    EX x GL
+    SY x GL
+    IS x GL
+    PR x GL
+    PO x GL
+    NU x GL
+    AL x GL
+    HL x GL
+    ID x GL
+    IN x GL
+    BB x GL
+    B2 x GL
+    ZW x GL
+    CM x GL
+    WJ x GL
+    H2 x GL
+    H3 x GL
+    JL x GL
+    JV x GL
+    JT x GL
+    RI x GL
+    RI_PAIR x GL
+    EB x GL
+    EM x GL
+    CB x GL
 
 -- Do not break before ‘]’ or ‘!’ or ‘;’ or ‘/’, even after spaces.
 LB13 :
