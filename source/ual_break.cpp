@@ -36,7 +36,7 @@ const ual_char* ual_break_analyze( ual_buffer* ub, size_t* out_count )
 {
     const UCDRecord* ucdn = ub->ucdn;
 
-    int lb_state = STATE_SOT;
+    int lb_state = STATE_SOT_ZWJ;
     int cb_state = STATE_CONTROL_LF;
 
     size_t space_index = NO_SPACE;
