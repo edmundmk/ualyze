@@ -65,7 +65,6 @@ const ual_char* ual_break_analyze( ual_buffer* ub, size_t* out_count )
         }
 
         // Read state machine.
-        fprintf( stderr, "index: %zu lb_class: %u lb_state:%i -> %i\n", i, lb_class, lb_state, UAX14[ lb_state ][ lb_class ] );
         lb_state = UAX14[ lb_state ][ lb_class ];
         cb_state = UAX29P3[ cb_state ][ cb_class ];
 
@@ -76,11 +75,14 @@ const ual_char* ual_break_analyze( ual_buffer* ub, size_t* out_count )
             bc |= UAL_BREAK_LINE;
             lb_state = -lb_state;
 
-            if ( space_index != NO_SPACE )
+            if ( was_space )
             {
+                assert( space_index != NO_SPACE );
                 ub->c[ space_index ].bc |= UAL_BREAK_SPACES;
-                space_index = NO_SPACE;
             }
+
+            space_index = NO_SPACE;
+            was_space = false;
         }
         if ( cb_state < 0 )
         {
@@ -90,7 +92,10 @@ const ual_char* ual_break_analyze( ual_buffer* ub, size_t* out_count )
         c.bc = bc;
 
         // Check for space.
-        bool is_space = u.category == UCDN_GENERAL_CATEGORY_ZS || lb_state == STATE_NL_LF_CR_BK;
+        bool is_space =
+               u.category == UCDN_GENERAL_CATEGORY_ZS   // space characters
+            || lb_class == UCDN_LINEBREAK_CLASS_ZW      // ZERO WIDTH SPACE
+            || lb_state == STATE_NL_LF_CR_BK;           // newlines
         if ( is_space && ! was_space )
         {
             space_index = i;
@@ -99,8 +104,9 @@ const ual_char* ual_break_analyze( ual_buffer* ub, size_t* out_count )
     }
 
     // Set last space index, if any.
-    if ( space_index != NO_SPACE )
+    if ( was_space )
     {
+        assert( space_index != NO_SPACE );
         ub->c[ space_index ].bc |= UAL_BREAK_SPACES;
     }
 

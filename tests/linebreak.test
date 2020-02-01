@@ -5,7 +5,7 @@ LINEBREAK
 "HelloWorld!"
 
 LINEBREAK
-:"    ";"Without you.":"  ";"The eyes gaze"
+:"    ";"Without":" ";"you.":"  ";"The":" ";"eyes":" ";"gaze"
 
 
 -- LB8.  Zero-width space.
@@ -16,7 +16,7 @@ LINEBREAK
 "A":"  "<zws>"  ";"B"
 
 LINEBREAK
-"Hello"<zws>;"]"
+"Hello":<zws>;"]"
 
 
 -- LB8a.  Emoji zero-width-joiner sequences.
@@ -32,7 +32,7 @@ LINEBREAK
 <man><zwj><heart><variation16><zwj><kiss><zwj><man>;<woman><zwj><heart><variation16><zwj><kiss><zwj><woman>
 
 LINEBREAK
-"hello"<zws>;<zwj><man>
+"hello":<zws>;<zwj><man>
 
 
 -- LB9, LB10.  Combining marks.
@@ -55,7 +55,7 @@ LINEBREAK
 "Hello,":" "<zws>;<wj>"World!"
 
 LINEBREAK
-"Hello,"<zws>:" ";<wj>"World!"
+"Hello,":<zws>" ";<wj>"World!"
 
 LINEBREAK
 <man><bom><woman>
