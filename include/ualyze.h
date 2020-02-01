@@ -50,7 +50,7 @@ ual_buffer* ual_buffer_create();
 ual_buffer* ual_buffer_retain( ual_buffer* ub );
 void ual_buffer_release( ual_buffer* ub );
 
-void ual_buffer_clear();
+void ual_buffer_clear( ual_buffer* ub );
 void ual_buffer_append( ual_buffer* ub, ual_string_view text );
 ual_string_view ual_buffer_text( ual_buffer* ub, size_t lower, size_t upper );
 
@@ -70,7 +70,7 @@ typedef struct ual_paragraph
     size_t upper;
 } ual_paragraph;
 
-bool ual_next_paragraph( ual_buffer* ub, ual_paragraph* out_paragraph );
+bool ual_paragraph_next( ual_buffer* ub, ual_paragraph* out_paragraph );
 ual_string_view ual_paragraph_text( ual_buffer* ub );
 
 /*

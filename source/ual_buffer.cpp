@@ -53,10 +53,12 @@ void ual_buffer_release( ual_buffer* ub )
 void ual_buffer_clear( ual_buffer* ub )
 {
     ub->s.clear();
+    ub->p = { 0, 0 };
 }
 
 void ual_buffer_append( ual_buffer* ub, ual_string_view text )
 {
+    assert( ub->p.upper == 0 );
     ub->s.append( text.data, text.size );
 }
 

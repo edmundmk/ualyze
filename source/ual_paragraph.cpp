@@ -11,7 +11,7 @@
 #include "ual_buffer.h"
 #include <assert.h>
 
-bool ual_next_paragraph( ual_buffer* ub, ual_paragraph* out_paragraph )
+bool ual_paragraph_next( ual_buffer* ub, ual_paragraph* out_paragraph )
 {
     const UCDRecord* ucdn = ub->ucdn;
 
