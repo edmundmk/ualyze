@@ -115,11 +115,6 @@ Then, bidi runs are generated using an iterator-style interface.
     }
     ual_bidi_runs.end( ub );
 
-The `ual_bidi_paragraph_level` function does only enough processing to
-determine the paragraph level (either 0 left or 1 right) for the current
-paragraph.  This can be useful when using certain text layout APIs which
-perform bidi processing without providing this information explicitly.
-
 
 ## Shared Resources
 

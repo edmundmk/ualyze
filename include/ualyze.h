@@ -125,12 +125,6 @@ bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span );
 void ual_script_spans_end( ual_buffer* ub );
 
 /*
-    Find bidi paragraph level.
-*/
-
-unsigned ual_bidi_paragraph_level( ual_buffer* ub );
-
-/*
     Perform bidi analysis on a paragraph.  Sets the bc value to the resolved
     bidi class of each character.  Returns the paragraph level.
 
