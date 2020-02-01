@@ -341,7 +341,7 @@ bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span )
     if ( index >= length )
     {
         out_span->upper = index;
-        out_span->script = SCRIPT_CODE[ UCDN_SCRIPT_COMMON ];
+        out_span->script = SCRIPT_CODE[ UCDN_SCRIPT_LATIN ];
         return false;
     }
 

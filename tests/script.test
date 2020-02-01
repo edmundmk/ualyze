@@ -1,0 +1,67 @@
+SCRIPT
+[Grek]"Για τρεις δεδομένους κύκλους εν γένειυπάρχουν οκτώ διαφορετικοί κύκλοι που εφάπτονται σε αυτούς και κάθε κύκλος περικλείει ή όχι τους τρεις κατά διαφορετικό τρόπο."
+
+SCRIPT
+[Cyrl]"Однако многие свойства комплексных чисел отличаются от свойств вещественных чисел; например, нельзя указать, какое из двух комплексных чисел больше или меньше."
+
+SCRIPT
+[Hang]"오스트레일리아에서 가장 목소리가 빼어난 명금류 중 하나로, 다양한 울음소리를 낼 수 있다. 잡식성이며, 먹이는 주로 무척추동물들이다. 대개 텃세권을 지키는 정주성 조류, 즉 텃새로 살아간다. 흔히 관찰되는 종으로서 인적이 있는 곳에도 잘 적응하여 오스트레일리아와 뉴기니의 공원, 정원, 농지 등에서 자주 목격된다."
+
+SCRIPT
+[Grek]"Για τρεις δεδομένους "[Latn]"Hello, World!"
+
+SCRIPT
+[Grek]"δεδομένους"[Hang]"오스트레일리아에서"[Cyrl]"комплексных"[Latn]"Hello"
+
+SCRIPT
+[Grek]"Για τρεις ("[Latn]"Hello, World!"[Grek]") δεδομένους"
+
+SCRIPT
+[Grek]"Για τρεις ("[Latn]"Hello[ World!"[Grek]") δεδομένους"
+
+SCRIPT
+[Grek]"Για τρεις["[Latn]"(Hello, World!)"[Grek]"]δεδομένους"
+
+SCRIPT
+[Grek]"Για τρεις["[Latn]"(Hello, World!"[Grek]"])δεδομένους"
+
+SCRIPT
+[Grek]"Για τρεις("[Latn]"[Hello, World!"[Grek]")]δεδομένους"
+
+SCRIPT
+[Grek]"Για τρεις("[Latn]"Hello"[Grek]")("[Latn]", World!"[Grek]")δεδομένους"
+
+CHAR lf 000A
+
+SCRIPT
+[Latn]"    "<lf>//[Grek]"    Για τρεις δεδομένους"
+
+SCRIPT
+[Latn]"    "<lf>//[Grek]"Για τρεις δεδομένους"
+
+SCRIPT
+[Grek]"    (τρεις)    "
+
+SCRIPT
+[Latn]"    ("[Hang]"    ("[Grek]"τρεις"[Hang]") 빼어난"[Latn]") ]' World!"
+
+SCRIPT
+[Cyrl]" Однако ("[Latn]"Hello! "[Cyrl]"свойства)     "
+
+CHAR surr0 D8E4
+CHAR surr1 D932
+
+SCRIPT
+[Latn]"Hello,"<surr0>"World!"
+
+SCRIPT
+[Latn]"Hello, World!"<surr1>
+
+SCRIPT
+[Latn]"    "<lf>
+
+SCRIPT
+[Latn]<lf>
+
+SCRIPT
+""

@@ -32,7 +32,7 @@ int main( int argc, char* argv[] )
 
     if ( data.size() % 2 )
     {
-        fprintf( stderr, "incomplete UTF-16 input" );
+        fprintf( stderr, "incomplete UTF-16 input\n" );
         return EXIT_FAILURE;
     }
 
@@ -42,8 +42,30 @@ int main( int argc, char* argv[] )
 
     // Process paragraph-by-paragraph.
     ual_paragraph paragraph;
-    while ( ual_next_paragraph( ub, &paragraph ) )
+    while ( ual_paragraph_next( ub, &paragraph ) )
     {
+        // Print paragraph.
+        printf( "PARAGRAPH %zu %zu\n", paragraph.lower, paragraph.upper );
+
+        // Analyze script.
+        ual_script_span span;
+        ual_script_spans_begin( ub );
+        while ( ual_script_spans_next( ub, &span ) )
+        {
+            printf
+            (
+                "SCRIPT %c%c%c%c %zu %zu\n",
+                ( span.script >> 24 ) & 0xFF,
+                ( span.script >> 16 ) & 0xFF,
+                ( span.script >> 8  ) & 0xFF,
+                ( span.script       ) & 0xFF,
+                span.lower,
+                span.upper
+            );
+        }
+        ual_script_spans_end( ub );
+
+/*
         // Analyze breaks.
         ual_break_analyze( ub );
         ual_char* chars = ual_char_buffer( ub, nullptr );
@@ -66,6 +88,7 @@ int main( int argc, char* argv[] )
 
         // Write hard break at end of paragraph.
         printf( "HARD_BREAK %zu\n", paragraph.upper );
+*/
     }
 
     // Complete.

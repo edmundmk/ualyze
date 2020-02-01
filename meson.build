@@ -45,3 +45,6 @@ ualtest = executable(
     link_with : ualyze
 )
 
+test_script = find_program( 'tests/ualtest.py' )
+test( 'script.test', test_script, args : [ ualtest.full_path(), files( 'tests/script.test' ) ] )
+
