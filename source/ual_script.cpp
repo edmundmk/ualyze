@@ -221,14 +221,21 @@ static bool push_bracket( ual_script_brstack* stack, const ual_script_bracket& b
     }
 }
 
+const unsigned BELOW_BRACKET_LEVEL = ~(unsigned)0;
+
 static unsigned match_bracket( ual_script_brstack* stack, size_t bracket_level, char32_t uc, unsigned curr_script )
 {
     size_t i = stack->sp;
-    while ( i-- > bracket_level )
+    while ( i-- )
     {
         const ual_script_bracket& b = stack->ss[ i ];
         if ( b.closing_bracket == uc )
         {
+            if ( i < bracket_level )
+            {
+                return BELOW_BRACKET_LEVEL;
+            }
+
             unsigned script = b.script;
             trim_brstack( stack, i );
             return script;
@@ -276,7 +283,10 @@ static unsigned lookahead( ual_buffer* ub, ual_script_brstack* stack, size_t ind
             else if ( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_CLOSE )
             {
                 // Closing bracket.
-                match_bracket( stack, bracket_level, uc, UCDN_SCRIPT_COMMON );
+                if ( match_bracket( stack, bracket_level, uc, UCDN_SCRIPT_COMMON ) == BELOW_BRACKET_LEVEL )
+                {
+                    break;
+                }
             }
 
             continue;
