@@ -11,7 +11,6 @@
 #include "ualyze.h"
 #include <assert.h>
 #include "ual_buffer.h"
-#include "ucdn.h"
 
 /*
     Invalid bidi class.
@@ -43,7 +42,7 @@ enum bidi_complexity
 
 static bidi_complexity bidi_lookup( ual_buffer* ub )
 {
-    const UCDRecord* ucdn = ucdn_record_table();
+    const UCDRecord* ucdn = ub->ucdn;
 
     bool left = true;
     bool solitary = true;

@@ -14,8 +14,11 @@
 #include "ualyze.h"
 #include <string>
 #include <vector>
+#include <ucdn.h>
 
 const uint16_t IX_INVALID = ( 1 << 11 ) - 1;
+const size_t INVALID_INDEX = ~(size_t)0;
+const size_t STACK_BYTES = 8 * 64;
 
 struct ual_level_run
 {
@@ -26,6 +29,13 @@ struct ual_level_run
     unsigned inext  : 20;   // index of next level run in isolating sequence.
 };
 
+struct ual_script_analysis
+{
+    size_t index;
+    unsigned script;
+    unsigned sp;
+};
+
 struct ual_buffer
 {
     ual_buffer();
@@ -34,24 +44,30 @@ struct ual_buffer
     // Reference count.
     intptr_t refcount;
 
+    // UCDN record table.
+    const UCDRecord* ucdn;
+
     // Text data.
     std::u16string s;
     std::vector< ual_char > c;
-    ual_paragraph p;
-
-    // Stack memory.
-    void* stack_bytes;
-
-    // Span results.
-    std::vector< ual_script_span > script_spans;
-
-    // Bidi results.
     std::vector< ual_level_run > level_runs;
-    std::vector< ual_bidi_run > bidi_runs;
+
+    // Current analysis state.
+    ual_paragraph p;
+    ual_script_analysis script_analysis;
+
+    // Bidi analysis.
+//    size_t bidi_index;
 };
 
-void* ual_stack_bytes( ual_buffer* ub, size_t count, size_t size );
 char32_t ual_codepoint( ual_buffer* ub, size_t index );
+
+template < typename T, size_t count >
+inline T* ual_stack( ual_buffer* ub )
+{
+    static_assert( sizeof( T ) * count <= STACK_BYTES );
+    return (T*)( ub + 1 );
+}
 
 #endif
 

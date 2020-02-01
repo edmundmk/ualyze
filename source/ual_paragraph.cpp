@@ -10,16 +10,10 @@
 
 #include "ual_buffer.h"
 #include <assert.h>
-#include "ucdn.h"
 
 bool ual_next_paragraph( ual_buffer* ub, ual_paragraph* out_paragraph )
 {
-    const UCDRecord* ucdn = ucdn_record_table();
-    if ( ucdn_record_table_size() >= IX_INVALID )
-    {
-        assert( ! "ual_next_paragraph : ucdn record table is too large" );
-        return false;
-    }
+    const UCDRecord* ucdn = ub->ucdn;
 
     ub->c.clear();
     ub->p.lower = ub->p.upper;

@@ -88,52 +88,6 @@ typedef struct ual_char
 ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count );
 
 /*
-    Builds a list of spans indicating runs of the same script.  The script
-    code is a 4-character identifier from ISO 15924, with the first character
-    in the high byte (this is the same as Harfbuzz).
-
-    Each script span starts at the lower index and ends at the lower index of
-    the next span in the array.  There are count - 1 spans.  The final entry in
-    the span array holds only the index of the end of the paragraph.
-*/
-
-typedef struct ual_script_span
-{
-    unsigned lower;
-    uint32_t script;
-} ual_script_span;
-
-size_t ual_script_analyze( ual_buffer* ub );
-ual_script_span* ual_script_spans( ual_buffer* ub, size_t* out_count );
-
-/*
-    Find bidi paragraph level.
-*/
-
-unsigned ual_bidi_paragraph_level( ual_buffer* ub );
-
-/*
-    Perform bidi analysis on a paragraph.  Will clobber the break flags.
-    The result of bidi analysis is a set of bidi runs containing characters
-    with the same bidi level.
-
-    Each bidi run starts at the lower index and ends at the lower index of
-    the next run in the array.  There are count - 1 runs.  The final entry in
-    the run array holds only the index of the end of the paragraph.
-
-    Returns the paragraph level.
-*/
-
-typedef struct ual_bidi_run
-{
-    unsigned lower;
-    unsigned level;
-} ual_bidi_run;
-
-unsigned ual_bidi_analyze( ual_buffer* ub );
-ual_bidi_run* ual_bidi_runs( ual_buffer* ub, size_t* out_count );
-
-/*
     Perform cluster and line breaking analysis.  After analysis, the char
     buffer will have break flags set at the start of each cluster, and at each
     break opportunity (at the character that would start the new line).
@@ -149,6 +103,58 @@ const uint16_t UAL_BREAK_LINE       = 1 << 1;
 const uint16_t UAL_BREAK_SPACES     = 1 << 2;
 
 void ual_break_analyze( ual_buffer* ub );
+
+/*
+    Split the paragraph into spans containing runs of the same script.  The
+    script code is a 4-character identifier from ISO 15924, with the first
+    character in the high byte (this is the same as Harfbuzz).
+
+    Active script analysis locks the internal stack.  Bidi analysis cannot
+    be run at the same time.
+*/
+
+typedef struct ual_script_span
+{
+    size_t lower;
+    size_t upper;
+    uint32_t script;
+} ual_script_span;
+
+void ual_script_spans_begin( ual_buffer* ub );
+bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span );
+void ual_script_spans_end( ual_buffer* ub );
+
+/*
+    Find bidi paragraph level.
+*/
+
+unsigned ual_bidi_paragraph_level( ual_buffer* ub );
+
+/*
+    Perform bidi analysis on a paragraph.  Sets the bc value to the resolved
+    bidi class of each character.  Returns the paragraph level.
+
+    This routine requires the internal stack.  Script analysis cannot be run
+    at the same time.
+*/
+
+unsigned ual_bidi_analyze( ual_buffer* ub );
+
+/*
+    With resolved bidi classes,  split the paragraph into bidi runs.  This
+    process does *not* require the internal stack.
+*/
+
+typedef struct ual_bidi_run
+{
+    size_t lower;
+    size_t upper;
+    unsigned level;
+} ual_bidi_run;
+
+bool ual_bidi_runs_begin( ual_buffer* ub );
+bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run );
+void ual_bidi_runs_end( ual_buffer* ub );
 
 #ifdef __cplusplus
 }

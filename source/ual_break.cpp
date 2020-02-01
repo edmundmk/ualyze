@@ -10,7 +10,6 @@
 
 #include "ualyze.h"
 #include "ual_buffer.h"
-#include "ucdn.h"
 
 /*
     Include state machines.
@@ -35,7 +34,7 @@ const size_t NO_SPACE = SIZE_MAX;
 
 void ual_break_analyze( ual_buffer* ub )
 {
-    const UCDRecord* ucdn = ucdn_record_table();
+    const UCDRecord* ucdn = ub->ucdn;
 
     int lb_state = STATE_SOT;
     int cb_state = STATE_CONTROL_LF;

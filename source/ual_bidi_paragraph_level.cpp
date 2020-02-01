@@ -10,11 +10,10 @@
 
 #include "ualyze.h"
 #include "ual_buffer.h"
-#include "ucdn.h"
 
 unsigned ual_bidi_paragraph_level( ual_buffer* ub )
 {
-    const UCDRecord* ucdn = ucdn_record_table();
+    const UCDRecord* ucdn = ub->ucdn;
 
     /*
         Calculate paragraph embedding level for this paragraph.

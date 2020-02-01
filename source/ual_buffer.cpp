@@ -10,24 +10,37 @@
 
 #include "ual_buffer.h"
 #include <assert.h>
-
-const size_t BYTES_SIZE = 4 * 64;
+#include <memory>
 
 ual_buffer::ual_buffer()
     :   refcount( 1 )
+    ,   ucdn( ucdn_record_table() )
     ,   p{ 0, 0 }
-    ,   stack_bytes( malloc( BYTES_SIZE ) )
+    ,   script_analysis{ INVALID_INDEX }
 {
 }
 
 ual_buffer::~ual_buffer()
 {
-    free( stack_bytes );
 }
 
 ual_buffer* ual_buffer_create()
 {
-    return new ual_buffer();
+    // Check record table.
+    if ( ucdn_record_table_size() >= IX_INVALID )
+    {
+        assert( ! "ucdn record table is too large" );
+        return nullptr;
+    }
+
+    // Allocate enough memory for structure and stack.
+    void* p = malloc( sizeof( ual_buffer ) + STACK_BYTES );
+    if ( ! p )
+    {
+        return nullptr;
+    }
+
+    return new ( p ) ual_buffer();
 }
 
 ual_buffer* ual_buffer_retain( ual_buffer* ub )
@@ -40,7 +53,8 @@ void ual_buffer_release( ual_buffer* ub )
 {
     if ( ub && --ub->refcount == 0 )
     {
-        delete ub;
+        ub->~ual_buffer();
+        free( ub );
     }
 }
 
@@ -99,9 +113,4 @@ char32_t ual_codepoint( ual_buffer* ub, size_t index )
     return uc;
 }
 
-void* ual_stack_bytes( ual_buffer* ub, size_t count, size_t size )
-{
-    assert( count * size <= BYTES_SIZE );
-    return ub->stack_bytes;
-}
 
