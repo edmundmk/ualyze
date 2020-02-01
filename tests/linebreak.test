@@ -1,0 +1,89 @@
+LINEBREAK
+"Hello,":" ";"World!"
+
+LINEBREAK
+"HelloWorld!"
+
+LINEBREAK
+:"    ";"Without you.":"  ";"The eyes gaze"
+
+
+-- LB8.  Zero-width space.
+
+CHAR zws 200B
+
+LINEBREAK
+"A":"  "<zws>"  ";"B"
+
+LINEBREAK
+"Hello"<zws>;"]"
+
+
+-- LB8a.  Emoji zero-width-joiner sequences.
+
+CHAR zwj 200D
+CHAR man 01F468
+CHAR woman 01F469
+CHAR heart 2764
+CHAR variation16 FE0F
+CHAR kiss 01F48B
+
+LINEBREAK
+<man><zwj><heart><variation16><zwj><kiss><zwj><man>;<woman><zwj><heart><variation16><zwj><kiss><zwj><woman>
+
+LINEBREAK
+"hello"<zws>;<zwj><man>
+
+
+-- LB9, LB10.  Combining marks.
+
+CHAR combine 20E4
+
+LINEBREAK
+"!"<combine><combine>:" ";<combine><combine>
+
+
+-- LB11.  Word joiner.  Note that WJ is overriden by zero-width space.
+
+CHAR wj 2060
+CHAR bom FEFF
+
+LINEBREAK
+"Hello, "<wj>"World!"
+
+LINEBREAK
+"Hello,":" "<zws>;<wj>"World!"
+
+LINEBREAK
+"Hello,"<zws>:" ";<wj>"World!"
+
+LINEBREAK
+<man><bom><woman>
+
+
+-- LB12.  No-break space.
+
+CHAR nbs 00A0
+CHAR nbsnarrow 202F
+
+LINEBREAK
+"Hello,"<nbs>"World!":" ";"I"<nbsnarrow><heart><nbsnarrow>"U!"
+
+
+-- Degenerate cases.
+
+CHAR surr0 D8E4
+CHAR surr1 D932
+
+LINEBREAK
+"Hello,"<surr0>"World!"
+
+LINEBREAK
+"Hello,":" ";"World<surr1>"
+
+LINEBREAK
+:"    "
+
+LINEBREAK
+""
+

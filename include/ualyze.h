@@ -77,6 +77,8 @@ ual_string_view ual_paragraph_text( ual_buffer* ub );
     Direct access to the analysis buffer.  Only valid for the currently
     analyzed paragraph.  The bc member is either a (private) bidi class after
     bidi analysis, or contains breaking flags after break analysis.
+
+    The buffer is valid until the next call to ual_paragraph_next().
 */
 
 typedef struct ual_char
@@ -85,7 +87,7 @@ typedef struct ual_char
     uint16_t bc : 5;    // bidi class or break flags
 } ual_char;
 
-ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count );
+const ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count );
 
 /*
     Perform cluster and line breaking analysis.  After analysis, the char
@@ -102,7 +104,7 @@ const uint16_t UAL_BREAK_CLUSTER    = 1 << 0;
 const uint16_t UAL_BREAK_LINE       = 1 << 1;
 const uint16_t UAL_BREAK_SPACES     = 1 << 2;
 
-void ual_break_analyze( ual_buffer* ub );
+const ual_char* ual_break_analyze( ual_buffer* ub, size_t* out_count );
 
 /*
     Split the paragraph into spans containing runs of the same script.  The

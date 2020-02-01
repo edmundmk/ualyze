@@ -47,6 +47,25 @@ int main( int argc, char* argv[] )
         // Print paragraph.
         printf( "PARAGRAPH %zu %zu\n", paragraph.lower, paragraph.upper );
 
+        // Analyze breaks.
+        size_t count = 0;
+        const ual_char* c = ual_break_analyze( ub, &count );
+        for ( size_t index = 0; index < count; ++index )
+        {
+            if ( c[ index ].bc & UAL_BREAK_CLUSTER )
+            {
+                printf( "BREAK_CLUSTER %zu\n", index );
+            }
+            if ( c[ index ].bc & UAL_BREAK_LINE )
+            {
+                printf( "BREAK_LINE %zu\n", index );
+            }
+            if ( c[ index ].bc & UAL_BREAK_SPACES )
+            {
+                printf( "BREAK_SPACES %zu\n", index );
+            }
+        }
+
         // Analyze script.
         ual_script_span span;
         ual_script_spans_begin( ub );

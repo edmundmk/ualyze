@@ -69,7 +69,7 @@ ual_string_view ual_buffer_text( ual_buffer* ub, size_t lower, size_t upper )
     return { ub->s.data() + lower, upper - lower };
 }
 
-ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count )
+const ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count )
 {
     if ( out_count )
     {

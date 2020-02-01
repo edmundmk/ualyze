@@ -32,11 +32,12 @@ with open( sys.argv[ 2 ], 'r' ) as f:
         # Check for character.
         if line.startswith( "CHAR" ):
             chardef = line.split()
-            chars[ chardef[ 1 ] ] = bytes.fromhex( chardef[ 2 ] )[ : : -1 ]
+            code = chr( int( chardef[ 2 ], 16 ) ).encode( 'utf-16-le', errors = 'surrogatepass' )
+            chars[ chardef[ 1 ] ] = code
             continue
 
         # Check for new test case
-        if line == "SCRIPT" or line == "PARAGRAPH":
+        if line == "SCRIPT" or line == "PARAGRAPH" or line == "LINEBREAK" or line == "CLUSTERBREAK":
             cases.append( [ line, "" ] )
         elif line != "":
             cases[ -1 ][ 1 ] += line
@@ -48,7 +49,7 @@ for case in cases:
     code = case[ 1 ]
 
     text = bytearray()
-    p = [ [ [ 0, 0 ] ] ]
+    p = [ [ [ 0, -1 ] ] ]
     index = 0
 
     i = 0
@@ -59,8 +60,9 @@ for case in cases:
         if c == '[':
             j = code.find( ']', i )
             if j != -1:
-                p[ -1 ][ -1 ][ -1 ] = index
-                p[ -1 ].append( [ code[ i : j ], index, index ] )
+                if p[ -1 ][ -1 ][ -1 ] == -1:
+                    p[ -1 ][ -1 ][ -1 ] = index
+                p[ -1 ].append( [ code[ i : j ], index, -1 ] )
                 i = j + 1
                 continue
 
@@ -84,7 +86,8 @@ for case in cases:
 
         elif c == '/':
             if code[ i ] == '/':
-                p[ -1 ][ -1 ][ -1 ] = index
+                if p[ -1 ][ -1 ][ -1 ] == -1:
+                    p[ -1 ][ -1 ][ -1 ] = index
                 upper = len( text ) // 2
                 p[ -1 ][ 0 ][ -1 ] = upper
                 p.append( [ [ upper, upper ] ] )
@@ -92,12 +95,26 @@ for case in cases:
                 i += 1
                 continue
 
+        elif c == ',':
+            p[ -1 ].append( [ "BREAK_CLUSTER", index ] )
+            continue
+
+        elif c == ':':
+            p[ -1 ].append( [ "BREAK_SPACES", index ] )
+            continue
+
+        elif c == ';':
+            p[ -1 ].append( [ "BREAK_LINE", index ] )
+            continue
+
         elif c == ' ':
             continue
 
+        print( "'", code[ i : ], "'", sep = "" )
         raise Exception( 'invalid test case code' )
 
-    p[ -1 ][ -1 ][ -1 ] = index
+    if p[ -1 ][ -1 ][ -1 ] == -1:
+        p[ -1 ][ -1 ][ -1 ] = index
     p[ -1 ][ 0 ][ -1 ] = len( text ) // 2
 
     # Remove empty paragraph
@@ -128,7 +145,13 @@ for case in cases:
             q[ -1 ].append( [ info[ 1 ], int( info[ 2 ] ), int( info[ 3 ] ) ] )
             continue
 
-#        print( info )
+        if kind == 'CLUSTERBREAK' and info[ 0 ] == 'BREAK_CLUSTER':
+            q[ -1 ].append( [ info[ 0 ], int( info[ 1 ] ) ] )
+            continue
+
+        if kind == 'LINEBREAK' and ( info[ 0 ] == 'BREAK_SPACES' or info[ 0 ] == 'BREAK_LINE' ):
+            q[ -1 ].append( [ info[ 0 ], int( info[ 1 ] ) ] )
+            continue
 
     if p != q:
         print( kind, text.decode( 'utf-16-le', errors = 'replace' ) )
