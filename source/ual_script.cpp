@@ -374,12 +374,6 @@ bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span )
 
             if ( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_OPEN )
             {
-                // Open bracket at end of string has nothing to match with.
-                if ( index + 1 >= length )
-                {
-                    continue;
-                }
-
                 // Opening bracket.
                 char32_t closing_bracket = ucdn_paired_bracket( uc );
                 push_bracket( &stack, { closing_bracket, script } );
@@ -389,6 +383,10 @@ bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span )
                 while ( index < length && ub->c[ index ].ix == IX_INVALID )
                 {
                     index += 1;
+                }
+                if ( index >= length )
+                {
+                    break;
                 }
 
                 // Determine script of now-current character by lookahead.
