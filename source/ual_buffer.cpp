@@ -87,7 +87,7 @@ char32_t ual_codepoint( ual_buffer* ub, size_t index )
     if ( ( uc & 0xF800 ) == 0xD800 )
     {
         // Get next code unit.
-        char32_t ul = index < ub->s.size() ? ub->s[ index++ ] : 0;
+        char32_t ul = index < ub->s.size() ? ub->s[ index ] : 0;
 
         // Check for high/low surrogate pair.
         bool have_hi_surrogate = ( uc & 0xFC00 ) == 0xD800;
@@ -96,6 +96,7 @@ char32_t ual_codepoint( ual_buffer* ub, size_t index )
         {
             // Decode surrogate pair.
             uc = 0x010000 + ( ( uc & 0x3FF ) << 10 ) + ( ul & 0x3FF );
+            index += 1;
         }
         else
         {
