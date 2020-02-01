@@ -317,7 +317,6 @@ static unsigned lookahead( ual_buffer* ub, ual_script_brstack* stack, size_t ind
 void ual_script_spans_begin( ual_buffer* ub )
 {
     // Start at beginning of paragraph.
-    assert( ub->script_analysis.index == INVALID_INDEX );
     ub->script_analysis = { 0, UCDN_SCRIPT_LATIN, 0 };
 
     // Lookahead to determine script of first character.
