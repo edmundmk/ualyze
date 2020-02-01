@@ -87,7 +87,7 @@ const ual_char* ual_break_analyze( ual_buffer* ub, size_t* out_count )
         if ( cb_state < 0 )
         {
             bc |= UAL_BREAK_CLUSTER;
-            cb_state = -cb_state;
+            cb_state = -cb_state-1;
         }
         c.bc = bc;
 
