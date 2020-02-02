@@ -1247,8 +1247,8 @@ static void bidi_isolating_neutral( ual_buffer* ub, size_t irun )
                 if ( neutrals == NEUTRAL_SPAN )
                 {
                     bidi_resolve_neutrals( ub, lirun, lower, index, e );
-                    neutrals = NEUTRAL_NONE;
                 }
+                neutrals = NEUTRAL_NONE;
                 prev_strong = e;
             }
             break;
