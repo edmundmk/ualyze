@@ -18,7 +18,6 @@ CHAR en 0037
 CHAR on 003F
 CHAR al 0643
 CHAR nsm 0306
-CHAR ws 0020
 CHAR es 002B
 CHAR cs 003A
 CHAR et 00B0
@@ -87,7 +86,7 @@ BIDIWEAKR
 ( R AN )
 
 BIDIWEAKR
-<al><ws><en>
+<al>" "<en>
 ( R WS AN )
 
 BIDIWEAKR
@@ -102,7 +101,7 @@ BIDIWEAKR
 <al><r><fsi><en>
 ( R R FSI EN )
 
--- W4
+-- W4.  Use initial R to establish right-to-left context.
 
 BIDIWEAK
 <r><en><es><en>
@@ -129,7 +128,8 @@ BIDIWEAK
 ( R AN ON ON AN )
 
 
--- W5
+-- W5.  Use initial R to establish right-to-left context.
+
 BIDIWEAK
 <r><et><et><en>
 ( R EN EN EN )
@@ -146,7 +146,7 @@ BIDIWEAK
 <r><l><et><et><en>
 ( R L L L L )
 
--- W6
+-- W6.  Use initial R to establish right-to-left context.
 
 BIDIWEAK
 <r><an><et>
@@ -177,4 +177,61 @@ BIDIWEAKR
 BIDIWEAKR
 <r><rli><en>
 ( R RLI EN )
+
+
+-- Neutral processing.
+
+-- N1/N2
+
+BIDINEUTRAL
+<r><l><on><on><l>
+( R L L L L )
+
+BIDINEUTRAL
+<r><on><r>
+( R R R )
+
+BIDINEUTRAL
+<r><pdi><an>
+( R R AN )
+
+BIDINEUTRAL
+<r><on><on><on><en>
+( R R R R EN )
+
+BIDINEUTRAL
+<an><on><r>
+( AN R R )
+
+BIDINEUTRAL
+<an><on><an>
+( AN R AN )
+
+BIDIWEAK
+<l><r><an><on><en>
+( L R AN ON EN )
+
+BIDINEUTRAL
+<l><r><an><on><en> -- L R context avoids conversion of final EN to L by weak.
+( L R AN R EN )
+
+BIDINEUTRAL
+<en><lri><pdi><fsi><pdi><rli><pdi><r>
+( EN R R R R R R R )
+
+BIDIWEAK
+<l><r><en>" "<an>
+( L R EN WS AN )
+
+BIDINEUTRAL
+<l><r><en>" "<an> -- L R context avoids conversion of EN to L by weak.
+( L R EN R AN )
+
+BIDIWEAK
+<l><r><en><on><en>
+( L R EN ON EN )
+
+BIDINEUTRAL
+<l><r><en><on><en>
+( L R EN R EN )
 
