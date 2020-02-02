@@ -1232,8 +1232,8 @@ static void bidi_isolating_neutral( ual_buffer* ub, size_t irun )
                 {
                     unsigned bc = prev_strong == strong ? strong : e;
                     bidi_resolve_neutrals( ub, lirun, lower, index, bc );
-                    neutrals = NEUTRAL_NONE;
                 }
+                neutrals = NEUTRAL_NONE;
                 prev_strong = strong;
             }
             break;

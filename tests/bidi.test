@@ -8,9 +8,6 @@ CHAR rli 2067
 CHAR fsi 2068
 CHAR pdi 2069
 
-CHAR bell 0007
-CHAR rlmark 200F
-
 CHAR l 004C
 CHAR r 05D0
 CHAR an 0660
@@ -21,6 +18,10 @@ CHAR nsm 0306
 CHAR es 002B
 CHAR cs 003A
 CHAR et 00B0
+
+CHAR bell 0007
+CHAR rlmark 200F
+CHAR cyclone 1F300
 
 -- Check identification of level runs.  Level run spans are [{level}:{inext}:{sos}{eos}].
 
@@ -234,4 +235,51 @@ BIDIWEAK
 BIDINEUTRAL
 <l><r><en><on><en>
 ( L R EN R EN )
+
+
+-- N1/N2 isolates.
+
+BIDINEUTRAL
+<rli><l><on>" "<r><pdi>
+( L L R R R L )
+
+BIDINEUTRAL
+<rli><r><on>" "<l><pdi>
+( L R R R L L )
+
+BIDINEUTRAL
+<lri><l><on>" "<r><pdi>
+( L L L L R L )
+
+BIDINEUTRAL
+<lri><r><on>" "<l><pdi>
+( L R L L L L )
+
+BIDINEUTRAL
+<l><an><cyclone><on><r><fsi><r><pdi><on><on><r>
+( L AN R X R R R R R R R R )
+
+BIDINEUTRAL
+<l><an><r><on><fsi><r><pdi><on><on><r>
+( L AN R R R R R R R R )
+
+BIDINEUTRAL
+<on><on><on><r>
+( R R R R )
+
+BIDINEUTRAL
+<lri><on><on><on><r><pdi>
+( L L L L R L )
+
+BIDINEUTRAL
+<r><on><on><on><lre><on><on><pdf>
+( R R R R R L L L )
+
+BIDIWEAK
+<l><r><pdf><r><pdf><on><on><pdf><l>
+( L R BN R BN ON ON BN L )
+
+BIDINEUTRAL
+<l><r><pdf><r><pdf><on><on><pdf><l>
+( L R BN R L L L L L )
 
