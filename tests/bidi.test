@@ -236,7 +236,6 @@ BIDINEUTRAL
 <l><r><en><on><en>
 ( L R EN R EN )
 
-
 -- N1/N2 isolates.
 
 BIDINEUTRAL
@@ -282,4 +281,67 @@ BIDIWEAK
 BIDINEUTRAL
 <l><r><pdf><r><pdf><on><on><pdf><l>
 ( L R BN R L L L L L )
+
+-- N0 brackets
+
+BIDINEUTRAL
+<r><l>"("<r>")"<l>
+( R L R R R L )
+
+BIDINEUTRAL
+<r><l>"{"<l><r>"}"<l>
+( R L R L R R L )
+
+BIDINEUTRAL
+<r><l>"["<on><r>"]"<l>
+( R L R R R R L )
+
+BIDINEUTRAL
+<r><l>"["<l>"]"<r>
+( R L L L L R )
+
+BIDINEUTRAL
+<r><l>"["<l><on>"]"<l>
+( R L L L L L L )
+
+BIDINEUTRAL
+<r><r>"["<l>"]"<l>
+( R R R L R L )
+
+BIDINEUTRAL
+<r><r>"["<l>"]"<r>
+( R R R L R R )
+
+BIDINEUTRAL
+<r><l>"["<on><on>"]"<on><r>
+( R L R R R R R R )
+
+BIDINEUTRAL
+<r><l>"["<on><on>"]"<on><l>
+( R L L L L L L L )
+
+BIDINEUTRAL
+<r><r>"("<r><r>"{&ef]!)gh"
+( R R R R R R R L L R R R L L )
+
+BIDINEUTRAL
+<r>"smith (fabrikam "<r><r><r><r><r><r>") "<r><r><r><r><r><r>
+( R L L L L L R R L L L L L L L L R R R R R R R R R R R R R R R )
+
+BIDINEUTRAL
+<r><r><r><r><r><r>" book(s)"
+( R R R R R R R L L L L L L L )
+
+BIDINEUTRAL
+<r><l>"({["<on>"]"<on><l>")"<r>
+( R L L L L L L L L L R )
+
+BIDINEUTRAL
+<r><l>"({["<on>"]"<on>"("<l>")"<l>")"<r>
+( R L L L L L L L L L L L L R )
+-- uR uL "({[" uON "]" uON "(" uL ")" uL ")" uR, &as ) == bidi_string{ R, L, L, L, L, L, L, L, L, L, L, L, L, R } );
+
+-- uR uL "({[" uON "]" uON "(" uL ")" uR ")" uR, &as ) == bidi_string{ R, L, R, R, R, R, R, R, R, L, R, R, R, R } );
+-- uR uL "({[" uON "]" uON uL "(" uL ")" uR ")" uR, &as ) == bidi_string{ R, L, R, R, R, R, R, R, L, L, L, L, R, R, R } );
+-- uR uL "({[" uON "]" uON uL "(" uON "{" uL ")" uR ")" uR, &as ) == bidi_string{ R, L, R, R, R, R, R, R, L, L, L, L, L, L, R, R, R } );
 
