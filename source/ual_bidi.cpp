@@ -1300,6 +1300,7 @@ void bidi_initial( ual_buffer* ub )
     ub->level_runs.clear();
 
     // Look up initial bidi classes.
+    size_t index = 0;
     unsigned paragraph_level = 0;
     ual_bidi_complexity complexity = bidi_lookup( ub );
     switch ( complexity )
@@ -1307,7 +1308,9 @@ void bidi_initial( ual_buffer* ub )
     case BIDI_ALL_LEFT:
     case BIDI_ALL_DONE:
         // Entire string is left to right.  No further analysis required.
-        ub->bidi_analysis = { ub->c.size(), paragraph_level, complexity };
+        index = ub->c.size();
+        ub->level_runs.push_back( { 0, 0, UCDN_BIDI_CLASS_L, UCDN_BIDI_CLASS_L, 0 } );
+        ub->level_runs.push_back( { (unsigned)index, paragraph_level, BC_SEQUENCE, BC_SEQUENCE, 0 } );
         break;
 
     case BIDI_SOLITARY:
@@ -1322,7 +1325,10 @@ void bidi_initial( ual_buffer* ub )
     }
 
     // Set up analysis state.
-    ub->bidi_analysis = { 0, paragraph_level, complexity };
+    ub->bidi_analysis.ilrun = 0;
+    ub->bidi_analysis.index = index;
+    ub->bidi_analysis.paragraph_level = paragraph_level;
+    ub->bidi_analysis.complexity = complexity;
 }
 
 unsigned ual_bidi_analyze( ual_buffer* ub )

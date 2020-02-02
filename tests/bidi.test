@@ -11,6 +11,18 @@ CHAR pdi 2069
 CHAR bell 0007
 CHAR rlmark 200F
 
+CHAR l 004C
+CHAR r 05D0
+CHAR an 0660
+CHAR en 0037
+CHAR on 003F
+CHAR al 0643
+CHAR nsm 0306
+CHAR ws 0020
+CHAR es 002B
+CHAR cs 003A
+CHAR et 00B0
+
 -- Check identification of level runs.  Level run spans are [{level}:{inext}:{sos}{eos}].
 
 BIDILRUN
@@ -46,4 +58,55 @@ BIDILRUN
 
 BIDILRUN
 [0:0:LL]"A"<lri><pdi><fsi><pdi><rli><pdi>"B"
+
+
+-- Weak processing.  Test cases happen in a right-to-left context.
+
+-- W1
+
+BIDIWEAKR
+<al><nsm><nsm>
+( R R R )
+
+BIDIWEAKR
+<nsm>
+( R )
+
+BIDIWEAKR
+<lri><nsm>
+( LRI ON )
+
+BIDIWEAKR
+<pdi><nsm>
+( PDI ON )
+
+-- W2
+
+BIDIWEAKR
+<al><en>
+( R AN )
+
+BIDIWEAKR
+<al><ws><en>
+( R WS AN )
+
+BIDIWEAKR
+<pdi><en>
+( PDI EN )
+
+BIDIWEAKR
+<al><l><rli><en>
+( R L RLI L )
+
+BIDIWEAKR
+<al><r><fsi><en>
+( R R FSI EN )
+
+-- W4
+
+-- W5
+
+-- W6
+
+-- W7
 

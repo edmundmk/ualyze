@@ -72,13 +72,14 @@ int main( int argc, char* argv[] )
 #endif
 
     // Check for bidi argument.
-    enum { LEVEL_RUNS, EXPLICIT, WEAK, NEUTRAL, NONE } bidi_mode = NONE;
+    enum { LEVEL_RUNS, EXPLICIT, WEAK, WEAK_R, NEUTRAL, NONE } bidi_mode = NONE;
     if ( argc > 1 )
     {
         const char* arg = argv[ 1 ];
-        if ( strcmp( arg, "r" ) == 0 ) bidi_mode = LEVEL_RUNS;
+        if ( strcmp( arg, "l" ) == 0 ) bidi_mode = LEVEL_RUNS;
         if ( strcmp( arg, "x" ) == 0 ) bidi_mode = EXPLICIT;
         if ( strcmp( arg, "w" ) == 0 ) bidi_mode = WEAK;
+        if ( strcmp( arg, "wr" ) == 0 ) bidi_mode = WEAK_R;
         if ( strcmp( arg, "n" ) == 0 ) bidi_mode = NEUTRAL;
     }
 
@@ -149,34 +150,46 @@ int main( int argc, char* argv[] )
         if ( bidi_mode != NONE )
         {
             bidi_initial( ub );
+            size_t lrun_length = ub->level_runs.size() - 1;
+            for ( size_t irun = 0; irun < lrun_length; ++irun )
+            {
+                const ual_level_run* prun = &ub->level_runs.at( irun );
+                const ual_level_run* nrun = &ub->level_runs.at( irun + 1 );
+                printf
+                (
+                    "LRUN %u:%u:%c%c %u %u\n",
+                    prun->level,
+                    prun->inext,
+                    boundary_class( prun->sos ),
+                    boundary_class( prun->eos ),
+                    prun->start,
+                    nrun->start
+                );
+            }
             if ( bidi_mode == LEVEL_RUNS )
             {
-                size_t length = ub->level_runs.size() - 1;
-                for ( size_t irun = 0; irun < length; ++irun )
-                {
-                    const ual_level_run* prun = &ub->level_runs.at( irun );
-                    const ual_level_run* nrun = &ub->level_runs.at( irun + 1 );
-                    printf
-                    (
-                        "LRUN %u:%u:%c%c %u %u\n",
-                        prun->level,
-                        prun->inext,
-                        boundary_class( prun->sos ),
-                        boundary_class( prun->eos ),
-                        prun->start,
-                        nrun->start
-                    );
-                }
                 continue;
             }
 
-            if ( bidi_mode != EXPLICIT && ub->bidi_analysis.complexity != BIDI_ALL_LEFT )
+            if ( bidi_mode == WEAK_R )
             {
-                bidi_weak( ub );
-                if ( bidi_mode != WEAK && ub->bidi_analysis.complexity != BIDI_ALL_LEFT )
+                // Force a single right-to-left level run.
+                ub->level_runs.clear();
+                ub->level_runs.push_back( { 0, 1, UCDN_BIDI_CLASS_R, UCDN_BIDI_CLASS_R, 0 } );
+                ub->level_runs.push_back( { (unsigned)ub->c.size(), 1, BC_SEQUENCE, BC_SEQUENCE, 0 } );
+                ub->bidi_analysis.complexity = BIDI_SOLITARY;
+            }
+
+            if ( ub->bidi_analysis.complexity != BIDI_ALL_LEFT )
+            {
+                if ( bidi_mode != EXPLICIT )
                 {
-                    bidi_brackets( ub );
-                    bidi_neutral( ub );
+                    bidi_weak( ub );
+                    if ( bidi_mode != WEAK && bidi_mode != WEAK_R )
+                    {
+                        bidi_brackets( ub );
+                        bidi_neutral( ub );
+                    }
                 }
             }
 

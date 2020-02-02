@@ -40,11 +40,13 @@ with open( sys.argv[ 2 ], 'r' ) as f:
         if line == "SCRIPT" or line == "PARAGRAPH" or line == "LINEBREAK" or line == "CLUSTERBREAK":
             cases.append( [ line, None, "" ] )
         elif line == "BIDILRUN":
-            cases.append( [ line, "r", "" ] )
+            cases.append( [ line, "l", "" ] )
         elif line == "BIDIEXPLICIT":
             cases.append( [ line, "x", "" ] )
         elif line == "BIDIWEAK":
             cases.append( [ line, "w", "" ] )
+        elif line == "BIDIWEAKR":
+            cases.append( [ line, "wr", "" ] )
         elif line == "BIDINEUTRAL":
             cases.append( [ line, "n", "" ] )
         elif line != "":
@@ -146,7 +148,8 @@ for case in cases:
     output = result.stdout.decode( 'utf-8' )
     if result.returncode != 0:
         print( kind, text.decode( 'utf-16-le', errors = 'replace' ) )
-        print( "    FAILED:", output, end="" )
+        print( "    FAILED:" )
+        print( output )
         exitcode = result.returncode
         continue
 
@@ -174,12 +177,13 @@ for case in cases:
         if kind == 'BIDILRUN' and info[ 0 ] == 'LRUN':
             q[ -1 ].append( [ info[ 1 ], int( info[ 2 ] ), int( info[ 3 ] ) ] )
 
-        if ( kind == 'BIDIEXPLICIT' or kind == 'BIDIWEAK' or kind == 'BIDINEUTRAL' ) and info[ 0 ] == 'BCLASS':
+        if ( kind == 'BIDIEXPLICIT' or kind == 'BIDIWEAK' or kind == 'BIDIWEAKR' or kind == 'BIDINEUTRAL' ) and info[ 0 ] == 'BCLASS':
             q[ -1 ].append( info )
 
     if p != q:
         print( kind, text.decode( 'utf-16-le', errors = 'replace' ) )
         print( "   FAILED:" )
+        print( output )
         print( p )
         print( q )
         exitcode = 1
