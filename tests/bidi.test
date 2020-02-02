@@ -23,18 +23,5 @@ BIDILRUN
 
 BIDIEXPLICIT
 "text1"<rle>"text2"<pdf><rlo>"text3"<pdf>"text4"
-( L L L L L BN L L L L L BN R R R R R BN L L L L L )
-
-BIDILRUN
-
-
--- Cheak weak bidi processing.
-
-BIDIWEAK
-
-
-
--- Cheak full bidi algorithm, including neutrals.
-
-BIDI
+( L L L L EN BN L L L L EN BN BN R R R R R BN L L L L EN )
 

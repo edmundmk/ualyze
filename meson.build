@@ -41,6 +41,7 @@ ualtest = executable(
     'ualtest',
     sources : [ 'tests/ualtest.cpp' ],
     include_directories : include_directories( 'include' ),
+    dependencies : ucdn_dep,
     link_with : ualyze
 )
 
@@ -49,3 +50,4 @@ test( 'paragraph.test', test_script, args : [ ualtest.full_path(), files( 'tests
 test( 'linebreak.test', test_script, args : [ ualtest.full_path(), files( 'tests/linebreak.test' ) ] )
 test( 'clusterbreak.test', test_script, args : [ ualtest.full_path(), files( 'tests/linebreak.test' ) ] )
 test( 'script.test', test_script, args : [ ualtest.full_path(), files( 'tests/script.test' ) ] )
+test( 'bidi.test', test_script, args : [ ualtest.full_path(), files( 'tests/bidi.test' ) ] )

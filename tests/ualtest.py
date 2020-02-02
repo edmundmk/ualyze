@@ -38,15 +38,23 @@ with open( sys.argv[ 2 ], 'r' ) as f:
 
         # Check for new test case
         if line == "SCRIPT" or line == "PARAGRAPH" or line == "LINEBREAK" or line == "CLUSTERBREAK":
-            cases.append( [ line, "" ] )
+            cases.append( [ line, None, "" ] )
+        elif line == "BIDILRUN":
+            cases.append( [ line, "r", "" ] )
+        elif line == "BIDIEXPLICIT":
+            cases.append( [ line, "x", "" ] )
+        elif line == "BIDIWEAK":
+            cases.append( [ line, "w", "" ] )
+        elif line == "BIDINEUTRAL":
+            cases.append( [ line, "n", "" ] )
         elif line != "":
-            cases[ -1 ][ 1 ] += line
+            cases[ -1 ][ 2 ] += line
 
 # Perform cases.
 for case in cases:
 
     kind = case[ 0 ]
-    code = case[ 1 ]
+    code = case[ 2 ]
 
     text = bytearray()
     p = [ [ [ 0, -1 ] ] ]
@@ -95,6 +103,13 @@ for case in cases:
                 i += 1
                 continue
 
+        elif c == '(':
+            j = code.find( ')', i )
+            if j != -1:
+                p[ -1 ].append( [ "BCLASS" ] + code[ i : j ].split() )
+                i = j + 1
+                continue
+
         elif c == ',':
             p[ -1 ].append( [ "BREAK_CLUSTER", index ] )
             continue
@@ -122,7 +137,10 @@ for case in cases:
         p.pop()
 
     # Invoke test case.
-    result = subprocess.run( ualtest, input = text, stdout = subprocess.PIPE, stderr = subprocess.STDOUT )
+    command = [ ualtest ]
+    if case[ 1 ] != None:
+        command.append( case[ 1 ] )
+    result = subprocess.run( command, input = text, stdout = subprocess.PIPE, stderr = subprocess.STDOUT )
 
     # Print test case and check for failure.
     output = result.stdout.decode( 'utf-8' )
@@ -152,6 +170,12 @@ for case in cases:
         if kind == 'LINEBREAK' and ( info[ 0 ] == 'BREAK_SPACES' or info[ 0 ] == 'BREAK_LINE' ):
             q[ -1 ].append( [ info[ 0 ], int( info[ 1 ] ) ] )
             continue
+
+        if kind == 'BIDILRUN' and info[ 0 ] == 'LRUN':
+            q[ -1 ].append( [ info[ 1 ], int( info[ 2 ] ), int( info[ 3 ] ) ] )
+
+        if ( kind == 'BIDIEXPLICIT' or kind == 'BIDIWEAK' or kind == 'BIDINEUTRAL' ) and info[ 0 ] == 'BCLASS':
+            q[ -1 ].append( info )
 
     if p != q:
         print( kind, text.decode( 'utf-16-le', errors = 'replace' ) )

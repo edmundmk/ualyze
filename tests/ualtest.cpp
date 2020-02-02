@@ -12,6 +12,56 @@
 #include <stdio.h>
 #include <vector>
 #include <ualyze.h>
+#include "../source/ual_buffer.h"
+
+void bidi_initial( ual_buffer* ub );
+void bidi_weak( ual_buffer* ub );
+void bidi_brackets( ual_buffer* ub );
+void bidi_neutral( ual_buffer* ub );
+
+static char boundary_class( unsigned bc )
+{
+    switch ( bc )
+    {
+    case UCDN_BIDI_CLASS_L:     return 'L';
+    case UCDN_BIDI_CLASS_R:     return 'R';
+    case UCDN_BIDI_CLASS_AL:    return 'A';
+    case BC_SEQUENCE:           return '-';
+    default:                    return '?';
+    }
+}
+
+static const char* bidi_class( unsigned bc )
+{
+    switch ( bc )
+    {
+    case UCDN_BIDI_CLASS_L:     return "L";
+    case UCDN_BIDI_CLASS_R:     return "R";
+    case UCDN_BIDI_CLASS_AL:    return "AL";
+    case UCDN_BIDI_CLASS_LRE:   return "LRE";
+    case UCDN_BIDI_CLASS_LRO:   return "LRO";
+    case UCDN_BIDI_CLASS_RLE:   return "RLE";
+    case UCDN_BIDI_CLASS_RLO:   return "RLO";
+    case UCDN_BIDI_CLASS_PDF:   return "PDF";
+    case UCDN_BIDI_CLASS_EN:    return "EN";
+    case UCDN_BIDI_CLASS_ES:    return "ES";
+    case UCDN_BIDI_CLASS_ET:    return "ET";
+    case UCDN_BIDI_CLASS_AN:    return "AN";
+    case UCDN_BIDI_CLASS_CS:    return "CS";
+    case UCDN_BIDI_CLASS_NSM:   return "NSM";
+    case UCDN_BIDI_CLASS_BN:    return "BN";
+    case UCDN_BIDI_CLASS_B:     return "B";
+    case UCDN_BIDI_CLASS_S:     return "S";
+    case UCDN_BIDI_CLASS_WS:    return "WS";
+    case UCDN_BIDI_CLASS_ON:    return "ON";
+    case UCDN_BIDI_CLASS_LRI:   return "LRI";
+    case UCDN_BIDI_CLASS_RLI:   return "RLI";
+    case UCDN_BIDI_CLASS_FSI:   return "FSI";
+    case UCDN_BIDI_CLASS_PDI:   return "PDI";
+    case BC_INVALID:            return "X";
+    default:                    return "?";
+    }
+}
 
 int main( int argc, char* argv[] )
 {
@@ -20,6 +70,17 @@ int main( int argc, char* argv[] )
     _setmode( _fileno( stdin ), _O_BINARY );
     _setmode( _fileno( stdout ), _O_BINARY );
 #endif
+
+    // Check for bidi argument.
+    enum { LEVEL_RUNS, EXPLICIT, WEAK, NEUTRAL, NONE } bidi_mode = NONE;
+    if ( argc > 1 )
+    {
+        const char* arg = argv[ 1 ];
+        if ( strcmp( arg, "r" ) == 0 ) bidi_mode = LEVEL_RUNS;
+        if ( strcmp( arg, "x" ) == 0 ) bidi_mode = EXPLICIT;
+        if ( strcmp( arg, "w" ) == 0 ) bidi_mode = WEAK;
+        if ( strcmp( arg, "n" ) == 0 ) bidi_mode = NEUTRAL;
+    }
 
     // Read in text from stdin.
     std::vector< char > data;
@@ -84,30 +145,51 @@ int main( int argc, char* argv[] )
         }
         ual_script_spans_end( ub );
 
-/*
-        // Analyze breaks.
-        ual_break_analyze( ub );
-        ual_char* chars = ual_char_buffer( ub, nullptr );
-        for ( size_t i = paragraph.lower; i < paragraph.upper; ++i )
+        // Analyze bidi stages.
+        if ( bidi_mode != NONE )
         {
-            ual_char c = chars[ i - paragraph.lower ];
-            if ( c.bc & UAL_BREAK_SPACES )
+            bidi_initial( ub );
+            if ( bidi_mode == LEVEL_RUNS )
             {
-                printf( "BREAK_SPACES %zu\n", i );
+                size_t length = ub->level_runs.size() - 1;
+                for ( size_t irun = 0; irun < length; ++irun )
+                {
+                    const ual_level_run* prun = &ub->level_runs.at( irun );
+                    const ual_level_run* nrun = &ub->level_runs.at( irun + 1 );
+                    printf
+                    (
+                        "LRUN %u:%u:%c%c %u %u\n",
+                        prun->level,
+                        prun->inext,
+                        boundary_class( prun->sos ),
+                        boundary_class( prun->eos ),
+                        prun->start,
+                        nrun->start
+                    );
+                }
+                continue;
             }
-            if ( c.bc & UAL_BREAK_LINE )
-            {
-                printf( "BREAK_LINE %zu\n", i );
-            }
-            if ( c.bc & UAL_BREAK_CLUSTER )
-            {
-                printf( "BREAK_CLUSTER %zu\n", i );
-            }
-        }
 
-        // Write hard break at end of paragraph.
-        printf( "HARD_BREAK %zu\n", paragraph.upper );
-*/
+            if ( bidi_mode != EXPLICIT && ub->bidi_analysis.complexity != BIDI_ALL_LEFT )
+            {
+                bidi_weak( ub );
+                if ( bidi_mode != WEAK && ub->bidi_analysis.complexity != BIDI_ALL_LEFT )
+                {
+                    bidi_brackets( ub );
+                    bidi_neutral( ub );
+                }
+            }
+
+            printf( "BCLASS" );
+            size_t length = ub->c.size();
+            for ( size_t i = 0; i < length; ++i )
+            {
+                const ual_char& c = ub->c[ i ];
+                printf( " %s", bidi_class( c.bc ) );
+            }
+            printf( "\n" );
+            continue;
+        }
     }
 
     ual_buffer_release( ub );

@@ -13,12 +13,6 @@
 #include "ual_buffer.h"
 
 /*
-    Invalid bidi class.
-*/
-
-const uint16_t BC_INVALID = 31;
-
-/*
     sos/eos types.  BC_SEQUENCE represents a link to next/previous run in the
     isolating run sequence.
 */
@@ -26,7 +20,7 @@ const uint16_t BC_INVALID = 31;
 static_assert( UCDN_BIDI_CLASS_L == 0 );
 static_assert( UCDN_BIDI_CLASS_R == 1 );
 static_assert( UCDN_BIDI_CLASS_AL == 2 );
-const unsigned BC_SEQUENCE = 3;
+static_assert( BC_SEQUENCE == 3 );
 
 /*
     Look up bidi classes for each codepoint in a paragraph.  The class of
@@ -569,7 +563,7 @@ static unsigned lookahead( ual_buffer* ub, size_t i, size_t upper )
     return BC_INVALID;
 }
 
-static void bidi_weak( ual_buffer* ub )
+void bidi_weak( ual_buffer* ub )
 {
     size_t length = ub->level_runs.size() - 1;
     for ( size_t i = 0; i < length; ++i )
@@ -1125,7 +1119,7 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
     }
 }
 
-static void bidi_brackets( ual_buffer* ub )
+void bidi_brackets( ual_buffer* ub )
 {
     // Create stack.
     ual_bidi_brstack stack = make_brstack( ub );
@@ -1199,7 +1193,7 @@ static void bidi_resolve_neutrals( ual_buffer* ub, size_t irun, unsigned lower, 
     }
 }
 
-static void bidi_neutral( ual_buffer* ub )
+void bidi_neutral( ual_buffer* ub )
 {
     // Process each isolating run sequence independently.
     size_t length = ub->level_runs.size() - 1;
@@ -1301,7 +1295,7 @@ static void bidi_neutral( ual_buffer* ub )
     Perform bidi analysis, generating a final set of bidi runs.
 */
 
-unsigned ual_bidi_analyze( ual_buffer* ub )
+void bidi_initial( ual_buffer* ub )
 {
     ub->level_runs.clear();
 
@@ -1314,7 +1308,7 @@ unsigned ual_bidi_analyze( ual_buffer* ub )
     case BIDI_ALL_DONE:
         // Entire string is left to right.  No further analysis required.
         ub->bidi_analysis = { ub->c.size(), paragraph_level, complexity };
-        return paragraph_level;
+        break;
 
     case BIDI_SOLITARY:
         // There is only one level run at rule X10.
@@ -1327,14 +1321,21 @@ unsigned ual_bidi_analyze( ual_buffer* ub )
         break;
     }
 
-    // Perform weak and neutral processing.
-    bidi_weak( ub );
-    bidi_brackets( ub );
-    bidi_neutral( ub );
-
     // Set up analysis state.
     ub->bidi_analysis = { 0, paragraph_level, complexity };
-    return paragraph_level;
+}
+
+unsigned ual_bidi_analyze( ual_buffer* ub )
+{
+    bidi_initial( ub );
+    if ( ub->bidi_analysis.complexity != BIDI_ALL_LEFT )
+    {
+        bidi_weak( ub );
+        bidi_brackets( ub );
+        bidi_neutral( ub );
+    }
+
+    return ub->bidi_analysis.paragraph_level;
 }
 
 /*

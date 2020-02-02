@@ -17,6 +17,9 @@
 #include <ucdn.h>
 
 const uint16_t IX_INVALID = ( 1 << 11 ) - 1;
+const unsigned BC_SEQUENCE = 3;
+const uint16_t BC_INVALID = 31;
+
 const size_t INVALID_INDEX = ~(size_t)0;
 const size_t STACK_BYTES = sizeof( unsigned ) * 128;
 
