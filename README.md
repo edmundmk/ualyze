@@ -113,7 +113,7 @@ Then, bidi runs are generated using an iterator-style interface.
     {
         // Process this bidi run.
     }
-    ual_bidi_runs.end( ub );
+    ual_bidi_runs_end( ub );
 
 
 ## Shared Resources
