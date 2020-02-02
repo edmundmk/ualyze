@@ -916,7 +916,7 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
     // Get /e/ and /o/ directions.
     unsigned e = prun->level & 1;
     unsigned o = ! e;
-    assert( prun->sos == UCDN_BIDI_CLASS_L || prun->eos == UCDN_BIDI_CLASS_R );
+    assert( prun->sos == UCDN_BIDI_CLASS_L || prun->sos == UCDN_BIDI_CLASS_R );
     ual_bidi_eo_strong prev_strong = prun->sos == o ? BIDI_O : BIDI_E;
 
     // Bracket stack is empty, context contains no strong characters.
@@ -927,7 +927,6 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
     // Go through every level run in isolating run sequence.
     while ( true )
     {
-
         // Process characters in level run.
         for ( unsigned index = prun->start; index < nrun->start; ++index )
         {
@@ -1193,30 +1192,24 @@ static void bidi_resolve_neutrals( ual_buffer* ub, size_t irun, unsigned lower, 
     }
 }
 
-void bidi_neutral( ual_buffer* ub )
+static void bidi_isolating_neutral( ual_buffer* ub, size_t irun )
 {
-    // Process each isolating run sequence independently.
-    size_t length = ub->level_runs.size() - 1;
-    for ( size_t irun = 0; irun < length; ++irun )
+    ual_level_run* prun = &ub->level_runs[ irun ];
+    ual_level_run* nrun = &ub->level_runs[ irun + 1 ];
+
+    // Get embedding direction /e/, and sos type.
+    unsigned e = prun->level & 1;
+    assert( prun->sos == UCDN_BIDI_CLASS_L || prun->sos == UCDN_BIDI_CLASS_R );
+    unsigned prev_strong = prun->sos;
+
+    // No run of neutrals yet.
+    ual_bidi_neutral_kind neutrals = NEUTRAL_NONE;
+    size_t lirun = irun;
+    unsigned lower = 0;
+
+    // Go through every level run in isolating run sequence.
+    while ( true )
     {
-        // Skip runs that continue an isolating runs equence.
-        ual_level_run* prun = &ub->level_runs[ irun ];
-        ual_level_run* nrun = &ub->level_runs[ irun + 1 ];
-        if ( prun->sos == BC_SEQUENCE )
-        {
-            continue;
-        }
-
-        // Get embedding direction /e/, and sos type.
-        unsigned e = prun->level & 1;
-        assert( prun->sos == UCDN_BIDI_CLASS_L || prun->eos == UCDN_BIDI_CLASS_R );
-        unsigned prev_strong = prun->sos;
-
-        // No run of neutrals yet.
-        ual_bidi_neutral_kind neutrals = NEUTRAL_NONE;
-        size_t lirun = irun;
-        unsigned lower = 0;
-
         // Process characters in level run.
         for ( unsigned index = prun->start; index < nrun->start; ++index )
         {
@@ -1288,6 +1281,45 @@ void bidi_neutral( ual_buffer* ub )
             break;
             }
         }
+
+        // Move to next run in isolating run sequence.
+        size_t inext = prun->inext;
+        if ( ! inext )
+        {
+            assert( prun->eos != BC_SEQUENCE );
+            break;
+        }
+
+        assert( prun->eos == BC_SEQUENCE );
+        prun = &ub->level_runs.at( inext );
+        nrun = &ub->level_runs.at( inext + 1 );
+    }
+
+    assert( prun->eos == UCDN_BIDI_CLASS_L || prun->eos == UCDN_BIDI_CLASS_R );
+
+    // Resolve neutrals at end of isolating run sequence.
+    if ( neutrals == NEUTRAL_SPAN )
+    {
+        unsigned bc = prev_strong == prun->eos ? prun->eos : e;
+        bidi_resolve_neutrals( ub, lirun, lower, nrun->start, bc );
+    }
+}
+
+
+void bidi_neutral( ual_buffer* ub )
+{
+    // Process each isolating run sequence independently.
+    size_t length = ub->level_runs.size() - 1;
+    for ( size_t irun = 0; irun < length; ++irun )
+    {
+        // Skip runs that continue an isolating runs equence.
+        ual_level_run* prun = &ub->level_runs[ irun ];
+        if ( prun->sos == BC_SEQUENCE )
+        {
+            continue;
+        }
+
+        bidi_isolating_neutral( ub, irun );
     }
 }
 
