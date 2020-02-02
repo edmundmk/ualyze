@@ -39,10 +39,9 @@ install_headers( 'include/ualyze.h' )
 
 ualtest = executable(
     'ualtest',
-    sources : [ 'tests/ualtest.cpp' ],
+    sources : sources + [ 'tests/ualtest.cpp' ],
     include_directories : include_directories( 'include' ),
-    dependencies : ucdn_dep,
-    link_with : ualyze
+    dependencies : ucdn_dep
 )
 
 test_script = find_program( 'tests/ualtest.py' )
