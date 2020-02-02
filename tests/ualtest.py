@@ -125,7 +125,7 @@ for case in cases:
         elif c == ' ':
             continue
 
-        print( "'", code[ i : ], "'", sep = "" )
+        print( "'", code, "'", sep = "" )
         raise Exception( 'invalid test case code' )
 
     if p[ -1 ][ -1 ][ -1 ] == -1:

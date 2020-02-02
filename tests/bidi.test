@@ -9,8 +9,9 @@ CHAR fsi 2068
 CHAR pdi 2069
 
 CHAR bell 0007
+CHAR rlmark 200F
 
--- Check identification of level runs.
+-- Check identification of level runs.  Level run spans are [{level}:{inext}:{sos}{eos}].
 
 BIDILRUN
 [0:0:LR]"text1"<rle>[1:0:RR]"text2"<pdf><rle>"text3"<pdf>[0:0:RL]"text4"
@@ -24,4 +25,25 @@ BIDILRUN
 BIDIEXPLICIT
 "text1"<rle>"text2"<pdf><rlo>"text3"<pdf>"text4"
 ( L L L L EN BN L L L L EN BN BN R R R R R BN L L L L EN )
+
+BIDILRUN
+[0:2:L=]"text1"<rli>[1:0:RR]"text2"[0:4:==]<pdi><rli>[1:0:RR]"text3"[0:0:=L]<pdi>"text4"
+
+BIDILRUN
+[0:6:L=]"text1"<rli>[1:5:R=]"text2"<lri>[2:0:LR]"text3"<rle>[3:0:RR]"text4"<pdf>[2:0:RL]"text5"[1:0:=R]<pdi>"text6"[0:0:=L]<pdi>"text7"
+
+BIDILRUN
+[0:0:LR]"text1"<rle>[1:0:RL]"text2"<lre>[2:0:LL]"text3"<pdf>[1:0:LR]"text4"<pdf><rle>"text5"<pdf>[0:0:RL]"text6"
+
+BIDILRUN
+[0:4:L=]"text1"<rli>[1:3:R=]"text2"<lri>[2:0:LL]"text3"[1:0:=R]<pdi>"text4"[0:6:==]<pdi><rli>[1:0:RR]"text5"[0:0:=L]<pdi>"text6"
+
+BIDILRUN
+[0:0:LR]"text1"<rle>[1:4:R=]"text2"<lri>[2:0:LR]"text3"<rle>[3:0:RR]"text4"[1:0:=R]<pdi>"text5"<pdf>[0:0:RL]"text6"
+
+BIDILRUN
+[0:0:LL]"He"<fsi>[2:0:LL]"llo "<lri>[4:0:LL]"Wor"<fsi>[5:0:RR]<rlmark>"ld!"
+
+BIDILRUN
+[0:0:LL]"A"<lri><pdi><fsi><pdi><rli><pdi>"B"
 

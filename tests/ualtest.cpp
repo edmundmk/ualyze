@@ -26,7 +26,7 @@ static char boundary_class( unsigned bc )
     case UCDN_BIDI_CLASS_L:     return 'L';
     case UCDN_BIDI_CLASS_R:     return 'R';
     case UCDN_BIDI_CLASS_AL:    return 'A';
-    case BC_SEQUENCE:           return '-';
+    case BC_SEQUENCE:           return '=';
     default:                    return '?';
     }
 }
