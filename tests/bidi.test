@@ -339,9 +339,16 @@ BIDINEUTRAL
 BIDINEUTRAL
 <r><l>"({["<on>"]"<on>"("<l>")"<l>")"<r>
 ( R L L L L L L L L L L L L R )
--- uR uL "({[" uON "]" uON "(" uL ")" uL ")" uR, &as ) == bidi_string{ R, L, L, L, L, L, L, L, L, L, L, L, L, R } );
 
--- uR uL "({[" uON "]" uON "(" uL ")" uR ")" uR, &as ) == bidi_string{ R, L, R, R, R, R, R, R, R, L, R, R, R, R } );
--- uR uL "({[" uON "]" uON uL "(" uL ")" uR ")" uR, &as ) == bidi_string{ R, L, R, R, R, R, R, R, L, L, L, L, R, R, R } );
--- uR uL "({[" uON "]" uON uL "(" uON "{" uL ")" uR ")" uR, &as ) == bidi_string{ R, L, R, R, R, R, R, R, L, L, L, L, L, L, R, R, R } );
+BIDINEUTRAL
+<r><l>"({["<on>"]"<on>"("<l>")"<r>")"<r>
+( R L R R R R R R R L R R R R )
+
+BIDINEUTRAL
+<r><l>"({["<on>"]"<on><l>"("<l>")"<r>")"<r>
+( R L R R R R R R L L L L R R R )
+
+BIDINEUTRAL
+<r><l>"({["<on>"]"<on><l>"("<on>"{"<l>")"<r>")"<r>
+( R L R R R R R R L L L L L L R R R )
 
