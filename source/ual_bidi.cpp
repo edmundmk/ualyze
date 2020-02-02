@@ -1054,29 +1054,26 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                 contains_e |= entry->prev_contains_e;
                 contains_o |= entry->prev_contains_o;
 
-                // Neutral brackets.
                 if ( ! inner_contains_e && ! inner_contains_o )
                 {
+                    // Neutral brackets.
                     b.bc = UCDN_BIDI_CLASS_B;
                     c.bc = UCDN_BIDI_CLASS_B;
-                    break;
                 }
-
-                // Brackets are /e/.
-                assert( inner_contains_e || inner_contains_o );
-                if ( inner_contains_e || entry->prev_strong == BIDI_E )
+                else if ( inner_contains_e || entry->prev_strong == BIDI_E )
                 {
+                    assert( inner_contains_e || inner_contains_o );
+
+                    // This bracket pair is /e/.
                     b.bc = e;
                     c.bc = e;
                     contains_e = true;
                     prev_strong = BIDI_E;
-                    break;
                 }
-
-                // Brackets are /e-guess/.
-                assert( inner_contains_o );
-                if ( entry->prev_strong == BIDI_E_GUESS )
+                else if ( entry->prev_strong == BIDI_E_GUESS )
                 {
+                    assert( inner_contains_o );
+
                     // This pair depends on guessed strong from outer bracket.
                     assert( stack->sp > 0 );
                     stack->ss[ stack->sp - 1 ].rewind_point = true;
@@ -1084,17 +1081,21 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                     // Later brackets may also depend on the same guess.
                     prev_strong = BIDI_E_GUESS;
                 }
-
-                // Brackets are /o/.
-                assert( entry->prev_strong == BIDI_O );
-                b.bc = o;
-                c.bc = o;
-                prev_strong = BIDI_O;
-
-                // Guess was wrong.  If any inner pairs depend on it, rewind.
-                if ( entry->rewind_point )
+                else
                 {
-                    rewind_o( ub, irun, entry->index, index, o );
+                    assert( inner_contains_o );
+                    assert( entry->prev_strong == BIDI_O );
+
+                    // Brackets are /o/.
+                    b.bc = o;
+                    c.bc = o;
+                    prev_strong = BIDI_O;
+
+                    // Guess was wrong.  If any inner pairs depend on it, rewind.
+                    if ( entry->rewind_point )
+                    {
+                        rewind_o( ub, irun, entry->index, index, o );
+                    }
                 }
             }
             break;
