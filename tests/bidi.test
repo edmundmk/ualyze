@@ -1,0 +1,40 @@
+CHAR lre 202A
+CHAR rle 202B
+CHAR pdf 202C
+CHAR lro 202D
+CHAR rlo 202E
+CHAR lri 2066
+CHAR rli 2067
+CHAR fsi 2068
+CHAR pdi 2069
+
+CHAR bell 0007
+
+-- Check identification of level runs.
+
+BIDILRUN
+[0:0:LR]"text1"<rle>[1:0:RR]"text2"<pdf><rle>"text3"<pdf>[0:0:RL]"text4"
+
+BIDILRUN
+[0:0:LL]"text1"<rle><bell><bell><pdf><lro><lre><bell><bell><pdf><pdf><rle><bell><bell><pdf>"text4"
+
+BIDILRUN
+[0:0:LR]"text1"<rle>[1:0:RR]"text2"<pdf><rlo>"text3"<pdf>[0:0:RL]"text4"
+
+BIDIEXPLICIT
+"text1"<rle>"text2"<pdf><rlo>"text3"<pdf>"text4"
+( L L L L L BN L L L L L BN R R R R R BN L L L L L )
+
+BIDILRUN
+
+
+-- Cheak weak bidi processing.
+
+BIDIWEAK
+
+
+
+-- Cheak full bidi algorithm, including neutrals.
+
+BIDI
+
