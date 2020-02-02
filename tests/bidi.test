@@ -60,9 +60,9 @@ BIDILRUN
 [0:0:LL]"A"<lri><pdi><fsi><pdi><rli><pdi>"B"
 
 
--- Weak processing.  Test cases happen in a right-to-left context.
+-- Weak processing.
 
--- W1
+-- W1.  Force single right-to-left isolating run sequence.
 
 BIDIWEAKR
 <al><nsm><nsm>
@@ -80,7 +80,7 @@ BIDIWEAKR
 <pdi><nsm>
 ( PDI ON )
 
--- W2
+-- W2.  Force single right-to-left isolating run sequence.
 
 BIDIWEAKR
 <al><en>
@@ -104,9 +104,77 @@ BIDIWEAKR
 
 -- W4
 
+BIDIWEAK
+<r><en><es><en>
+( R EN EN EN )
+
+BIDIWEAK
+<r><en><es><es><en>
+( R EN ON ON EN )
+
+BIDIWEAK
+<r><en><cs><en>
+( R EN EN EN )
+
+BIDIWEAK
+<r><en><cs><cs><en>
+( R EN ON ON EN )
+
+BIDIWEAK
+<r><an><cs><an>
+( R AN AN AN )
+
+BIDIWEAK
+<r><an><cs><cs><an>
+( R AN ON ON AN )
+
+
 -- W5
+BIDIWEAK
+<r><et><et><en>
+( R EN EN EN )
+
+BIDIWEAK
+<r><en><et><et>
+( R EN EN EN )
+
+BIDIWEAK
+<r><an><et><en>
+( R AN EN EN )
+
+BIDIWEAK
+<r><l><et><et><en>
+( R L L L L )
 
 -- W6
 
--- W7
+BIDIWEAK
+<r><an><et>
+( R AN ON )
+
+BIDIWEAK
+<r><l><es><an>
+( R L ON AN )
+
+BIDIWEAK
+<r><en><cs><an>
+( R EN ON AN )
+
+BIDIWEAK
+<r><et><an>
+( R ON AN )
+
+-- W7.  Force single right-to-left isolating run sequence.
+
+BIDIWEAKR
+<l><pdi><en>
+( L PDI L )
+
+BIDIWEAKR
+<l><es><en>
+( L ON L )
+
+BIDIWEAKR
+<r><rli><en>
+( R RLI EN )
 
