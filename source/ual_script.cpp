@@ -324,7 +324,7 @@ static unsigned lookahead( ual_buffer* ub, ual_script_brstack* stack, size_t ind
     Iterator-style interface to produce script spans.
 */
 
-void ual_script_spans_begin( ual_buffer* ub )
+UAL_API void ual_script_spans_begin( ual_buffer* ub )
 {
     // Start at beginning of paragraph.
     ub->script_analysis = { 0, UCDN_SCRIPT_LATIN, 0 };
@@ -334,7 +334,7 @@ void ual_script_spans_begin( ual_buffer* ub )
     ub->script_analysis.script = lookahead( ub, &stack, 0, UCDN_SCRIPT_LATIN );
 }
 
-bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span )
+UAL_API bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span )
 {
     const UCDRecord* ucdn = ub->ucdn;
 
@@ -435,7 +435,7 @@ bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span )
     return true;
 }
 
-void ual_script_spans_end( ual_buffer* ub )
+UAL_API void ual_script_spans_end( ual_buffer* ub )
 {
     ub->script_analysis.index = INVALID_INDEX;
 }

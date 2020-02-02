@@ -30,6 +30,24 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#if defined( __GNUC__ )
+#define UAL_EXPORT __attribute__(( visibility( "default" ) ))
+#define UAL_IMPORT __attribute__(( visibility( "default" ) ))
+#elif defined( _MSC_VER )
+#define UAL_EXPORT __declspec( dllexport )
+#define UAL_IMPORT __declspec( dllimport )
+#else
+#define UAL_EXPORT
+#define UAL_IMPORT
+#endif
+
+#if defined( UAL_BUILD_TESTS )
+#define UAL_API
+#elif defined( UAL_BUILD )
+#define UAL_API UAL_EXPORT
+#else
+#define UAL_API UAL_IMPORT
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -46,13 +64,13 @@ typedef struct ual_string_view
 
 typedef struct ual_buffer ual_buffer;
 
-ual_buffer* ual_buffer_create();
-ual_buffer* ual_buffer_retain( ual_buffer* ub );
-void ual_buffer_release( ual_buffer* ub );
+UAL_API ual_buffer* ual_buffer_create();
+UAL_API ual_buffer* ual_buffer_retain( ual_buffer* ub );
+UAL_API void ual_buffer_release( ual_buffer* ub );
 
-void ual_buffer_clear( ual_buffer* ub );
-void ual_buffer_append( ual_buffer* ub, ual_string_view text );
-ual_string_view ual_buffer_text( ual_buffer* ub, size_t lower, size_t upper );
+UAL_API void ual_buffer_clear( ual_buffer* ub );
+UAL_API void ual_buffer_append( ual_buffer* ub, ual_string_view text );
+UAL_API ual_string_view ual_buffer_text( ual_buffer* ub, size_t lower, size_t upper );
 
 /*
     Analysis proceeds one paragraph at a time.  Paragraphs are delimited by
@@ -70,8 +88,8 @@ typedef struct ual_paragraph
     size_t upper;
 } ual_paragraph;
 
-bool ual_paragraph_next( ual_buffer* ub, ual_paragraph* out_paragraph );
-ual_string_view ual_paragraph_text( ual_buffer* ub );
+UAL_API bool ual_paragraph_next( ual_buffer* ub, ual_paragraph* out_paragraph );
+UAL_API ual_string_view ual_paragraph_text( ual_buffer* ub );
 
 /*
     Direct access to the analysis buffer.  Only valid for the currently
@@ -87,7 +105,7 @@ typedef struct ual_char
     uint16_t bc : 5;    // bidi class or break flags
 } ual_char;
 
-const ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count );
+UAL_API const ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count );
 
 /*
     Perform cluster and line breaking analysis.  After analysis, the char
@@ -104,7 +122,7 @@ const uint16_t UAL_BREAK_CLUSTER    = 1 << 0;
 const uint16_t UAL_BREAK_LINE       = 1 << 1;
 const uint16_t UAL_BREAK_SPACES     = 1 << 2;
 
-const ual_char* ual_break_analyze( ual_buffer* ub, size_t* out_count );
+UAL_API const ual_char* ual_break_analyze( ual_buffer* ub, size_t* out_count );
 
 /*
     Split the paragraph into spans containing runs of the same script.  The
@@ -122,9 +140,9 @@ typedef struct ual_script_span
     uint32_t script;
 } ual_script_span;
 
-void ual_script_spans_begin( ual_buffer* ub );
-bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span );
-void ual_script_spans_end( ual_buffer* ub );
+UAL_API void ual_script_spans_begin( ual_buffer* ub );
+UAL_API bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span );
+UAL_API void ual_script_spans_end( ual_buffer* ub );
 
 /*
     Perform bidi analysis on a paragraph.  Sets the bc value to the resolved
@@ -134,7 +152,7 @@ void ual_script_spans_end( ual_buffer* ub );
     at the same time.
 */
 
-unsigned ual_bidi_analyze( ual_buffer* ub );
+UAL_API unsigned ual_bidi_analyze( ual_buffer* ub );
 
 /*
     With resolved bidi classes,  split the paragraph into bidi runs.  This
@@ -148,9 +166,9 @@ typedef struct ual_bidi_run
     unsigned level;
 } ual_bidi_run;
 
-void ual_bidi_runs_begin( ual_buffer* ub );
-bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run );
-void ual_bidi_runs_end( ual_buffer* ub );
+UAL_API void ual_bidi_runs_begin( ual_buffer* ub );
+UAL_API bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run );
+UAL_API void ual_bidi_runs_end( ual_buffer* ub );
 
 #ifdef __cplusplus
 }

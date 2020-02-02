@@ -11,6 +11,8 @@ project( 'ualyze', 'cpp', 'c', default_options : [ 'cpp_std=c++17' ] )
 
 ucdn_dep = subproject( 'ucdn' ).get_variable( 'ucdn_dep' )
 
+include = include_directories( 'include' )
+
 sources = [
     'source/ual_bidi.cpp',
     'source/ual_break.cpp',
@@ -29,18 +31,24 @@ sources += break_machine.process( 'source/uax14.rules', 'source/uax29p3.rules' )
 
 ualyze = library(
     'ualyze',
+    gnu_symbol_visibility : 'hidden',
+    cpp_args : [ '-DUAL_BUILD' ],
     sources : sources,
-    include_directories : include_directories( 'include' ),
+    include_directories : include,
     dependencies : ucdn_dep,
     install : true
 )
 
 install_headers( 'include/ualyze.h' )
 
+ualyze_dep = declare_dependency( include_directories : include, link_with : ualyze )
+ualyze_license = files( 'LICENSE' )
+
 ualtest = executable(
     'ualtest',
+    cpp_args : [ '-DUAL_BUILD_TESTS' ],
     sources : sources + [ 'tests/ualtest.cpp' ],
-    include_directories : include_directories( 'include' ),
+    include_directories : include,
     dependencies : ucdn_dep
 )
 

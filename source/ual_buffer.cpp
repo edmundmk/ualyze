@@ -25,7 +25,7 @@ ual_buffer::~ual_buffer()
 {
 }
 
-ual_buffer* ual_buffer_create()
+UAL_API ual_buffer* ual_buffer_create()
 {
     if ( ucdn_record_table_size() >= IX_INVALID )
     {
@@ -36,13 +36,13 @@ ual_buffer* ual_buffer_create()
     return new ual_buffer();
 }
 
-ual_buffer* ual_buffer_retain( ual_buffer* ub )
+UAL_API ual_buffer* ual_buffer_retain( ual_buffer* ub )
 {
     ++ub->refcount;
     return ub;
 }
 
-void ual_buffer_release( ual_buffer* ub )
+UAL_API void ual_buffer_release( ual_buffer* ub )
 {
     if ( ub && --ub->refcount == 0 )
     {
@@ -50,26 +50,26 @@ void ual_buffer_release( ual_buffer* ub )
     }
 }
 
-void ual_buffer_clear( ual_buffer* ub )
+UAL_API void ual_buffer_clear( ual_buffer* ub )
 {
     ub->s.clear();
     ub->p = { 0, 0 };
 }
 
-void ual_buffer_append( ual_buffer* ub, ual_string_view text )
+UAL_API void ual_buffer_append( ual_buffer* ub, ual_string_view text )
 {
     assert( ub->p.upper == 0 );
     ub->s.append( text.data, text.size );
 }
 
-ual_string_view ual_buffer_text( ual_buffer* ub, size_t lower, size_t upper )
+UAL_API ual_string_view ual_buffer_text( ual_buffer* ub, size_t lower, size_t upper )
 {
     assert( lower <= upper );
     assert( upper <= ub->s.size() );
     return { ub->s.data() + lower, upper - lower };
 }
 
-const ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count )
+UAL_API const ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count )
 {
     if ( out_count )
     {

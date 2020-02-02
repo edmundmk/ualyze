@@ -11,7 +11,7 @@
 #include "ual_buffer.h"
 #include <assert.h>
 
-bool ual_paragraph_next( ual_buffer* ub, ual_paragraph* out_paragraph )
+UAL_API bool ual_paragraph_next( ual_buffer* ub, ual_paragraph* out_paragraph )
 {
     const UCDRecord* ucdn = ub->ucdn;
 
@@ -95,7 +95,7 @@ bool ual_paragraph_next( ual_buffer* ub, ual_paragraph* out_paragraph )
     return true;
 }
 
-ual_string_view ual_paragraph_text( ual_buffer* ub )
+UAL_API ual_string_view ual_paragraph_text( ual_buffer* ub )
 {
     return ual_buffer_text( ub, ub->p.lower, ub->p.upper );
 }

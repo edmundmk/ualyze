@@ -1364,7 +1364,7 @@ void bidi_initial( ual_buffer* ub )
     ub->bidi_analysis.complexity = complexity;
 }
 
-unsigned ual_bidi_analyze( ual_buffer* ub )
+UAL_API unsigned ual_bidi_analyze( ual_buffer* ub )
 {
     bidi_initial( ub );
     if ( ub->bidi_analysis.complexity != BIDI_ALL_LEFT )
@@ -1381,7 +1381,7 @@ unsigned ual_bidi_analyze( ual_buffer* ub )
     Iterator-style interface for constructing bidi runs from resolved classes.
 */
 
-void ual_bidi_runs_begin( ual_buffer* ub )
+UAL_API void ual_bidi_runs_begin( ual_buffer* ub )
 {
     assert( ub->bc_usage == BC_BIDI_CLASS );
     assert( ub->level_runs.back().start == ub->c.size() );
@@ -1390,7 +1390,7 @@ void ual_bidi_runs_begin( ual_buffer* ub )
     ub->bidi_analysis.index = 0;
 }
 
-bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
+UAL_API bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
 {
     assert( ub->bc_usage == BC_BIDI_CLASS );
 
@@ -1515,7 +1515,7 @@ bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
     return true;
 }
 
-void ual_bidi_runs_end( ual_buffer* ub )
+UAL_API void ual_bidi_runs_end( ual_buffer* ub )
 {
     ub->bidi_analysis.ilrun = INVALID_INDEX;
     ub->bidi_analysis.index = INVALID_INDEX;
