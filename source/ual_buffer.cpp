@@ -49,13 +49,19 @@ UAL_API void ual_buffer_release( ual_buffer* ub )
     }
 }
 
-UAL_API const ual_char* ual_buffer_chars( ual_buffer* ub, size_t* out_count )
+UAL_API const char16_t* ual_buffer_text( ual_buffer* ub )
 {
-    if ( out_count )
-    {
-        *out_count = ub->c.size();
-    }
+    return ub->text.data();
+}
+
+UAL_API const ual_char* ual_buffer_chars( ual_buffer* ub )
+{
     return ub->c.data();
+}
+
+UAL_API size_t ual_buffer_size( ual_buffer* ub )
+{
+    return ub->text.size();
 }
 
 char32_t ual_codepoint( ual_buffer* ub, size_t index )

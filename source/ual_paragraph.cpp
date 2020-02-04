@@ -82,6 +82,7 @@ UAL_API size_t ual_analyze_paragraph( ual_buffer* ub, const char16_t* text, size
 
     // Index is first character of next paragraph (or end of string).
     ub->text = std::u16string_view( text, i );
+    assert( ub->c.size() == i );
     return i;
 }
 

@@ -114,7 +114,7 @@ int main( int argc, char* argv[] )
 
         // Analyze breaks.
         size_t count = 0;
-        const ual_char* c = ual_analyze_breaks( ub, &count );
+        const ual_char* c = ual_analyze_breaks( ub );
         for ( size_t index = 0; index < count; ++index )
         {
             if ( c[ index ].bc & UAL_BREAK_CLUSTER )
