@@ -44,7 +44,7 @@ that paragraph.
     while ( size )
     {
         /* identify paragraph. */
-        size_t length = ual_analyze_paragraph( ub, text, size ) )
+        size_t length = ual_analyze_paragraph( ub, text, size );
 
         /* analyze this paragraph. */
 
