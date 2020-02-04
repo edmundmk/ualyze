@@ -71,6 +71,7 @@ UAL_API void ual_buffer_release( ual_buffer* ub );
 UAL_API void ual_buffer_clear( ual_buffer* ub );
 UAL_API void ual_buffer_append( ual_buffer* ub, ual_string_view text );
 UAL_API ual_string_view ual_buffer_text( ual_buffer* ub, size_t lower, size_t upper );
+UAL_API ual_string_view ual_buffer_string( ual_buffer* ub );
 
 /*
     Analysis proceeds one paragraph at a time.  Paragraphs are delimited by

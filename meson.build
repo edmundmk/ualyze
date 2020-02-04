@@ -21,37 +21,15 @@ sources = [
     'source/ual_script.cpp'
 ]
 
-break_machine = generator(
-    find_program( 'source/break_machine.py' ),
-    output : '@BASENAME@.h',
-    arguments : [ '@INPUT@', '@OUTPUT@' ]
-)
-
+break_machine = generator( find_program( 'source/break_machine.py' ), output : '@BASENAME@.h', arguments : [ '@INPUT@', '@OUTPUT@' ] )
 sources += break_machine.process( 'source/uax14.rules', 'source/uax29p3.rules' )
 
-ualyze = library(
-    'ualyze',
-    gnu_symbol_visibility : 'hidden',
-    cpp_args : [ '-DUAL_BUILD' ],
-    sources : sources,
-    include_directories : include,
-    dependencies : ucdn_dep,
-    install : true
-)
-
+ualyze_lib = library( 'ualyze', sources : sources, include_directories : include, cpp_args : [ '-DUAL_BUILD' ], dependencies : ucdn_dep, gnu_symbol_visibility : 'hidden', install : true )
+ualyze_lic = files( 'LICENSE' )
+ualyze_dep = declare_dependency( include_directories : include, link_with : ualyze_lib )
 install_headers( 'include/ualyze.h' )
 
-ualyze_dep = declare_dependency( include_directories : include, link_with : ualyze )
-ualyze_license = files( 'LICENSE' )
-
-ualtest = executable(
-    'ualtest',
-    cpp_args : [ '-DUAL_BUILD_TESTS' ],
-    sources : sources + [ 'tests/ualtest.cpp' ],
-    include_directories : include,
-    dependencies : ucdn_dep
-)
-
+ualtest = executable( 'ualtest', sources : sources + [ 'tests/ualtest.cpp' ], cpp_args : [ '-DUAL_BUILD_TESTS' ], include_directories : include, dependencies : ucdn_dep )
 test_script = find_program( 'tests/ualtest.py' )
 test( 'paragraph.test', test_script, args : [ ualtest.full_path(), files( 'tests/paragraph.test' ) ] )
 test( 'linebreak.test', test_script, args : [ ualtest.full_path(), files( 'tests/linebreak.test' ) ] )

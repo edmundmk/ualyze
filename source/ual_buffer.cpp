@@ -69,6 +69,11 @@ UAL_API ual_string_view ual_buffer_text( ual_buffer* ub, size_t lower, size_t up
     return { ub->s.data() + lower, upper - lower };
 }
 
+UAL_API ual_string_view ual_buffer_string( ual_buffer* ub )
+{
+    return { ub->s.data(), ub->s.size() };
+}
+
 UAL_API const ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count )
 {
     if ( out_count )
