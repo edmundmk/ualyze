@@ -24,49 +24,46 @@ wrap requires identification of potential break points.
 
 ## API
 
-### Buffer
+### Text
 
-Analysis is performed on text stored in a `ual_buffer`.  This is a refcounted
-object.
+Analysis data is stored in a `ual_buffer`.  This is a refcounted object.
 
     ual_buffer* ub = ual_buffer_create();
     ub = ual_buffer_retain( ub );
     ual_buffer_release( ub );
     ual_buffer_release( ub );
 
+Text is UTF-16, provided by the client as a `char16_t` string.  This string
+must be kept alive during analysis.
 
-### Text
+The string is split into paragraphs by hard line breaks.  Each paragraph is
+analysed independently.  Each call to `ual_analyze_paragraph` identifies the
+first paragraph in the string, and sets up analysis for the characters in
+that paragraph.
 
-Text is UTF-16, provided as `char16_t`.  UTF-16 is the most common encoding
-used by UI and font systems.
+    while ( size )
+    {
+        /* identify paragraph. */
+        size_t length = ual_analyze_paragraph( ub, text, size ) )
 
-    ual_buffer_clear( ub );
-    ual_buffer_append( ub, { u"Hello, World!", 13 } );
+        /* analyze this paragraph. */
+
+        /* move to next paragraph. */
+        assert( length <= size );
+        text += length;
+        size -= length;
+    }
 
 Invalid UTF-16 sequences are treated by the library as if they were replaced
 by U+FFFD REPLACEMENT CHARACTER.
 
+The internal `ual_char` buffer has one entry for each encoding unit in the
+currently analyzed paragraph.
 
-### Paragraphs
-
-Text is split into paragraphs by hard line breaks.  Each paragraph is
-identified and visited in sequence.
-
-    ual_paragraph p;
-    while ( ual_next_paragraph( ub, &p ) )
-    {
-        // Analyze this paragraph.
-    }
-
-The `ual_char` array and indexes produced by analysis passes are relative to
-the current paragraph, not the entire text.
-
-
-## Analysis
 
 ### Line and Cluster Breaking
 
-Call `ual_break_analyze` to perform line and cluster breaking.  The results of
+Call `ual_analyze_breaks` to perform line and cluster breaking.  The results of
 break analysis are stored in the `ual_char` buffer.
 
   * The `UAL_BREAK_CLUSTER` flag is set on the encoding unit which starts each
@@ -92,7 +89,7 @@ classification.  The information is reported using an iterator-style interface.
     ual_script_spans_begin( ub );
     while ( ual_script_spans_next( ub, &span ) )
     {
-        // Process this script span.
+        /* process this script span. */
     }
     ual_script_spans_end( ub );
 
@@ -105,13 +102,13 @@ character in the paragraph.
 
 Then, bidi runs are generated using an iterator-style interface.
 
-    unsigned paragraph_level = ual_bidi_analyze( ub );
+    unsigned paragraph_level = ual_analyze_bidi( ub );
 
     ual_bidi_run run;
     ual_bidi_runs_begin( ub );
     while ( ual_bidi_runs_next( ub, &run ) )
     {
-        // Process this bidi run.
+        /* process this bidi run. */
     }
     ual_bidi_runs_end( ub );
 
@@ -122,17 +119,17 @@ Certain resources owned by the `ual_buffer` are shared between analysis passes.
 
 The `bc` member of the `ual_char` structure has two different uses:
 
-  * After `ual_break_analyze`, this member stores break flags.
-  * After `ual_bidi_analyze`, this member stores the resolved bidi class.
+  * After `ual_analyze_breaks`, this member stores break flags.
+  * After `ual_analyze_bidi`, this member stores the resolved bidi class.
 
 Generation of bidi runs can only be performed with resolved bidi classes.
 
 There is also an internal shared stack, which is in use:
 
   * When iterating through script spans.
-  * During the `ual_bidi_analyze` function.
+  * During the `ual_analyze_bidi` function.
 
-Therefore, `ual_bidi_analyze` should be called before beginning iteration of
+Therefore, `ual_analyze_bidi` should be called before beginning iteration of
 script spans.  Once bidi analysis has completed, bidi runs and script spans can
 be iterated at the same time - bidi processing only requires the stack during
 the analysis pass.

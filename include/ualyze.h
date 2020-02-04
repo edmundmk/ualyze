@@ -53,14 +53,8 @@ extern "C" {
 #endif
 
 /*
-    All analysis happens on text in a ual_buffer.  Text is always UTF-16.
+    A ual_buffer holds the results of analysis.
 */
-
-typedef struct ual_string_view
-{
-    const char16_t* data;
-    size_t size;
-} ual_string_view;
 
 typedef struct ual_buffer ual_buffer;
 
@@ -68,29 +62,21 @@ UAL_API ual_buffer* ual_buffer_create();
 UAL_API ual_buffer* ual_buffer_retain( ual_buffer* ub );
 UAL_API void ual_buffer_release( ual_buffer* ub );
 
-UAL_API void ual_buffer_clear( ual_buffer* ub );
-UAL_API void ual_buffer_append( ual_buffer* ub, ual_string_view text );
-UAL_API ual_string_view ual_buffer_text( ual_buffer* ub, size_t lower, size_t upper );
-UAL_API ual_string_view ual_buffer_string( ual_buffer* ub );
-
 /*
-    Analysis proceeds one paragraph at a time.  Paragraphs are delimited by
+    Analysis is performed on UTF-16 text.  The buffer retains an internal
+    pointer to the string.  The caller is responsible for keeping the string
+    alive during analysis.
+
+    Analysis proceeds on a single paragraph.  Paragraphs are delimited by
     hard line breaks - \n, \r, \r\n, \v, \f, U+0085 NEXT LINE, U+2028 LINE
     SEPARATOR, or U+2029 PARAGRAPH SEPARATOR.
 
-    All indexes into the text produced by other analysis stages are relative
-    to the current paragraph.  Spans of text are always a half-open interval
-    lower <= index < upper.
+    This function sets up analysis for the text between the start of text and
+    the end of the first paragraph separator (or the end of the string).  It
+    returns the length of the paragraph, in encoding units.
 */
 
-typedef struct ual_paragraph
-{
-    size_t lower;
-    size_t upper;
-} ual_paragraph;
-
-UAL_API bool ual_paragraph_next( ual_buffer* ub, ual_paragraph* out_paragraph );
-UAL_API ual_string_view ual_paragraph_text( ual_buffer* ub );
+UAL_API size_t ual_analyze_paragraph( ual_buffer* ub, const char16_t* text, size_t size );
 
 /*
     Direct access to the analysis buffer.  Only valid for the currently
@@ -106,7 +92,7 @@ typedef struct ual_char
     uint16_t bc : 5;    // bidi class or break flags
 } ual_char;
 
-UAL_API const ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count );
+UAL_API const ual_char* ual_buffer_chars( ual_buffer* ub, size_t* out_count );
 
 /*
     Perform cluster and line breaking analysis.  After analysis, the char
@@ -116,14 +102,14 @@ UAL_API const ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count );
     For each break opportunity, a space flag is set at the space character that
     starts a contiguous run of space characters before it.  Space characters
     are those in Unicode category Zs as well as line break categories BK, CR,
-    LF, and NL (i.e. hard line break characters).
+    LF, and NL (hard line break characters), or ZW (zero width space).
 */
 
 const uint16_t UAL_BREAK_CLUSTER    = 1 << 0;
 const uint16_t UAL_BREAK_LINE       = 1 << 1;
 const uint16_t UAL_BREAK_SPACES     = 1 << 2;
 
-UAL_API const ual_char* ual_break_analyze( ual_buffer* ub, size_t* out_count );
+UAL_API const ual_char* ual_analyze_breaks( ual_buffer* ub, size_t* out_count );
 
 /*
     Split the paragraph into spans containing runs of the same script.  The
@@ -153,7 +139,7 @@ UAL_API void ual_script_spans_end( ual_buffer* ub );
     at the same time.
 */
 
-UAL_API unsigned ual_bidi_analyze( ual_buffer* ub );
+UAL_API unsigned ual_analyze_bidi( ual_buffer* ub );
 
 /*
     With resolved bidi classes,  split the paragraph into bidi runs.  This

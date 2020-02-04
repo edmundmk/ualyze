@@ -74,10 +74,9 @@ struct ual_buffer
     const UCDRecord* ucdn;
 
     // Text data.
-    std::u16string s;
+    std::u16string_view text;
     std::vector< ual_char > c;
     ual_bc_usage bc_usage;
-    ual_paragraph p;
 
     // Current analysis state.
     ual_script_analysis script_analysis;

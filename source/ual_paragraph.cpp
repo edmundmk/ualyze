@@ -11,39 +11,34 @@
 #include "ual_buffer.h"
 #include <assert.h>
 
-UAL_API bool ual_paragraph_next( ual_buffer* ub, ual_paragraph* out_paragraph )
+UAL_API size_t ual_analyze_paragraph( ual_buffer* ub, const char16_t* text, size_t size )
 {
     const UCDRecord* ucdn = ub->ucdn;
 
     ub->c.clear();
     ub->bc_usage = BC_NONE;
-    ub->p.lower = ub->p.upper;
 
-    // Check if we're already at the end of the string.
-    if ( ub->p.lower >= ub->s.size() )
+    // Check for empty string.
+    if ( ! text || ! size )
     {
-        if ( out_paragraph )
-        {
-            *out_paragraph = ub->p;
-        }
-        return false;
+        ub->text = std::u16string_view();
+        return 0;
     }
 
     // Perform analysis.
-    size_t i = ub->p.lower;
+    size_t i = 0;
     unsigned prev = UCDN_LINEBREAK_CLASS_XX;
-    size_t length = ub->s.size();
-    while ( i < length )
+    while ( i < size )
     {
         // Decode character from UTF-16.
         size_t inext = i;
-        char32_t uc = ub->s[ inext++ ];
+        char32_t uc = text[ inext++ ];
 
         // Check for surrogate.
         if ( ( uc & 0xF800 ) == 0xD800 )
         {
             // Get next code unit.
-            char32_t ul = inext < ub->s.size() ? ub->s[ inext ] : 0;
+            char32_t ul = inext < size ? text[ inext ] : 0;
 
             // Check for high/low surrogate pair.
             bool have_hi_surrogate = ( uc & 0xFC00 ) == 0xD800;
@@ -86,17 +81,7 @@ UAL_API bool ual_paragraph_next( ual_buffer* ub, ual_paragraph* out_paragraph )
     }
 
     // Index is first character of next paragraph (or end of string).
-    ub->p.upper = i;
-    if ( out_paragraph )
-    {
-        *out_paragraph = ub->p;
-    }
-
-    return true;
-}
-
-UAL_API ual_string_view ual_paragraph_text( ual_buffer* ub )
-{
-    return ual_buffer_text( ub, ub->p.lower, ub->p.upper );
+    ub->text = std::u16string_view( text, i );
+    return i;
 }
 

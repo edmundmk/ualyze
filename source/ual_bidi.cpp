@@ -1364,7 +1364,7 @@ void bidi_initial( ual_buffer* ub )
     ub->bidi_analysis.complexity = complexity;
 }
 
-UAL_API unsigned ual_bidi_analyze( ual_buffer* ub )
+UAL_API unsigned ual_analyze_bidi( ual_buffer* ub )
 {
     bidi_initial( ub );
     if ( ub->bidi_analysis.complexity != BIDI_ALL_LEFT )

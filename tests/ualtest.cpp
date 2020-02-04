@@ -99,20 +99,22 @@ int main( int argc, char* argv[] )
         return EXIT_FAILURE;
     }
 
+
     // Create buffer.
     ual_buffer* ub = ual_buffer_create();
-    ual_buffer_append( ub, { (const char16_t*)data.data(), data.size() / 2 } );
 
     // Process paragraph-by-paragraph.
-    ual_paragraph paragraph;
-    while ( ual_paragraph_next( ub, &paragraph ) )
+    size_t plower = 0;
+    std::u16string_view text( (const char16_t*)data.data(), data.size() / 2 );
+    while ( size_t length = ual_analyze_paragraph( ub, text.data() + plower, text.size() - plower ) )
     {
         // Print paragraph.
-        printf( "PARAGRAPH %zu %zu\n", paragraph.lower, paragraph.upper );
+        printf( "PARAGRAPH %zu %zu\n", plower, plower + length );
+        plower += length;
 
         // Analyze breaks.
         size_t count = 0;
-        const ual_char* c = ual_break_analyze( ub, &count );
+        const ual_char* c = ual_analyze_breaks( ub, &count );
         for ( size_t index = 0; index < count; ++index )
         {
             if ( c[ index ].bc & UAL_BREAK_CLUSTER )

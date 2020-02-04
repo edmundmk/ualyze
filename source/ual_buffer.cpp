@@ -15,7 +15,6 @@ ual_buffer::ual_buffer()
     :   refcount( 1 )
     ,   ucdn( ucdn_record_table() )
     ,   bc_usage( BC_NONE )
-    ,   p{ 0, 0 }
     ,   script_analysis{ INVALID_INDEX }
     ,   bidi_analysis{ INVALID_INDEX, INVALID_INDEX }
 {
@@ -50,31 +49,7 @@ UAL_API void ual_buffer_release( ual_buffer* ub )
     }
 }
 
-UAL_API void ual_buffer_clear( ual_buffer* ub )
-{
-    ub->s.clear();
-    ub->p = { 0, 0 };
-}
-
-UAL_API void ual_buffer_append( ual_buffer* ub, ual_string_view text )
-{
-    assert( ub->p.upper == 0 );
-    ub->s.append( text.data, text.size );
-}
-
-UAL_API ual_string_view ual_buffer_text( ual_buffer* ub, size_t lower, size_t upper )
-{
-    assert( lower <= upper );
-    assert( upper <= ub->s.size() );
-    return { ub->s.data() + lower, upper - lower };
-}
-
-UAL_API ual_string_view ual_buffer_string( ual_buffer* ub )
-{
-    return { ub->s.data(), ub->s.size() };
-}
-
-UAL_API const ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count )
+UAL_API const ual_char* ual_buffer_chars( ual_buffer* ub, size_t* out_count )
 {
     if ( out_count )
     {
@@ -85,14 +60,14 @@ UAL_API const ual_char* ual_char_buffer( ual_buffer* ub, size_t* out_count )
 
 char32_t ual_codepoint( ual_buffer* ub, size_t index )
 {
-    index += ub->p.lower;
-    char32_t uc = ub->s[ index++ ];
+    assert( index < ub->text.size() );
+    char32_t uc = ub->text[ index ];
 
     // Check for surrogate.
     if ( ( uc & 0xF800 ) == 0xD800 )
     {
         // Get next code unit.
-        char32_t ul = index < ub->s.size() ? ub->s[ index ] : 0;
+        char32_t ul = index < ub->text.size() ? ub->text[ index ] : 0;
 
         // Check for high/low surrogate pair.
         bool have_hi_surrogate = ( uc & 0xFC00 ) == 0xD800;
