@@ -21,10 +21,15 @@ sources = [
     'source/ual_script.cpp'
 ]
 
+cpp_args = [ '-DUAL_BUILD' ]
+if meson.is_subproject() and get_option( 'buildtype' ) == 'debug'
+    cpp_args += '-O2'
+endif
+
 break_machine = generator( find_program( 'source/break_machine.py' ), output : '@BASENAME@.h', arguments : [ '@INPUT@', '@OUTPUT@' ] )
 sources += break_machine.process( 'source/uax14.rules', 'source/uax29p3.rules' )
 
-ualyze_lib = library( 'ualyze', sources : sources, include_directories : include, cpp_args : [ '-DUAL_BUILD' ], dependencies : ucdn_dep, gnu_symbol_visibility : 'hidden', install : true )
+ualyze_lib = library( 'ualyze', sources : sources, include_directories : include, cpp_args : cpp_args, dependencies : ucdn_dep, gnu_symbol_visibility : 'hidden', install : true )
 ualyze_lic = files( 'LICENSE' )
 ualyze_dep = declare_dependency( include_directories : include, link_with : ualyze_lib )
 install_headers( 'include/ualyze.h' )
