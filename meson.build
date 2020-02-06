@@ -22,9 +22,6 @@ sources = [
 ]
 
 cpp_args = [ '-DUAL_BUILD' ]
-if meson.is_subproject() and get_option( 'buildtype' ) == 'debug'
-    cpp_args += '-O2'
-endif
 
 break_machine = generator( find_program( 'source/break_machine.py' ), output : '@BASENAME@.h', arguments : [ '@INPUT@', '@OUTPUT@' ] )
 sources += break_machine.process( 'source/uax14.rules', 'source/uax29p3.rules' )
