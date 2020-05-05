@@ -33,7 +33,7 @@
 
 const size_t NO_SPACE = SIZE_MAX;
 
-UAL_API const ual_char* ual_analyze_breaks( ual_buffer* ub )
+UAL_API void ual_analyze_breaks( ual_buffer* ub )
 {
     const UCDRecord* ucdn = ub->ucdn;
 
@@ -112,6 +112,5 @@ UAL_API const ual_char* ual_analyze_breaks( ual_buffer* ub )
     }
 
     ub->bc_usage = BC_BREAK_FLAGS;
-    return ub->c.data();
 }
 

@@ -112,7 +112,7 @@ const uint16_t UAL_BREAK_CLUSTER    = 1 << 0;
 const uint16_t UAL_BREAK_LINE       = 1 << 1;
 const uint16_t UAL_BREAK_SPACES     = 1 << 2;
 
-UAL_API const ual_char* ual_analyze_breaks( ual_buffer* ub );
+UAL_API void ual_analyze_breaks( ual_buffer* ub );
 
 /*
     Split the paragraph into spans containing runs of the same script.  The

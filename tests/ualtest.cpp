@@ -113,8 +113,9 @@ int main( int argc, char* argv[] )
         plower += length;
 
         // Analyze breaks.
-        size_t count = 0;
-        const ual_char* c = ual_analyze_breaks( ub );
+        ual_analyze_breaks( ub );
+        const ual_char* c = ual_buffer_chars( ub );
+        size_t count = ual_buffer_size( ub );
         for ( size_t index = 0; index < count; ++index )
         {
             if ( c[ index ].bc & UAL_BREAK_CLUSTER )
