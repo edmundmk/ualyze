@@ -697,7 +697,7 @@ void bidi_weak( ual_buffer* ub )
                         continue;
                     }
 
-                    assert( et.bc = UCDN_BIDI_CLASS_ET );
+                    assert( et.bc == UCDN_BIDI_CLASS_ET );
                     et.bc = change_to;
                 }
 
@@ -732,7 +732,7 @@ void bidi_weak( ual_buffer* ub )
                     continue;
                 }
 
-                assert( et.bc = UCDN_BIDI_CLASS_ET );
+                assert( et.bc == UCDN_BIDI_CLASS_ET );
                 et.bc = UCDN_BIDI_CLASS_ON;
             }
         }
