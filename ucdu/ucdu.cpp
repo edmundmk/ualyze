@@ -11,7 +11,7 @@
 
 size_t ucdu_lookup( char32_t c )
 {
-    return ucdu_index_get( c );
+    return ucdu_index( c );
 }
 
 ucdu_bracket_kind ucdu_paired_bracket( char32_t bracket, char32_t* out_paired )

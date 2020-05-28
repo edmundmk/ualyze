@@ -14,7 +14,7 @@
 #include "ualyze.h"
 #include <string>
 #include <vector>
-#include <ucdn.h>
+#include "ucdu.h"
 
 const uint16_t IX_INVALID = ( 1 << 11 ) - 1;
 const unsigned BC_SEQUENCE = 3;
@@ -69,9 +69,6 @@ struct ual_buffer
 
     // Reference count.
     intptr_t refcount;
-
-    // UCDN record table.
-    const UCDRecord* ucdn;
 
     // Text data.
     std::u16string_view text;

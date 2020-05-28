@@ -2,7 +2,7 @@
 #include "ucdu.h"
 
 extern const ucdu_record UCDU_TABLE[] = {
-    { UCDU_SCRIPT_ZZZZ, UCDU_BIDI_L, UCDU_LBREAK_XX, false, UCDU_CBREAK_XX, false },
+    { UCDU_SCRIPT_UNKNOWN, UCDU_BIDI_L, UCDU_LBREAK_XX, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_BN, UCDU_LBREAK_CM, false, UCDU_CBREAK_CONTROL, false },
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_S, UCDU_LBREAK_BA, false, UCDU_CBREAK_CONTROL, false },
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_B, UCDU_LBREAK_LF, false, UCDU_CBREAK_LF, false },
@@ -53,7 +53,7 @@ extern const ucdu_record UCDU_TABLE[] = {
     { UCDU_SCRIPT_ARMENIAN, UCDU_BIDI_ON, UCDU_LBREAK_BA, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_ARMENIAN, UCDU_BIDI_ON, UCDU_LBREAK_AL, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_ARMENIAN, UCDU_BIDI_ET, UCDU_LBREAK_PR, false, UCDU_CBREAK_XX, false },
-    { UCDU_SCRIPT_ZZZZ, UCDU_BIDI_R, UCDU_LBREAK_XX, false, UCDU_CBREAK_XX, false },
+    { UCDU_SCRIPT_UNKNOWN, UCDU_BIDI_R, UCDU_LBREAK_XX, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_HEBREW, UCDU_BIDI_NSM, UCDU_LBREAK_CM, false, UCDU_CBREAK_EXTEND, false },
     { UCDU_SCRIPT_HEBREW, UCDU_BIDI_R, UCDU_LBREAK_BA, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_HEBREW, UCDU_BIDI_R, UCDU_LBREAK_AL, false, UCDU_CBREAK_XX, false },
@@ -69,7 +69,7 @@ extern const ucdu_record UCDU_TABLE[] = {
     { UCDU_SCRIPT_ARABIC, UCDU_BIDI_NSM, UCDU_LBREAK_CM, false, UCDU_CBREAK_EXTEND, false },
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_AL, UCDU_LBREAK_EX, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_ARABIC, UCDU_BIDI_AL, UCDU_LBREAK_CM, false, UCDU_CBREAK_CONTROL, false },
-    { UCDU_SCRIPT_ZZZZ, UCDU_BIDI_AL, UCDU_LBREAK_XX, false, UCDU_CBREAK_XX, false },
+    { UCDU_SCRIPT_UNKNOWN, UCDU_BIDI_AL, UCDU_LBREAK_XX, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_ARABIC, UCDU_BIDI_AL, UCDU_LBREAK_EX, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_AL, UCDU_LBREAK_AL, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_ARABIC, UCDU_BIDI_AN, UCDU_LBREAK_NU, false, UCDU_CBREAK_XX, false },
@@ -278,14 +278,14 @@ extern const ucdu_record UCDU_TABLE[] = {
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_ON, UCDU_LBREAK_NS, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_BN, UCDU_LBREAK_WJ, false, UCDU_CBREAK_CONTROL, false },
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_BN, UCDU_LBREAK_AL, false, UCDU_CBREAK_CONTROL, false },
-    { UCDU_SCRIPT_ZZZZ, UCDU_BIDI_BN, UCDU_LBREAK_XX, false, UCDU_CBREAK_CONTROL, false },
+    { UCDU_SCRIPT_UNKNOWN, UCDU_BIDI_BN, UCDU_LBREAK_XX, false, UCDU_CBREAK_CONTROL, false },
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_LRI, UCDU_LBREAK_CM, false, UCDU_CBREAK_CONTROL, false },
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_RLI, UCDU_LBREAK_CM, false, UCDU_CBREAK_CONTROL, false },
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_FSI, UCDU_LBREAK_CM, false, UCDU_CBREAK_CONTROL, false },
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_PDI, UCDU_LBREAK_CM, false, UCDU_CBREAK_CONTROL, false },
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_EN, UCDU_LBREAK_AL, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_ES, UCDU_LBREAK_AL, false, UCDU_CBREAK_XX, false },
-    { UCDU_SCRIPT_ZZZZ, UCDU_BIDI_ET, UCDU_LBREAK_PR, false, UCDU_CBREAK_XX, false },
+    { UCDU_SCRIPT_UNKNOWN, UCDU_BIDI_ET, UCDU_LBREAK_PR, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_ON, UCDU_LBREAK_ID, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_ON, UCDU_LBREAK_EB, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_BRAILLE, UCDU_BIDI_L, UCDU_LBREAK_AL, false, UCDU_CBREAK_XX, false },
@@ -315,7 +315,7 @@ extern const ucdu_record UCDU_TABLE[] = {
     { UCDU_SCRIPT_BOPOMOFO, UCDU_BIDI_L, UCDU_LBREAK_ID, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_HANGUL, UCDU_BIDI_L, UCDU_LBREAK_ID, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_HANGUL, UCDU_BIDI_ON, UCDU_LBREAK_ID, false, UCDU_CBREAK_XX, false },
-    { UCDU_SCRIPT_ZZZZ, UCDU_BIDI_L, UCDU_LBREAK_ID, false, UCDU_CBREAK_XX, false },
+    { UCDU_SCRIPT_UNKNOWN, UCDU_BIDI_L, UCDU_LBREAK_ID, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_YI, UCDU_BIDI_L, UCDU_LBREAK_ID, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_YI, UCDU_BIDI_L, UCDU_LBREAK_NS, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_YI, UCDU_BIDI_ON, UCDU_LBREAK_ID, false, UCDU_CBREAK_XX, false },
@@ -368,9 +368,9 @@ extern const ucdu_record UCDU_TABLE[] = {
     { UCDU_SCRIPT_MEETEI_MAYEK, UCDU_BIDI_L, UCDU_LBREAK_NU, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_HANGUL, UCDU_BIDI_L, UCDU_LBREAK_H2, false, UCDU_CBREAK_LV, false },
     { UCDU_SCRIPT_HANGUL, UCDU_BIDI_L, UCDU_LBREAK_H3, false, UCDU_CBREAK_LVT, false },
-    { UCDU_SCRIPT_ZZZZ, UCDU_BIDI_L, UCDU_LBREAK_SG, false, UCDU_CBREAK_XX, false },
+    { UCDU_SCRIPT_UNKNOWN, UCDU_BIDI_L, UCDU_LBREAK_SG, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_HEBREW, UCDU_BIDI_ES, UCDU_LBREAK_AL, false, UCDU_CBREAK_XX, false },
-    { UCDU_SCRIPT_ZZZZ, UCDU_BIDI_BN, UCDU_LBREAK_XX, false, UCDU_CBREAK_XX, false },
+    { UCDU_SCRIPT_UNKNOWN, UCDU_BIDI_BN, UCDU_LBREAK_XX, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_CS, UCDU_LBREAK_CL, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_CS, UCDU_LBREAK_NS, false, UCDU_CBREAK_XX, false },
     { UCDU_SCRIPT_COMMON, UCDU_BIDI_ET, UCDU_LBREAK_ID, false, UCDU_CBREAK_XX, false },
@@ -628,7 +628,7 @@ extern const ucdu_record UCDU_TABLE[] = {
 };
 
 static const uint8_t
-ucdu_index_u8[4352] =
+ucdu_u8[4352] =
 {
     0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,  1, 30,
@@ -904,7 +904,7 @@ ucdu_index_u8[4352] =
    73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73,176,
 };
 static const uint16_t
-ucdu_index_u16[15848] =
+ucdu_u16[15848] =
 {
      0,   1,   0,   2,   3,   4,   5,   6,   7,   8,   8,   9,   7,   8,   8,  10,
     11,   0,   0,   0,  12,  13,  14,  15,   8,   8,  16,   8,   8,   8,  16,   8,
@@ -1900,9 +1900,9 @@ ucdu_index_u16[15848] =
 };
 
 uint_fast16_t
-ucdu_index_get (unsigned u)
+ucdu_index (unsigned u)
 {
-  return u<1114112u?ucdu_index_u16[5760+(((ucdu_index_u16[((ucdu_index_u8[u>>3>>5])<<5)+((u>>3)&31u)])<<3)+((u)&7u))]:0;
+  return u<1114112u?ucdu_u16[5760+(((ucdu_u16[((ucdu_u8[u>>3>>5])<<5)+((u>>3)&31u)])<<3)+((u)&7u))]:0;
 }
 
 extern const ucdu_bracket_record UCDU_BRACKETS[] = {

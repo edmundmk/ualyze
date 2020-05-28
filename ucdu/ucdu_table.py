@@ -101,11 +101,11 @@ def insert_record( record ):
     records.append( record )
     return index
 
-insert_record( ( 'Zzzz', 'L', 'XX', False, 'XX', False ) )
+insert_record( ( 'Unknown', 'L', 'XX', False, 'XX', False ) )
 
 for c in range( 0x110000 ):
     record = (
-        scripts.get( c, 'Zzzz' ),
+        scripts.get( c, 'Unknown' ),
         bidi_class.get( c, 'L' ),
         resolve_lbreak_class( c, line_break.get( c, 'XX' ) ),
         c in zspace,
@@ -135,8 +135,8 @@ print()
 
 solutions = packTab.pack_table( data, 0, None )
 solution = packTab.pick_solution( solutions, compression=1 )
-code = packTab.Code( 'ucdu_index' )
-expr = solution.genCode( code, 'get' )
+code = packTab.Code( 'ucdu' )
+expr = solution.genCode( code, 'index' )
 code.print_c()
 print()
 

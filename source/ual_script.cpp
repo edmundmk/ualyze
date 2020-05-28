@@ -15,7 +15,7 @@
 // https://unicode.org/iso15924/
 
 #ifndef _MSVC
-#define MAKE_SCRIPT_CODE( x, a, b, c, d ) [ UCDN_SCRIPT_ ## x ] = ( (uint32_t)a << 24 ) | ( (uint32_t)b << 16 ) | ( (uint32_t)c << 8 ) | (uint32_t)d
+#define MAKE_SCRIPT_CODE( x, a, b, c, d ) [ UCDU_SCRIPT_ ## x ] = ( (uint32_t)a << 24 ) | ( (uint32_t)b << 16 ) | ( (uint32_t)c << 8 ) | (uint32_t)d
 #else
 #define MAKE_SCRIPT_CODE( x, a, b, c, d ) ( (uint32_t)a << 24 ) | ( (uint32_t)b << 16 ) | ( (uint32_t)c << 8 ) | (uint32_t)d
 #endif
@@ -23,6 +23,8 @@
 static const uint32_t SCRIPT_CODE[] =
 {
     MAKE_SCRIPT_CODE( COMMON, 'Z', 'y', 'y', 'y' ),
+    MAKE_SCRIPT_CODE( INHERITED, 'Z', 'i', 'n', 'h' ),
+    MAKE_SCRIPT_CODE( UNKNOWN, 'Z', 'z', 'z', 'z' ),
     MAKE_SCRIPT_CODE( LATIN, 'L', 'a', 't', 'n' ),
     MAKE_SCRIPT_CODE( GREEK, 'G', 'r', 'e', 'k' ),
     MAKE_SCRIPT_CODE( CYRILLIC, 'C', 'y', 'r', 'l' ),
@@ -62,7 +64,6 @@ static const uint32_t SCRIPT_CODE[] =
     MAKE_SCRIPT_CODE( OLD_ITALIC, 'I', 't', 'a', 'l' ),
     MAKE_SCRIPT_CODE( GOTHIC, 'G', 'o', 't', 'h' ),
     MAKE_SCRIPT_CODE( DESERET, 'D', 's', 'r', 't' ),
-    MAKE_SCRIPT_CODE( INHERITED, 'Z', 'i', 'n', 'h' ),
     MAKE_SCRIPT_CODE( TAGALOG, 'T', 'g', 'l', 'g' ),
     MAKE_SCRIPT_CODE( HANUNOO, 'H', 'a', 'n', 'o' ),
     MAKE_SCRIPT_CODE( BUHID, 'B', 'u', 'h', 'd' ),
@@ -124,7 +125,6 @@ static const uint32_t SCRIPT_CODE[] =
     MAKE_SCRIPT_CODE( SHARADA, 'S', 'h', 'r', 'd' ),
     MAKE_SCRIPT_CODE( SORA_SOMPENG, 'S', 'o', 'r', 'a' ),
     MAKE_SCRIPT_CODE( TAKRI, 'T', 'a', 'k', 'r' ),
-    MAKE_SCRIPT_CODE( UNKNOWN, 'Z', 'z', 'z', 'z' ),
     MAKE_SCRIPT_CODE( BASSA_VAH, 'B', 'a', 's', 's' ),
     MAKE_SCRIPT_CODE( CAUCASIAN_ALBANIAN, 'A', 'g', 'h', 'b' ),
     MAKE_SCRIPT_CODE( DUPLOYAN, 'D', 'u', 'p', 'l' ),
@@ -175,6 +175,10 @@ static const uint32_t SCRIPT_CODE[] =
     MAKE_SCRIPT_CODE( NANDINAGARI, 'N', 'a', 'n', 'd' ),
     MAKE_SCRIPT_CODE( NYIAKENG_PUACHUE_HMONG, 'H', 'm', 'n', 'p' ),
     MAKE_SCRIPT_CODE( WANCHO, 'W', 'c', 'h', 'o' ),
+    MAKE_SCRIPT_CODE( YEZIDI, 'Y', 'e', 'z', 'i' ),
+    MAKE_SCRIPT_CODE( CHORASMIAN, 'C', 'h', 'r', 's' ),
+    MAKE_SCRIPT_CODE( DIVES_AKURU, 'D', 'i', 'a', 'k' ),
+    MAKE_SCRIPT_CODE( KHITAN_SMALL_SCRIPT, 'K', 'i', 't', 's' ),
 };
 
 /*
@@ -252,10 +256,8 @@ static unsigned match_bracket( ual_script_brstack* stack, size_t bracket_level, 
 
 static unsigned lookahead( ual_buffer* ub, ual_script_brstack* stack, size_t index, unsigned curr_script )
 {
-    const UCDRecord* ucdn = ub->ucdn;
-
     size_t bracket_level = stack->sp;
-    unsigned fallback = UCDN_SCRIPT_COMMON;
+    unsigned fallback = UCDU_SCRIPT_COMMON;
 
     size_t length = ub->c.size();
     for ( ; index < length; ++index )
@@ -266,32 +268,33 @@ static unsigned lookahead( ual_buffer* ub, ual_script_brstack* stack, size_t ind
             continue;
         }
 
-        unsigned char_script = ucdn[ c.ix ].script;
+        const ucdu_record& record = UCDU_TABLE[ c.ix ];
+        unsigned char_script = record.script;
 
-        if ( char_script == UCDN_SCRIPT_COMMON )
+        if ( record.paired )
         {
-            // Check for bracket.
+            // Match paired bracket.
             char32_t uc = ual_codepoint( ub, index );
-            int bracket_type = ucdn_paired_bracket_type( uc );
+            char32_t closing_bracket = '\0';
+            ucdu_bracket_kind bracket_kind = ucdu_paired_bracket( uc, &closing_bracket );
+            assert( bracket_kind != UCDU_BRACKET_NONE );
 
-            if ( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_OPEN )
+            if ( bracket_kind == UCDU_BRACKET_OPEN )
             {
                 // Opening bracket.
-                char32_t closing_bracket = ucdn_paired_bracket( uc );
-                push_bracket( stack, { closing_bracket, UCDN_SCRIPT_COMMON } );
+                push_bracket( stack, { closing_bracket, UCDU_SCRIPT_COMMON } );
             }
-            else if ( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_CLOSE )
+            else if ( bracket_kind == UCDU_BRACKET_CLOSE )
             {
                 // Closing bracket.
-                if ( match_bracket( stack, bracket_level, uc, UCDN_SCRIPT_COMMON ) == BELOW_BRACKET_LEVEL )
+                if ( match_bracket( stack, bracket_level, uc, UCDU_SCRIPT_COMMON ) == BELOW_BRACKET_LEVEL )
                 {
                     break;
                 }
             }
-
-            continue;
         }
-        else if ( char_script == UCDN_SCRIPT_INHERITED )
+
+        if ( char_script == UCDU_SCRIPT_COMMON || char_script == UCDU_SCRIPT_INHERITED )
         {
             continue;
         }
@@ -303,14 +306,14 @@ static unsigned lookahead( ual_buffer* ub, ual_script_brstack* stack, size_t ind
         }
 
         // Otherwise, remember first actual script, even inside brackets.
-        if ( fallback == UCDN_SCRIPT_COMMON )
+        if ( fallback == UCDU_SCRIPT_COMMON )
         {
             fallback = char_script;
         }
     }
 
     // Fall back to current script.
-    if ( fallback == UCDN_SCRIPT_COMMON )
+    if ( fallback == UCDU_SCRIPT_COMMON )
     {
         fallback = curr_script;
     }
@@ -327,21 +330,19 @@ static unsigned lookahead( ual_buffer* ub, ual_script_brstack* stack, size_t ind
 UAL_API void ual_script_spans_begin( ual_buffer* ub )
 {
     // Start at beginning of paragraph.
-    ub->script_analysis = { 0, UCDN_SCRIPT_LATIN, 0 };
+    ub->script_analysis = { 0, UCDU_SCRIPT_LATIN, 0 };
 
     // Lookahead to determine script of first character.
     ual_script_brstack stack = get_brstack( ub );
-    ub->script_analysis.script = lookahead( ub, &stack, 0, UCDN_SCRIPT_LATIN );
+    ub->script_analysis.script = lookahead( ub, &stack, 0, UCDU_SCRIPT_LATIN );
 }
 
 UAL_API bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span )
 {
-    const UCDRecord* ucdn = ub->ucdn;
-
     // Load state.
     ual_script_brstack stack = get_brstack( ub );
     size_t index = ub->script_analysis.index;
-    unsigned script = ub->script_analysis.script;
+    unsigned curr_script = ub->script_analysis.script;
 
     // Build span.
     out_span->lower = index;
@@ -351,12 +352,12 @@ UAL_API bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span )
     if ( index >= length )
     {
         out_span->upper = index;
-        out_span->script = SCRIPT_CODE[ UCDN_SCRIPT_LATIN ];
+        out_span->script = SCRIPT_CODE[ UCDU_SCRIPT_LATIN ];
         return false;
     }
 
     // Check each character.
-    unsigned cscript = script;
+    unsigned char_script = curr_script;
     for ( ++index; index < length; ++index )
     {
         // Get character.  Skip surrogates.
@@ -367,22 +368,19 @@ UAL_API bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span )
         }
 
         // Look up script for character.
-        cscript = ucdn[ c.ix ].script;
+        const ucdu_record& record = UCDU_TABLE[ c.ix ];
+        char_script = record.script;
 
-        // Inherited characters do not changes script.
-        if ( cscript == UCDN_SCRIPT_INHERITED )
-        {
-            continue;
-        }
-
-        // Common characters might be brackets.
-        if ( cscript == UCDN_SCRIPT_COMMON )
+        // Check for brackets.
+        if ( record.paired )
         {
             // Check for bracket.
             char32_t uc = ual_codepoint( ub, index );
-            int bracket_type = ucdn_paired_bracket_type( uc );
+            char32_t closing_bracket = '\0';
+            ucdu_bracket_kind bracket_kind = ucdu_paired_bracket( uc, &closing_bracket );
+            assert( bracket_kind != UCDU_BRACKET_NONE );
 
-            if ( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_OPEN )
+            if ( bracket_kind == UCDU_BRACKET_OPEN )
             {
                 // This bracket inherits the current script.  Move past it.
                 index += 1;
@@ -396,42 +394,42 @@ UAL_API bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span )
                 }
 
                 // Opening bracket.
-                char32_t closing_bracket = ucdn_paired_bracket( uc );
-                push_bracket( &stack, { closing_bracket, script } );
+                push_bracket( &stack, { closing_bracket, curr_script } );
 
                 // Determine script of now-current character by lookahead.
-                cscript = lookahead( ub, &stack, index, script );
+                char_script = lookahead( ub, &stack, index, curr_script );
             }
-            else if ( bracket_type == UCDN_BIDI_PAIRED_BRACKET_TYPE_CLOSE )
+            else if ( bracket_kind == UCDU_BRACKET_CLOSE )
             {
                 // Closing bracket.  Might change script here.
-                cscript = match_bracket( &stack, 0, uc, script );
-            }
-            else
-            {
-                // Not a bracket.  Treat same as inherited.
-                continue;
+                char_script = match_bracket( &stack, 0, uc, curr_script );
             }
         }
 
-        if ( cscript != script )
+        // Common and inherited characters do not change script.
+        if ( char_script == UCDU_SCRIPT_COMMON || char_script == UCDU_SCRIPT_INHERITED )
+        {
+            continue;
+        }
+
+        if ( char_script != curr_script )
         {
             // Script has changed.
             break;
         }
     }
 
-    assert( index >= length || cscript != script );
+    assert( index >= length || char_script != curr_script );
     assert( out_span->lower < index );
 
     // Save state.
     ub->script_analysis.index = index;
-    ub->script_analysis.script = cscript;
+    ub->script_analysis.script = char_script;
     ub->script_analysis.sp = stack.sp;
 
     // Return resulting span.
     out_span->upper = index;
-    out_span->script = SCRIPT_CODE[ script ];
+    out_span->script = SCRIPT_CODE[ curr_script ];
     return true;
 }
 

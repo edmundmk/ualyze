@@ -24,9 +24,9 @@ static char boundary_class( unsigned bc )
 {
     switch ( bc )
     {
-    case UCDN_BIDI_CLASS_L:     return 'L';
-    case UCDN_BIDI_CLASS_R:     return 'R';
-    case UCDN_BIDI_CLASS_AL:    return 'A';
+    case UCDU_BIDI_L:     return 'L';
+    case UCDU_BIDI_R:     return 'R';
+    case UCDU_BIDI_AL:    return 'A';
     case BC_SEQUENCE:           return '=';
     default:                    return '?';
     }
@@ -36,29 +36,29 @@ static const char* bidi_class( unsigned bc )
 {
     switch ( bc )
     {
-    case UCDN_BIDI_CLASS_L:     return "L";
-    case UCDN_BIDI_CLASS_R:     return "R";
-    case UCDN_BIDI_CLASS_AL:    return "AL";
-    case UCDN_BIDI_CLASS_LRE:   return "LRE";
-    case UCDN_BIDI_CLASS_LRO:   return "LRO";
-    case UCDN_BIDI_CLASS_RLE:   return "RLE";
-    case UCDN_BIDI_CLASS_RLO:   return "RLO";
-    case UCDN_BIDI_CLASS_PDF:   return "PDF";
-    case UCDN_BIDI_CLASS_EN:    return "EN";
-    case UCDN_BIDI_CLASS_ES:    return "ES";
-    case UCDN_BIDI_CLASS_ET:    return "ET";
-    case UCDN_BIDI_CLASS_AN:    return "AN";
-    case UCDN_BIDI_CLASS_CS:    return "CS";
-    case UCDN_BIDI_CLASS_NSM:   return "NSM";
-    case UCDN_BIDI_CLASS_BN:    return "BN";
-    case UCDN_BIDI_CLASS_B:     return "B";
-    case UCDN_BIDI_CLASS_S:     return "S";
-    case UCDN_BIDI_CLASS_WS:    return "WS";
-    case UCDN_BIDI_CLASS_ON:    return "ON";
-    case UCDN_BIDI_CLASS_LRI:   return "LRI";
-    case UCDN_BIDI_CLASS_RLI:   return "RLI";
-    case UCDN_BIDI_CLASS_FSI:   return "FSI";
-    case UCDN_BIDI_CLASS_PDI:   return "PDI";
+    case UCDU_BIDI_L:     return "L";
+    case UCDU_BIDI_R:     return "R";
+    case UCDU_BIDI_AL:    return "AL";
+    case UCDU_BIDI_LRE:   return "LRE";
+    case UCDU_BIDI_LRO:   return "LRO";
+    case UCDU_BIDI_RLE:   return "RLE";
+    case UCDU_BIDI_RLO:   return "RLO";
+    case UCDU_BIDI_PDF:   return "PDF";
+    case UCDU_BIDI_EN:    return "EN";
+    case UCDU_BIDI_ES:    return "ES";
+    case UCDU_BIDI_ET:    return "ET";
+    case UCDU_BIDI_AN:    return "AN";
+    case UCDU_BIDI_CS:    return "CS";
+    case UCDU_BIDI_NSM:   return "NSM";
+    case UCDU_BIDI_BN:    return "BN";
+    case UCDU_BIDI_B:     return "B";
+    case UCDU_BIDI_S:     return "S";
+    case UCDU_BIDI_WS:    return "WS";
+    case UCDU_BIDI_ON:    return "ON";
+    case UCDU_BIDI_LRI:   return "LRI";
+    case UCDU_BIDI_RLI:   return "RLI";
+    case UCDU_BIDI_FSI:   return "FSI";
+    case UCDU_BIDI_PDI:   return "PDI";
     case BC_INVALID:            return "X";
     default:                    return "?";
     }
@@ -179,7 +179,7 @@ int main( int argc, char* argv[] )
             {
                 // Force a single right-to-left level run.
                 ub->level_runs.clear();
-                ub->level_runs.push_back( { 0, 1, UCDN_BIDI_CLASS_R, UCDN_BIDI_CLASS_R, 0 } );
+                ub->level_runs.push_back( { 0, 1, UCDU_BIDI_R, UCDU_BIDI_R, 0 } );
                 ub->level_runs.push_back( { (unsigned)ub->c.size(), 1, BC_SEQUENCE, BC_SEQUENCE, 0 } );
                 ub->bidi_analysis.complexity = BIDI_SOLITARY;
             }

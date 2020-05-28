@@ -21,6 +21,7 @@
 #define UCDU_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 /*
     Based on ucdn https://github.com/grigorig/ucdn, this is a stripped-down
@@ -34,7 +35,7 @@ enum ucdu_script
 {
     UCDU_SCRIPT_COMMON,
     UCDU_SCRIPT_INHERITED,
-    UCDU_SCRIPT_ZZZZ,
+    UCDU_SCRIPT_UNKNOWN,
     UCDU_SCRIPT_LATIN,
     UCDU_SCRIPT_GREEK,
     UCDU_SCRIPT_CYRILLIC,
@@ -298,7 +299,7 @@ enum ucdu_bracket_kind
 struct ucdu_record
 {
     unsigned char script;       // script
-    unsigned char bidi;         // bidi class
+    unsigned char bidi_class;   // bidi class
     unsigned char lbreak : 7;   // resolved line break class.
     unsigned char zspace : 1;   // general category Zs
     unsigned char cbreak : 7;   // grapheme cluster break class.
@@ -330,7 +331,7 @@ size_t ucdu_lookup( char32_t c );
     Get paired bracket for c.
 */
 
-ucdu_bracket_kind ucdu_paired_bracket( char32_t c, char32_t* out );
+ucdu_bracket_kind ucdu_paired_bracket( char32_t bracket, char32_t* out_paired );
 
 
 #endif

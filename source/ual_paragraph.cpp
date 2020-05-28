@@ -13,8 +13,6 @@
 
 UAL_API size_t ual_analyze_paragraph( ual_buffer* ub, const char16_t* text, size_t size )
 {
-    const UCDRecord* ucdn = ub->ucdn;
-
     ub->c.clear();
     ub->bc_usage = BC_NONE;
 
@@ -27,7 +25,7 @@ UAL_API size_t ual_analyze_paragraph( ual_buffer* ub, const char16_t* text, size
 
     // Perform analysis.
     size_t i = 0;
-    unsigned prev = UCDN_LINEBREAK_CLASS_XX;
+    unsigned prev = UCDU_LBREAK_XX;
     while ( i < size )
     {
         // Decode character from UTF-16.
@@ -57,14 +55,14 @@ UAL_API size_t ual_analyze_paragraph( ual_buffer* ub, const char16_t* text, size
         }
 
         // Look up character in ucdn.
-        unsigned ix = ucdn_get_record_index( uc );
+        unsigned ix = ucdu_lookup( uc );
 
         // Check for line break.
-        unsigned curr = ucdn[ ix ].linebreak_class;
-        if ( prev == UCDN_LINEBREAK_CLASS_BK
-            || prev == UCDN_LINEBREAK_CLASS_NL
-            || prev == UCDN_LINEBREAK_CLASS_LF
-            || ( prev == UCDN_LINEBREAK_CLASS_CR && curr != UCDN_LINEBREAK_CLASS_LF ) )
+        unsigned curr = UCDU_TABLE[ ix ].lbreak;
+        if ( prev == UCDU_LBREAK_BK
+            || prev == UCDU_LBREAK_NL
+            || prev == UCDU_LBREAK_LF
+            || ( prev == UCDU_LBREAK_CR && curr != UCDU_LBREAK_LF ) )
         {
             break;
         }

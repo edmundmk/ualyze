@@ -13,7 +13,6 @@
 
 ual_buffer::ual_buffer()
     :   refcount( 1 )
-    ,   ucdn( ucdn_record_table() )
     ,   bc_usage( BC_NONE )
     ,   script_analysis{ INVALID_INDEX }
     ,   bidi_analysis{ INVALID_INDEX, INVALID_INDEX }
@@ -26,12 +25,6 @@ ual_buffer::~ual_buffer()
 
 UAL_API ual_buffer* ual_buffer_create()
 {
-    if ( ucdn_record_table_size() >= IX_INVALID )
-    {
-        assert( ! "ucdn record table is too large" );
-        return nullptr;
-    }
-
     return new ual_buffer();
 }
 

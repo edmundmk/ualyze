@@ -35,8 +35,6 @@ const size_t NO_SPACE = SIZE_MAX;
 
 UAL_API void ual_analyze_breaks( ual_buffer* ub )
 {
-    const UCDRecord* ucdn = ub->ucdn;
-
     int lb_state = STATE_SOT_ZWJ;
     int cb_state = STATE_CONTROL_LF;
 
@@ -55,15 +53,9 @@ UAL_API void ual_analyze_breaks( ual_buffer* ub )
         }
 
         // Look up properties.
-        const UCDRecord& u = ucdn[ c.ix ];
-        unsigned lb_class = u.linebreak_class;
-        unsigned cb_class = u.grapheme_cluster_break;
-
-        // LB1: Resolve SA+Mn and SA+Mc to CM.
-        if ( lb_class == UCDN_LINEBREAK_CLASS_SA && ( u.category == UCDN_GENERAL_CATEGORY_MN || u.category == UCDN_GENERAL_CATEGORY_MC ) )
-        {
-            lb_class = UCDN_LINEBREAK_CLASS_CM;
-        }
+        const ucdu_record& record = UCDU_TABLE[ c.ix ];
+        unsigned lb_class = record.lbreak;
+        unsigned cb_class = record.cbreak;
 
         // Read state machine.
         lb_state = UAX14[ lb_state ][ lb_class ];
@@ -93,10 +85,10 @@ UAL_API void ual_analyze_breaks( ual_buffer* ub )
         c.bc = bc;
 
         // Check for space.
-        bool is_space =
-               u.category == UCDN_GENERAL_CATEGORY_ZS   // space characters
-            || lb_class == UCDN_LINEBREAK_CLASS_ZW      // ZERO WIDTH SPACE
-            || lb_state == STATE_NL_LF_CR_BK;           // newlines
+        bool is_space = record.zspace ||
+               record.zspace                    // space characters
+            || lb_class == UCDU_LBREAK_ZW       // ZERO WIDTH SPACE
+            || lb_state == STATE_NL_LF_CR_BK;   // newlines
         if ( is_space && ! was_space )
         {
             space_index = i;
