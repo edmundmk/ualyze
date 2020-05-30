@@ -54,7 +54,7 @@ UAL_API size_t ual_analyze_paragraph( ual_buffer* ub, const char16_t* text, size
             }
         }
 
-        // Look up character in ucdn.
+        // Look up character in unicode database.
         unsigned ix = ucdu_lookup( uc );
 
         // Check for line break.

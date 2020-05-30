@@ -4,7 +4,7 @@
 --  Line breaking algorithm, from UAX #19
 --
 
--- Classes.  Must match order declared in ucdn.h.
+-- Classes.  Must match order declared in ucdu.h.
 OP
 CL
 CP

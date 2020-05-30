@@ -4,7 +4,7 @@
 --  Extended grapheme cluster boundaries, from UAX #29
 --
 
--- Classes.  Must match order declared in ucdn.h.
+-- Classes.  Must match order declared in ucdu.h.
 CR
 LF
 CONTROL
