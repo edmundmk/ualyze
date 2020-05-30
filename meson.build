@@ -7,7 +7,7 @@
 #  full license information.
 #
 
-project( 'ualyze', 'cpp', 'c', default_options : [ 'cpp_std=c++17' ] )
+project( 'ualyze', 'cpp', default_options : [ 'cpp_std=c++17' ] )
 
 include = include_directories( 'include' )
 
