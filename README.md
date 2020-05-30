@@ -7,10 +7,6 @@ Ualyze is a library which performs the following Unicode analyses:
   * Bracket-aware script classification [UAX #24](https://unicode.org/reports/tr24/#Classification_by_Script).
   * Bidirectional algorithm [UAX #9](https://unicode.org/reports/tr9/).
 
-It depends on a slightly [customised version of UCDN](https://github.com/edmundmk/ucdn)
-(forked from the original [here](https://github.com/grigorig/ucdn)) to query
-Unicode properties.
-
 Ualyze is designed to be used as part of a text layout system.
 
 For example, when using [FreeType](https://freetype.org) (to render glyphs)
@@ -145,4 +141,8 @@ in anger yet.  I make no promises about its stability or correctness.
 
 Copyright © 2019 Edmund Kapusniak.  Licensed under the MIT License. See the
 LICENSE file in the project root for full license information.
+
+The ucdu module contains ideas from [UCDN](https://github.com/grigorig/ucdn),
+which is licenced under the ISC license.  See the LICENSE file in the project
+root for full license information.
 
