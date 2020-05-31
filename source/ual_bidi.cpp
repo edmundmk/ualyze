@@ -1344,7 +1344,6 @@ void bidi_initial( ual_buffer* ub )
     switch ( complexity )
     {
     case BIDI_ALL_LEFT:
-    case BIDI_ALL_DONE:
         // Entire string is left to right.  No further analysis required.
         index = ub->c.size();
         ub->level_runs.push_back( { 0, 0, UCDU_BIDI_L, UCDU_BIDI_L, 0 } );
@@ -1385,11 +1384,82 @@ UAL_API unsigned ual_analyze_bidi( ual_buffer* ub )
 /*
     Iterator-style interface for constructing bidi runs from resolved classes.
 */
+/*
+static const char* bidi_os( unsigned bidi_class )
+{
+    switch ( bidi_class )
+    {
+    case UCDU_BIDI_L:   return "L";
+    case UCDU_BIDI_R:   return "R";
+    case UCDU_BIDI_AL:  return "AL";
+    case BC_SEQUENCE:   return "SEQ";
+    }
+    return "??";
+}
+
+static const char* bidi_cs( unsigned bidi_class )
+{
+    switch ( bidi_class )
+    {
+    case UCDU_BIDI_L:   return "L";
+    case UCDU_BIDI_R:   return "R";
+    case UCDU_BIDI_AL:  return "AL";
+    case UCDU_BIDI_LRE: return "LRE";
+    case UCDU_BIDI_LRO: return "LRO";
+    case UCDU_BIDI_RLE: return "RLE";
+    case UCDU_BIDI_RLO: return "RLO";
+    case UCDU_BIDI_PDF: return "PDF";
+    case UCDU_BIDI_EN:  return "EN";
+    case UCDU_BIDI_ES:  return "ES";
+    case UCDU_BIDI_ET:  return "ET";
+    case UCDU_BIDI_AN:  return "AN";
+    case UCDU_BIDI_CS:  return "CS";
+    case UCDU_BIDI_NSM: return "NSM";
+    case UCDU_BIDI_BN:  return "BN";
+    case UCDU_BIDI_B:   return "B";
+    case UCDU_BIDI_S:   return "S";
+    case UCDU_BIDI_WS:  return "WS";
+    case UCDU_BIDI_ON:  return "ON";
+    case UCDU_BIDI_LRI: return "LRI";
+    case UCDU_BIDI_RLI: return "RLI";
+    case UCDU_BIDI_FSI: return "FSI";
+    case UCDU_BIDI_PDI: return "PDI";
+    case BC_INVALID:    return "INV";
+    }
+
+    return "??";
+}
+
+static void debug_print_bidi( ual_buffer* ub )
+{
+    switch ( ub->bidi_analysis.complexity )
+    {
+    case BIDI_ALL_LEFT: printf( "BIDI_COMPLEXITY ALL_LEFT\n" ); break;
+    case BIDI_SOLITARY: printf( "BIDI_COMPLEXITY SOLITARY\n" ); break;
+    case BIDI_EXPLICIT: printf( "BIDI_COMPLEXITY EXPLICIT\n" ); break;
+    }
+
+    unsigned index = 0;
+    for ( ual_level_run lrun : ub->level_runs )
+    {
+        printf( "LEVEL_RUN [%u] %u %u %s %s %u\n", index++, lrun.start, lrun.level, bidi_os( lrun.sos ), bidi_os( lrun.eos ), lrun.inext );
+    }
+
+    printf( "BIDI_STRING" );
+    for ( ual_char c : ub->c )
+    {
+        printf( " %s", bidi_cs( c.bc ) );
+    }
+    printf( "\n" );
+}
+*/
 
 UAL_API void ual_bidi_runs_begin( ual_buffer* ub )
 {
     assert( ub->bc_usage == BC_BIDI_CLASS );
     assert( ub->level_runs.back().start == ub->c.size() );
+
+    //debug_print_bidi( ub );
 
     ub->bidi_analysis.ilrun = 0;
     ub->bidi_analysis.index = 0;
@@ -1412,14 +1482,6 @@ UAL_API bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
     {
         out_run->upper = index;
         out_run->level = ub->bidi_analysis.paragraph_level;
-
-        if ( ub->bidi_analysis.complexity == BIDI_ALL_LEFT )
-        {
-            out_run->lower = 0;
-            ub->bidi_analysis.complexity = BIDI_ALL_DONE;
-            return true;
-        }
-
         return false;
     }
 
@@ -1433,6 +1495,22 @@ UAL_API bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
     assert( index < nrun->start );
 
     unsigned level = prun->level;
+
+    if ( ub->bidi_analysis.complexity == BIDI_ALL_LEFT )
+    {
+        // Move over level run.
+        ilrun += 1;
+        index = nrun->start;
+
+        // Save state.
+        ub->bidi_analysis.index = index;
+        ub->bidi_analysis.ilrun = ilrun;
+
+        // Return run.
+        out_run->upper = index;
+        out_run->level = prun->level;
+        return true;
+    }
 
     ual_char c = ub->c[ index++ ];
     if ( level & 1 )

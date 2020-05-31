@@ -40,7 +40,6 @@ struct ual_script_analysis
 enum ual_bidi_complexity
 {
     BIDI_ALL_LEFT,  // Paragraph is left-to-right.
-    BIDI_ALL_DONE,  // Paragraph is left-to-right, but reported it already.
     BIDI_SOLITARY,  // No directional embeddings, overrides, or isolates.
     BIDI_EXPLICIT,  // Requires full processing.
 };
