@@ -84,7 +84,7 @@ UAL_API void ual_analyze_breaks( ual_buffer* ub )
             }
             else
             {
-                lb_state = -lb_state+63;
+                lb_state = -lb_state-63;
                 if ( ! lookahead_nu( ub, i + 1, length ) )
                 {
                     bc |= UAL_BREAK_LINE;
