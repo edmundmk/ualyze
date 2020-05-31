@@ -1298,6 +1298,10 @@ void bidi_brackets( ual_buffer* ub )
 /*
     Perform rules N1 and N2, resolving types for runs of neutrals.
 
+    TODO: Rule N0/NSM, where characters that were originally NSM before rule
+    W1, which follow a bracket which has changed, become the direction of that
+    bracket.  !!!
+
     The only types remaining in the string are:
 
         strong L    -> L
