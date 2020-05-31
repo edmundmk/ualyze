@@ -1038,6 +1038,7 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
     stack->sp = 0;
     bool contains_e = false;
     bool contains_o = false;
+    bool give_up = false;
 
     // Go through every level run in isolating run sequence.
     while ( true )
@@ -1062,6 +1063,13 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
 
             case UCDU_BIDI_ON:
             {
+                // If the bracket stack overflowed even once, we've given up.
+                if ( give_up )
+                {
+                    c.bc = UCDU_BIDI_B;
+                    break;
+                }
+
                 // Check for bracket.
                 ucdu_bracket_kind bracket_kind = UCDU_BRACKET_NONE;
                 char32_t closing_bracket = '\0';
@@ -1083,9 +1091,10 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
 
                 if ( bracket_kind == UCDU_BRACKET_OPEN )
                 {
-                    // If the stack is full, ignore this bracket.
+                    // If the stack is full, give up and ignore this bracket.
                     if ( stack->sp >= BIDI_BRSTACK_LIMIT )
                     {
+                        give_up = true;
                         c.bc = UCDU_BIDI_B;
                         break;
                     }
