@@ -108,7 +108,7 @@ for case in cases:
         elif c == '(':
             j = code.find( ')', i )
             if j != -1:
-                p[ -1 ].append( [ "BCLASS" ] + code[ i : j ].split() )
+                p[ -1 ].append( [ "BIDI_CLASS" ] + code[ i : j ].split() )
                 i = j + 1
                 continue
 
@@ -174,10 +174,10 @@ for case in cases:
             q[ -1 ].append( [ info[ 0 ], int( info[ 1 ] ) ] )
             continue
 
-        if kind == 'BIDILRUN' and info[ 0 ] == 'LRUN':
+        if kind == 'BIDILRUN' and info[ 0 ] == 'LEVEL_RUN':
             q[ -1 ].append( [ info[ 1 ], int( info[ 2 ] ), int( info[ 3 ] ) ] )
 
-        if ( kind == 'BIDIEXPLICIT' or kind == 'BIDIWEAK' or kind == 'BIDIWEAKR' or kind == 'BIDINEUTRAL' ) and info[ 0 ] == 'BCLASS':
+        if ( kind == 'BIDIEXPLICIT' or kind == 'BIDIWEAK' or kind == 'BIDIWEAKR' or kind == 'BIDINEUTRAL' ) and info[ 0 ] == 'BIDI_CLASS':
             q[ -1 ].append( info )
 
     if p != q:

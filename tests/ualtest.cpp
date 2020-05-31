@@ -73,7 +73,7 @@ int main( int argc, char* argv[] )
 #endif
 
     // Check for bidi argument.
-    enum { LEVEL_RUNS, EXPLICIT, WEAK, WEAK_R, NEUTRAL, NONE } bidi_mode = NONE;
+    enum { LEVEL_RUNS, EXPLICIT, WEAK, WEAK_R, NEUTRAL, FULL } bidi_mode = FULL;
     if ( argc > 1 )
     {
         const char* arg = argv[ 1 ];
@@ -151,7 +151,7 @@ int main( int argc, char* argv[] )
         ual_script_spans_end( ub );
 
         // Analyze bidi stages.
-        if ( bidi_mode != NONE )
+        if ( bidi_mode != FULL )
         {
             bidi_initial( ub );
             size_t lrun_length = ub->level_runs.size() - 1;
@@ -161,7 +161,7 @@ int main( int argc, char* argv[] )
                 const ual_level_run* nrun = &ub->level_runs.at( irun + 1 );
                 printf
                 (
-                    "LRUN %u:%u:%c%c %u %u\n",
+                    "LEVEL_RUN %u:%u:%c%c %u %u\n",
                     prun->level,
                     prun->inext,
                     boundary_class( prun->sos ),
@@ -197,7 +197,7 @@ int main( int argc, char* argv[] )
                 }
             }
 
-            printf( "BCLASS" );
+            printf( "BIDI_CLASS" );
             size_t length = ub->c.size();
             for ( size_t i = 0; i < length; ++i )
             {
@@ -206,6 +206,19 @@ int main( int argc, char* argv[] )
             }
             printf( "\n" );
             continue;
+        }
+        else if ( bidi_mode == FULL )
+        {
+            unsigned paragraph_level = ual_analyze_bidi( ub );
+            printf( "PARAGRAPH_LEVEL %u\n", paragraph_level );
+
+            ual_bidi_run run;
+            ual_bidi_runs_begin( ub );
+            while ( ual_bidi_runs_next( ub, &run ) )
+            {
+                printf( "BIDI_RUN %zu %zu %u\n", run.lower, run.upper, run.level );
+            }
+            ual_bidi_runs_end( ub );
         }
     }
 
