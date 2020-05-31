@@ -1247,6 +1247,31 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
         // sos was clobbered by weak processing, set back to SEQUENCE.
         prun->sos = BC_SEQUENCE;
     }
+
+    // All remaining opening brackets are mismatched.
+    while ( stack->sp-- )
+    {
+        ual_bidi_brentry* entry = stack->ss + stack->sp;
+
+        // Clear opening bracket to B to avoid reprocessing.
+        ub->c[ entry->index ].bc = UCDU_BIDI_B;
+
+        // Deal with rewind.
+        if ( entry->rewind_point )
+        {
+            if ( entry->prev_strong == BIDI_E_GUESS )
+            {
+                // Move rewind point to contained bracket.
+                assert( stack->sp > 0 );
+                stack->ss[ stack->sp - 1 ].rewind_point = true;
+            }
+            else if ( entry->prev_strong == BIDI_O )
+            {
+                // Brackets dependent on this context become /o/.
+                rewind_o( ub, irun, entry->index, nrun->start, o );
+            }
+        }
+    }
 }
 
 void bidi_brackets( ual_buffer* ub )
