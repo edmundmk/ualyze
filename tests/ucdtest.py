@@ -120,12 +120,22 @@ def bidi_character_test( test_cases ):
 
     for codepoints, paragraph_direction, paragraph_level, levels, visual_order in test_cases:
 
+        # Get test case in terms of integers/string.
         cpoint = [ int( x.strip(), 16 ) for x in codepoints.split() ]
         string = [ chr( x ) for x in cpoint ]
         paragraph_direction = int( paragraph_direction )
         paragraph_level = int( paragraph_level )
         levels = [ int( x ) if x != 'x' else -1 for x in levels.split() ]
 
+        # Removed characters are BN in our result and bind with left run.
+        bn_level = paragraph_level
+        for i in range( len( levels ) ):
+            if levels[ i ] == -1:
+                levels[ i ] = bn_level
+            else:
+                bn_level = levels[ i ]
+
+        # Run test case.
         args = [ 'f' ]
         if paragraph_direction != 2:
             args.append( str( paragraph_direction ) )
@@ -134,6 +144,7 @@ def bidi_character_test( test_cases ):
         if output is None:
             return 1
 
+        # Parse output, turning bidi runs into a list of per-character levels.
         pstart = 0
         result = []
         result_paragraph_level = -1
@@ -152,20 +163,17 @@ def bidi_character_test( test_cases ):
                 for i in range( lower, upper ):
                     result[ i ] = level
 
-        print( string )
-        print( levels )
-        print( result )
-        print( output )
-
-        if paragraph_level != result_paragraph_level:
+        # Check result.
+        if paragraph_level != result_paragraph_level or levels != result:
             print( string )
-            print( paragraph_direction, paragraph_level )
-            print( levels )
-            print( output )
+            print( paragraph_level )
             print( result_paragraph_level )
+            print( levels )
             print( result )
+            print( output )
             return 1
 
+        # There are a lot of test cases.  Indicate that we're still going.
         print( "PASSED", index )
         index += 1
 
