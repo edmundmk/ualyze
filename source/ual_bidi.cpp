@@ -26,7 +26,7 @@ static_assert( BC_SEQUENCE == 3 );
     Debug print.
 */
 
-/*
+
 static const char* bidi_os( unsigned bidi_class )
 {
     switch ( bidi_class )
@@ -94,7 +94,7 @@ static void debug_print_bidi( ual_buffer* ub )
     }
     printf( "\n" );
 }
-*/
+
 
 /*
     Look up bidi classes for each codepoint in a paragraph.  The class of
@@ -142,6 +142,8 @@ static ual_bidi_complexity bidi_lookup( ual_buffer* ub )
     }
 
     ub->bc_usage = BC_BIDI_CLASS;
+
+    debug_print_bidi( ub );
 
     if ( left )
         return BIDI_ALL_LEFT;
@@ -434,39 +436,20 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
 
         // X5a-c
         case UCDU_BIDI_FSI:
+        {
+            // Act as if it was LRI or RLI based on the first strong level.
             bc = first_strong_level( ub, index + 1, true ) ? UCDU_BIDI_RLI : UCDU_BIDI_LRI;
-            goto isolate_initiator;
+
+            // This character is part of the current level run.
+            break;
+        }
 
         case UCDU_BIDI_LRI:
         case UCDU_BIDI_RLI:
-        isolate_initiator:
         {
             // This character is part of the current level run.
-
-            // Compute the least odd (RLI) or even (LRI) embedding level
-            // greater than the embedding level of the last stack entry.
-            unsigned level = next_level( stack_entry.level, bc == UCDU_BIDI_RLI );
-
-            // Check for overflow isolate.
-            if ( level > BIDI_MAX_DEPTH || overflow_embedding_count > 0 || overflow_embedding_count > 0 )
-            {
-                // Increment the overflow isolate count by one, and leave all
-                // other variables unchanged.
-                overflow_isolate_count += 1;
-                break;
-            }
-
-            // Increment the valid isolate count by one.
-            valid_isolate_count += 1;
-
-            // Push an entry consisting of the new embedding level, neutral
-            // directional override status, and true directional isolate
-            // status onto the directional status stack.
-            assert( stack.sp < BIDI_EXSTACK_LIMIT );
-            stack.ss[ stack.sp++ ] = stack_entry;
-            stack_entry = { level, BIDI_ISOLATE, (unsigned)ub->level_runs.size() };
+            break;
         }
-        break;
 
         // X6a
         case UCDU_BIDI_PDI:
@@ -576,6 +559,33 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
             run_sos = boundary_class( run_level, clevel );
             run_start = index;
             run_level = clevel;
+        }
+
+        // X5a-c, now initiator has been added to current level run sequence.
+        if ( bc == UCDU_BIDI_LRI || bc == UCDU_BIDI_RLI )
+        {
+            // Compute the least odd (RLI) or even (LRI) embedding level
+            // greater than the embedding level of the last stack entry.
+            unsigned level = next_level( stack_entry.level, bc == UCDU_BIDI_RLI );
+
+            // Check for overflow isolate.
+            if ( level > BIDI_MAX_DEPTH || overflow_embedding_count > 0 || overflow_embedding_count > 0 )
+            {
+                // Increment the overflow isolate count by one, and leave all
+                // other variables unchanged.
+                overflow_isolate_count += 1;
+                break;
+            }
+
+            // Increment the valid isolate count by one.
+            valid_isolate_count += 1;
+
+            // Push an entry consisting of the new embedding level, neutral
+            // directional override status, and true directional isolate
+            // status onto the directional status stack.
+            assert( stack.sp < BIDI_EXSTACK_LIMIT );
+            stack.ss[ stack.sp++ ] = stack_entry;
+            stack_entry = { level, BIDI_ISOLATE, (unsigned)ub->level_runs.size() };
         }
     }
 
@@ -1476,11 +1486,18 @@ void bidi_initial( ual_buffer* ub, unsigned override_paragraph_level )
 UAL_API unsigned ual_analyze_bidi( ual_buffer* ub, unsigned override_paragraph_level )
 {
     bidi_initial( ub, override_paragraph_level );
+    debug_print_bidi( ub );
+
     if ( ub->bidi_analysis.complexity != BIDI_ALL_LEFT )
     {
         bidi_weak( ub );
+        debug_print_bidi( ub );
+
         bidi_brackets( ub );
+        debug_print_bidi( ub );
+
         bidi_neutral( ub );
+        debug_print_bidi( ub );
     }
 
     return ub->bidi_analysis.paragraph_level;
