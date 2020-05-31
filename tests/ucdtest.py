@@ -59,7 +59,7 @@ def run_ualtest( text, *args ):
 
 def break_test( test_case, break_kind ):
 
-    break_kind += " "
+    break_token = "BREAK_" + break_kind + " "
 
     offset = 0
     breaks = []
@@ -82,7 +82,9 @@ def break_test( test_case, break_kind ):
     for line in output.splitlines():
         if line.startswith( "PARAGRAPH " ):
             pstart = int( line.split()[ 1 ] )
-        if line.startswith( break_kind ):
+            if pstart != 0 and break_kind == "LINE":
+                result.append( pstart )
+        if line.startswith( break_token ):
             result.append( pstart + int( line.split()[ 1 ] ) )
     result.append( offset )
 
@@ -97,7 +99,7 @@ def break_test( test_case, break_kind ):
 def grapheme_break_test( test_cases ):
 
     for test_case, in test_cases:
-        if break_test( test_case, "BREAK_CLUSTER" ):
+        if break_test( test_case, "CLUSTER" ):
             return 1
 
     return 0
@@ -106,7 +108,7 @@ def grapheme_break_test( test_cases ):
 def line_break_test( test_cases ):
 
     for test_case, in test_cases:
-        if break_test( test_case, "BREAK_LINE" ):
+        if break_test( test_case, "LINE" ):
             return 1
 
     return 0
