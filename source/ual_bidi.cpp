@@ -84,25 +84,33 @@ static ual_bidi_complexity bidi_lookup( ual_buffer* ub )
     Return the paragraph embedding level.
 */
 
-static unsigned bidi_solitary( ual_buffer* ub )
+static unsigned bidi_solitary( ual_buffer* ub, unsigned override_paragraph_level )
 {
     unsigned paragraph_level = 0;
     unsigned boundary_class = UCDU_BIDI_L;
 
     size_t length = ub->c.size();
-    for ( size_t index = 0; index < length; ++index )
+    if ( override_paragraph_level == UAL_FROM_TEXT )
     {
-        const ual_char& c = ub->c[ index ];
-        if ( c.bc == UCDU_BIDI_L )
+        for ( size_t index = 0; index < length; ++index )
         {
-            break;
+            const ual_char& c = ub->c[ index ];
+            if ( c.bc == UCDU_BIDI_L )
+            {
+                break;
+            }
+            if ( c.bc == UCDU_BIDI_AL || c.bc == UCDU_BIDI_R )
+            {
+                paragraph_level = 1;
+                boundary_class = UCDU_BIDI_R;
+                break;
+            }
         }
-        if ( c.bc == UCDU_BIDI_AL || c.bc == UCDU_BIDI_R )
-        {
-            paragraph_level = 1;
-            boundary_class = UCDU_BIDI_R;
-            break;
-        }
+    }
+    else
+    {
+        paragraph_level = override_paragraph_level;
+        boundary_class = paragraph_level & 1;
     }
 
     ub->level_runs.push_back( { 0, paragraph_level, boundary_class, boundary_class, 0 } );
@@ -223,7 +231,7 @@ static unsigned boundary_class( unsigned a, unsigned b )
     return higher & 1;
 }
 
-static unsigned bidi_explicit( ual_buffer* ub )
+static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level )
 {
     ub->level_runs.clear();
 
@@ -231,7 +239,15 @@ static unsigned bidi_explicit( ual_buffer* ub )
     ual_bidi_exstack stack = make_exstack( ub );
 
     // Calculate paragraph embedding level and the base stack entry.
-    unsigned paragraph_level = first_strong_level( ub, 0, false );
+    unsigned paragraph_level = 0;
+    if ( override_paragraph_level == UAL_FROM_TEXT )
+    {
+        paragraph_level = first_strong_level( ub, 0, false );
+    }
+    else
+    {
+        paragraph_level = override_paragraph_level;
+    }
     ual_bidi_exentry stack_entry = { paragraph_level, BIDI_EMBEDDING_NEUTRAL, BIDI_INVALID_LEVEL_RUN };
 
     // Embedding/isolate state.
@@ -1334,14 +1350,20 @@ void bidi_neutral( ual_buffer* ub )
     Perform bidi analysis, generating a final set of bidi runs.
 */
 
-void bidi_initial( ual_buffer* ub )
+void bidi_initial( ual_buffer* ub, unsigned override_paragraph_level )
 {
     ub->level_runs.clear();
 
     // Look up initial bidi classes.
+    ual_bidi_complexity complexity = bidi_lookup( ub );
+    if ( complexity == BIDI_ALL_LEFT && override_paragraph_level != 0 && override_paragraph_level != UAL_FROM_TEXT )
+    {
+        complexity = BIDI_SOLITARY;
+    }
+
+    // Perform level run anlysis.
     size_t index = 0;
     unsigned paragraph_level = 0;
-    ual_bidi_complexity complexity = bidi_lookup( ub );
     switch ( complexity )
     {
     case BIDI_ALL_LEFT:
@@ -1353,12 +1375,12 @@ void bidi_initial( ual_buffer* ub )
 
     case BIDI_SOLITARY:
         // There is only one level run at rule X10.
-        paragraph_level = bidi_solitary( ub );
+        paragraph_level = bidi_solitary( ub, override_paragraph_level );
         break;
 
     case BIDI_EXPLICIT:
         // We require full processing of embeddings/overrides/isolates.
-        paragraph_level = bidi_explicit( ub );
+        paragraph_level = bidi_explicit( ub, override_paragraph_level );
         break;
     }
 
@@ -1369,9 +1391,9 @@ void bidi_initial( ual_buffer* ub )
     ub->bidi_analysis.complexity = complexity;
 }
 
-UAL_API unsigned ual_analyze_bidi( ual_buffer* ub )
+UAL_API unsigned ual_analyze_bidi( ual_buffer* ub, unsigned override_paragraph_level )
 {
-    bidi_initial( ub );
+    bidi_initial( ub, override_paragraph_level );
     if ( ub->bidi_analysis.complexity != BIDI_ALL_LEFT )
     {
         bidi_weak( ub );

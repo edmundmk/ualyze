@@ -39,4 +39,4 @@ test( 'script.test', test_script, args : [ ualtest.full_path(), files( 'tests/sc
 test( 'bidi.test', test_script, args : [ ualtest.full_path(), files( 'tests/bidi.test' ) ] )
 test_script = find_program( 'tests/ucdtest.py' )
 test( 'GraphemeBreakTest.txt', test_script, args : [ ualtest.full_path(), files( 'tests/GraphemeBreakTest.txt' ) ] )
-test( 'LineBreakTest.txt', test_script, args : [ ualtest.full_path(), files( 'tests/LineBreakTest.txt' ) ] )
+test( 'LineBreakTest.txt', test_script, args : [ ualtest.full_path(), files( 'tests/LineBreakTest.txt' ) ], timeout : 300 )

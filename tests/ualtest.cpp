@@ -15,7 +15,7 @@
 #include <ualyze.h>
 #include "../source/ual_buffer.h"
 
-void bidi_initial( ual_buffer* ub );
+void bidi_initial( ual_buffer* ub, unsigned override_paragraph_level );
 void bidi_weak( ual_buffer* ub );
 void bidi_brackets( ual_buffer* ub );
 void bidi_neutral( ual_buffer* ub );
@@ -82,6 +82,14 @@ int main( int argc, char* argv[] )
         if ( strcmp( arg, "w" ) == 0 ) bidi_mode = WEAK;
         if ( strcmp( arg, "wr" ) == 0 ) bidi_mode = WEAK_R;
         if ( strcmp( arg, "n" ) == 0 ) bidi_mode = NEUTRAL;
+        if ( strcmp( arg, "f" ) == 0 ) bidi_mode = FULL;
+    }
+
+    // Get paragraph override level.
+    unsigned override_paragraph_level = UAL_FROM_TEXT;
+    if ( argc > 2 )
+    {
+        override_paragraph_level = atoi( argv[ 2 ] );
     }
 
     // Read in text from stdin.
@@ -153,7 +161,7 @@ int main( int argc, char* argv[] )
         // Analyze bidi stages.
         if ( bidi_mode != FULL )
         {
-            bidi_initial( ub );
+            bidi_initial( ub, override_paragraph_level );
             size_t lrun_length = ub->level_runs.size() - 1;
             for ( size_t irun = 0; irun < lrun_length; ++irun )
             {
@@ -209,7 +217,7 @@ int main( int argc, char* argv[] )
         }
         else if ( bidi_mode == FULL )
         {
-            unsigned paragraph_level = ual_analyze_bidi( ub );
+            unsigned paragraph_level = ual_analyze_bidi( ub, override_paragraph_level );
             printf( "PARAGRAPH_LEVEL %u\n", paragraph_level );
 
             ual_bidi_run run;

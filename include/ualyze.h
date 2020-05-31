@@ -142,7 +142,9 @@ UAL_API void ual_script_spans_end( ual_buffer* ub );
     at the same time.
 */
 
-UAL_API unsigned ual_analyze_bidi( ual_buffer* ub );
+const unsigned UAL_FROM_TEXT = ~(unsigned)0;
+
+UAL_API unsigned ual_analyze_bidi( ual_buffer* ub, unsigned override_paragraph_level );
 
 /*
     With resolved bidi classes,  split the paragraph into bidi runs.  This

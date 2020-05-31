@@ -126,11 +126,26 @@ def bidi_character_test( test_cases ):
         if output is None:
             return 1
 
-        print( string )
-        print( paragraph_direction, paragraph_level )
-        print( levels )
-        print( output )
+        pstart = 0
+        result = []
+        result_paragraph_level = -1
 
+        for line in output.splitlines():
+            if line.startswith( "PARAGRAPH " ):
+                pstart = int( line.split()[ 1 ] )
+            if line.startswith( "PARAGRAPH_LEVEL " ):
+                result_paragraph_level = int( line.split()[ 1 ] )
+            if line.startswith( "BIDI_RUN " ):
+                pass
+
+        if paragraph_level != result_paragraph_level:
+            print( string )
+            print( paragraph_direction, paragraph_level )
+            print( levels )
+            print( output )
+            print( result_paragraph_level )
+            print( result )
+            return 1
 
     return 0
 
