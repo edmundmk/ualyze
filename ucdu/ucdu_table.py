@@ -56,6 +56,9 @@ with open( path.join( ucd_path, 'auxiliary/GraphemeBreakProperty.txt' ), 'r' ) a
 with open( path.join( ucd_path, 'BidiBrackets.txt' ), 'r' ) as file:
     bidi_brackets = parse_file( file )
 
+with open( path.join( ucd_path, 'emoji/emoji-data.txt' ), 'r' ) as file:
+    emoji_data = parse_file( file )
+
 
 # Generate lookup tables from data.
 
@@ -76,6 +79,7 @@ bidi_class = build_map( bidi_class )
 line_break = build_map( line_break )
 grapheme_break = build_map( grapheme_break )
 paired = { int( entry[ 0 ], 16 ) for entry in bidi_brackets }
+extended_pictographic = build_map( ( entry for entry in emoji_data if entry[ 1 ] == 'Extended_Pictographic' ) )
 
 
 # LB1: Resolve SA+Mn and SA+Mc to CM.
@@ -85,6 +89,12 @@ def resolve_lbreak_class( c, lbreak ):
         return 'CM'
     else:
         return lbreak
+
+
+# Treat Extended_Pictographic as its own cluster break class.
+
+def resolve_cbreak_class( c, cbreak ):
+    return extended_pictographic.get( c, cbreak ) if cbreak == 'XX' else cbreak
 
 
 # Build unique list of records.
@@ -109,7 +119,7 @@ for c in range( 0x110000 ):
         bidi_class.get( c, 'L' ),
         resolve_lbreak_class( c, line_break.get( c, 'XX' ) ),
         c in zspace,
-        grapheme_break.get( c, 'XX' ),
+        resolve_cbreak_class( c, grapheme_break.get( c, 'XX' ) ),
         c in paired
     )
     data.append( insert_record( record ) )
