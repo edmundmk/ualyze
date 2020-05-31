@@ -177,7 +177,7 @@ with open( sys.argv[ 2 ], 'w' ) as f:
     for state, actions in state_list:
         index, name, merged_states = state
 
-        print( f"    /* { ' '.join( merged_states ) } */\n    {{", file=f )
+        print( f"    /* STATE { ' '.join( merged_states ) } */\n    {{", file=f )
         for i in range( len( token ) ):
             allow_break, next_state = actions[ i ]
 

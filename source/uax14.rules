@@ -499,10 +499,10 @@ LB26 :
     JL x JL
     JL x JV
     JL x H2
-    HL x H3
+    JL x H3
     JV x JV
-    H2 x JV
     JV x JT
+    H2 x JV
     H2 x JT
     JT x JT
     H3 x JT
