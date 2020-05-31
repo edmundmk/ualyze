@@ -37,3 +37,6 @@ test( 'linebreak.test', test_script, args : [ ualtest.full_path(), files( 'tests
 test( 'clusterbreak.test', test_script, args : [ ualtest.full_path(), files( 'tests/linebreak.test' ) ] )
 test( 'script.test', test_script, args : [ ualtest.full_path(), files( 'tests/script.test' ) ] )
 test( 'bidi.test', test_script, args : [ ualtest.full_path(), files( 'tests/bidi.test' ) ] )
+test_script = find_program( 'tests/ucdtest.py' )
+test( 'GraphemeBreakTest.txt', test_script, args : [ ualtest.full_path(), files( 'tests/GraphemeBreakTest.txt' ) ] )
+test( 'LineBreakTest.txt', test_script, args : [ ualtest.full_path(), files( 'tests/LineBreakTest.txt' ) ] )
