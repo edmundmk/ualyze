@@ -706,19 +706,20 @@ void bidi_weak( ual_buffer* ub )
                 continue;
             }
 
-            // TODO: Switch on type first to reduce branching.
-
-            // W1. Update class of NSM to class of previous.
+            // W1. Update class of NSM to class of previous.  We leave NSM
+            // sequences that follow an ON as NSMs, since rule N0 needs to
+            // differentiate them.
             if ( c.bc == UCDU_BIDI_NSM )
             {
-                if ( prev_w1 != UCDU_BIDI_FSI
+                if ( prev_w1 != UCDU_BIDI_ON
+                    && prev_w1 != UCDU_BIDI_FSI
                     && prev_w1 != UCDU_BIDI_LRI
                     && prev_w1 != UCDU_BIDI_RLI
                     && prev_w1 != UCDU_BIDI_PDI )
                 {
                     c.bc = prev_w1;
                 }
-                else
+                else if ( prev_w1 != UCDU_BIDI_ON )
                 {
                     c.bc = UCDU_BIDI_ON;
                 }
@@ -1298,20 +1299,22 @@ void bidi_brackets( ual_buffer* ub )
 /*
     Perform rules N1 and N2, resolving types for runs of neutrals.
 
-    TODO: Rule N0/NSM, where characters that were originally NSM before rule
-    W1, which follow a bracket which has changed, become the direction of that
-    bracket.  !!!
-
     The only types remaining in the string are:
 
         strong L    -> L
         strong R    -> R, EN, AN
         strong /e/  -> ON
+        non-spacing -> NSM
         neutral     -> B, S, WS, FSI, LRI, RLI, PDI
         removed     -> BN, INVALID
 
     ON is treated as a strong type matching embedding direction, either L or R.
     The only remaining ON characters are guessed brackets.
+
+    The only NSMs remaining are those which originally followed an ON.  That
+    ON will have been updated to L, R, or B (meaning neutral).  Each NSM is
+    given the class of the preceding non-removed character, since rule N0
+    requires that they are updated with the class of matched brackets.
 
     We resolve to the following non-neutral types:
 
@@ -1365,6 +1368,7 @@ static void bidi_isolating_neutral( ual_buffer* ub, size_t irun )
     ual_bidi_neutral_kind neutrals = NEUTRAL_NONE;
     size_t lirun = irun;
     unsigned lower = 0;
+    unsigned prev_w1 = prun->sos;
 
     // Go through every level run in isolating run sequence.
     while ( true )
@@ -1412,9 +1416,18 @@ static void bidi_isolating_neutral( ual_buffer* ub, size_t irun )
             }
             break;
 
+            case UCDU_BIDI_NSM:
+            {
+                // Update with previous class.  Cannot start or end a neutral
+                // span, since the class is not changing.
+                c.bc = prev_w1;
+            }
+            break;
+
             case UCDU_BIDI_BN:
             {
                 // Ignore BN.
+                continue;
             }
             break;
 
@@ -1430,6 +1443,8 @@ static void bidi_isolating_neutral( ual_buffer* ub, size_t irun )
             }
             break;
             }
+
+            prev_w1 = c.bc;
         }
 
         // Move to next run in isolating run sequence.
