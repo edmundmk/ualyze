@@ -53,7 +53,7 @@ with open( sys.argv[ 1 ], 'r' ) as f:
             continue
 
         # Build token list.
-        if len( tokens ) == 1 and tokens[ 0 ] != '-' and tokens[ 0 ] != 'x':
+        if len( tokens ) == 1 and tokens[ 0 ] != '-' and tokens[ 0 ] != 'x' and tokens[ 0 ] != '!':
             token.append( tokens[ 0 ] )
             continue
 
@@ -78,7 +78,7 @@ with open( sys.argv[ 1 ], 'r' ) as f:
             # Break/no-break rule.
             i = 0
             left = '.'
-            if tokens[ i ] != '-' and tokens[ i ] != 'x':
+            if tokens[ i ] != '-' and tokens[ i ] != 'x' and tokens[ i ] != '!':
                 left = tokens[ i ]
                 i += 1
             action = tokens[ i ]
@@ -123,7 +123,7 @@ while len( build_stack ):
             if rhs != '.' and rhs != shift:
                 continue
 
-            if action == '-' or action == 'x':
+            if action == '-' or action == 'x' or action == '!':
                 if rhs != '.' and rhs not in token:
                     print( "invalid token on rhs:", rhs )
                 if brk_action == '?':
@@ -183,6 +183,8 @@ with open( sys.argv[ 2 ], 'w' ) as f:
 
             if allow_break == '-':
                 allow_break = "BREAK"
+            elif allow_break == '!':
+                allow_break = "LOOKAHEAD_NU"
             else:
                 allow_break = "NO_BREAK"
             next_state = states[ next_state ][ 0 ][ 1 ]

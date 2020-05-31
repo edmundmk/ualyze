@@ -392,27 +392,107 @@ LB24 :
     AL x PO
     HL x PO
 
--- Do not break between the following pairs of classes relevant to numbers:
+-- Do not break inside numbers described by the following regular expression:
+--   ( PR | PO )? ( OP | HY )? NU ( NU | SY | IS )* ( CL | CP )? ( PR | PO )?
+-- Cannot be expressed with one-character lookahead.  As a special case, !
+-- operator means break unless second lookahead character is NU.
 LB25 :
-    CL x PO
-    CP x PO
-    EAST_ASIAN_CP x PO
-    CL x PR
-    CP x PR
-    EAST_ASIAN_CP x PR
-    NU x PO
-    NU x PR
-    PO x OP
-    PO x EAST_ASIAN_OP
-    PO x NU
-    PR x OP
-    PR x EAST_ASIAN_OP
     PR x NU
+    PO x NU
+
+    PR ! OP               -- PR x OP x NU
+    PR ! EAST_ASIAN_OP    -- PR x EAST_ASIAN_OP x NU
+    PR ! HY               -- PR x HY x NU
+    PO ! OP               -- PO x OP x NU
+    PO ! EAST_ASIAN_OP    -- PO x EAST_ASIAN_OP x NU
+    PO ! HY               -- PO x HY x NU
+
+    OP x NU
+    EAST_ASIAN_OP x NU
     HY x NU
-    HL_HY x NU
-    IS x NU
+
     NU x NU
-    SY x NU
+    NU x SY
+    NU x IS
+    NU SY -> NU_SY
+    NU IS -> NU_IS
+
+    NU_SY x NU
+    NU_SY x SY
+    NU_SY x IS
+    NU_SY NU -> NU
+    NU_SY SY -> NU_SY
+    NU_SY IS -> NU_IS
+
+    NU_IS x NU
+    NU_IS x SY
+    NU_IS x IS
+    NU_IS NU -> NU
+    NU_IS SY -> NU_SY
+    NU_IS IS -> NU_IS
+
+    NU x CL
+    NU_SY x CL
+    NU_IS x CL
+    NU CL -> NU_CL
+    NU_SY CL -> NU_CL
+    NU_IS CL -> NU_CL
+
+    NU x CP
+    NU_SY x CP
+    NU_IS x CP
+    NU CP -> NU_CP
+    NU_SY CP -> NU_CP
+    NU_IS CP -> NU_CP
+
+    NU x EAST_ASIAN_CP
+    NU_SY x EAST_ASIAN_CP
+    NU_IS x EAST_ASIAN_CP
+    NU EAST_ASIAN_CP -> NU_EAST_ASIAN_CP
+    NU_SY EAST_ASIAN_CP -> NU_EAST_ASIAN_CP
+    NU_IS EAST_ASIAN_CP -> NU_EAST_ASIAN_CP
+
+    NU x PR
+    NU_SY x PR
+    NU_IS x PR
+    NU_CL x PR
+    NU_CP x PR
+    NU_EAST_ASIAN_CP x PR
+
+    NU x PO
+    NU_SY x PO
+    NU_IS x PO
+    NU_CL x PO
+    NU_CP x PO
+    NU_EAST_ASIAN_CP x PO
+
+    NU_SY -> SY
+    NU_IS -> IS
+    NU_CL -> CL
+    NU_CP -> CP
+    NU_EAST_ASIAN_CP -> EAST_ASIAN_CP
+
+-- -- Do not break between the following pairs of classes relevant to numbers:
+-- LB25 :
+--    CL x PO
+--    CP x PO
+--    EAST_ASIAN_CP x PO
+--    CL x PR
+--    CP x PR
+--    EAST_ASIAN_CP x PR
+--    NU x PO
+--    NU x PR
+--    PO x OP
+--    PO x EAST_ASIAN_OP
+--    PO x NU
+--    PR x OP
+--    PR x EAST_ASIAN_OP
+--    PR x NU
+--    HY x NU
+--    HL_HY x NU
+--    IS x NU
+--    NU x NU
+--    SY x NU
 
 -- Do not break a Korean syllable.
 LB26 :

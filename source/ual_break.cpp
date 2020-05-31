@@ -19,6 +19,7 @@
 #define ACTION signed char
 #define BREAK( x ) -x-1
 #define NO_BREAK( x ) +x
+#define LOOKAHEAD_NU( x ) -x-63
 
 #include "uax14.h"
 #include "uax29p3.h"
@@ -32,6 +33,17 @@
 */
 
 const size_t NO_SPACE = SIZE_MAX;
+
+static bool lookahead_nu( ual_buffer* ub, size_t index, size_t length )
+{
+    if ( index < length )
+    {
+        const ual_char& c = ub->c[ index ];
+        const ucdu_record& record = UCDU_TABLE[ c.ix ];
+        return record.lbreak == UCDU_LBREAK_NU;
+    }
+    return false;
+}
 
 UAL_API void ual_analyze_breaks( ual_buffer* ub )
 {
@@ -65,8 +77,19 @@ UAL_API void ual_analyze_breaks( ual_buffer* ub )
         unsigned bc = 0;
         if ( lb_state < 0 )
         {
-            bc |= UAL_BREAK_LINE;
-            lb_state = -lb_state-1;
+            if ( lb_state > -62 )
+            {
+                lb_state = -lb_state-1;
+                bc |= UAL_BREAK_LINE;
+            }
+            else
+            {
+                lb_state = -lb_state+63;
+                if ( ! lookahead_nu( ub, i + 1, length ) )
+                {
+                    bc |= UAL_BREAK_LINE;
+                }
+            }
 
             if ( was_space )
             {
