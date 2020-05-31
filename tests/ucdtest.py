@@ -144,7 +144,18 @@ def bidi_character_test( test_cases ):
             if line.startswith( "PARAGRAPH_LEVEL " ):
                 result_paragraph_level = int( line.split()[ 1 ] )
             if line.startswith( "BIDI_RUN " ):
-                pass
+                _, lower, upper, level = line.split()
+                lower = int( lower )
+                upper = int( upper )
+                level = int( level )
+                result.extend( ( -2 for x in range( len( result ), upper ) ) )
+                for i in range( lower, upper ):
+                    result[ i ] = level
+
+        print( string )
+        print( levels )
+        print( result )
+        print( output )
 
         if paragraph_level != result_paragraph_level:
             print( string )

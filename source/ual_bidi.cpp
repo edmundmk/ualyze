@@ -23,6 +23,80 @@ static_assert( UCDU_BIDI_AL == 2 );
 static_assert( BC_SEQUENCE == 3 );
 
 /*
+    Debug print.
+*/
+
+/*
+static const char* bidi_os( unsigned bidi_class )
+{
+    switch ( bidi_class )
+    {
+    case UCDU_BIDI_L:   return "L";
+    case UCDU_BIDI_R:   return "R";
+    case UCDU_BIDI_AL:  return "AL";
+    case BC_SEQUENCE:   return "SEQ";
+    }
+    return "??";
+}
+
+static const char* bidi_cs( unsigned bidi_class )
+{
+    switch ( bidi_class )
+    {
+    case UCDU_BIDI_L:   return "L";
+    case UCDU_BIDI_R:   return "R";
+    case UCDU_BIDI_AL:  return "AL";
+    case UCDU_BIDI_LRE: return "LRE";
+    case UCDU_BIDI_LRO: return "LRO";
+    case UCDU_BIDI_RLE: return "RLE";
+    case UCDU_BIDI_RLO: return "RLO";
+    case UCDU_BIDI_PDF: return "PDF";
+    case UCDU_BIDI_EN:  return "EN";
+    case UCDU_BIDI_ES:  return "ES";
+    case UCDU_BIDI_ET:  return "ET";
+    case UCDU_BIDI_AN:  return "AN";
+    case UCDU_BIDI_CS:  return "CS";
+    case UCDU_BIDI_NSM: return "NSM";
+    case UCDU_BIDI_BN:  return "BN";
+    case UCDU_BIDI_B:   return "B";
+    case UCDU_BIDI_S:   return "S";
+    case UCDU_BIDI_WS:  return "WS";
+    case UCDU_BIDI_ON:  return "ON";
+    case UCDU_BIDI_LRI: return "LRI";
+    case UCDU_BIDI_RLI: return "RLI";
+    case UCDU_BIDI_FSI: return "FSI";
+    case UCDU_BIDI_PDI: return "PDI";
+    case BC_INVALID:    return "INV";
+    }
+
+    return "??";
+}
+
+static void debug_print_bidi( ual_buffer* ub )
+{
+    switch ( ub->bidi_analysis.complexity )
+    {
+    case BIDI_ALL_LEFT: printf( "BIDI_COMPLEXITY ALL_LEFT\n" ); break;
+    case BIDI_SOLITARY: printf( "BIDI_COMPLEXITY SOLITARY\n" ); break;
+    case BIDI_EXPLICIT: printf( "BIDI_COMPLEXITY EXPLICIT\n" ); break;
+    }
+
+    unsigned index = 0;
+    for ( ual_level_run lrun : ub->level_runs )
+    {
+        printf( "LEVEL_RUN [%u] %u %u %s %s %u\n", index++, lrun.start, lrun.level, bidi_os( lrun.sos ), bidi_os( lrun.eos ), lrun.inext );
+    }
+
+    printf( "BIDI_STRING" );
+    for ( ual_char c : ub->c )
+    {
+        printf( " %s", bidi_cs( c.bc ) );
+    }
+    printf( "\n" );
+}
+*/
+
+/*
     Look up bidi classes for each codepoint in a paragraph.  The class of
     each codepoint is modified by later stages of the algorithm.
 */
@@ -1081,6 +1155,8 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                     b.bc = UCDU_BIDI_B;
                     c.bc = UCDU_BIDI_B;
                     prev_strong = (ual_bidi_eo_strong)entry->prev_strong;
+
+                    //printf( "BIDI_BRACKET %u %u NEUTRAL\n", entry->index, index );
                 }
                 else if ( inner_contains_e || entry->prev_strong == BIDI_E )
                 {
@@ -1091,6 +1167,8 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                     c.bc = e;
                     contains_e = true;
                     prev_strong = BIDI_E;
+
+                    //printf( "BIDI_BRACKET %u %u %s\n", entry->index, index, contains_e ? "CONTAINS_E" : "PREV_E" );
                 }
                 else if ( entry->prev_strong == BIDI_E_GUESS )
                 {
@@ -1102,6 +1180,8 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
 
                     // Later brackets may also depend on the same guess.
                     prev_strong = BIDI_E_GUESS;
+
+                    //printf( "BIDI_BRACKET %u %u GUESSED_E\n", entry->index, index );
                 }
                 else
                 {
@@ -1118,6 +1198,8 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                     {
                         rewind_o( ub, irun, entry->index, index, o );
                     }
+
+                    //printf( "BIDI_BRACKET %u %u O\n", entry->index, index );
                 }
             }
             break;
@@ -1407,75 +1489,6 @@ UAL_API unsigned ual_analyze_bidi( ual_buffer* ub, unsigned override_paragraph_l
 /*
     Iterator-style interface for constructing bidi runs from resolved classes.
 */
-/*
-static const char* bidi_os( unsigned bidi_class )
-{
-    switch ( bidi_class )
-    {
-    case UCDU_BIDI_L:   return "L";
-    case UCDU_BIDI_R:   return "R";
-    case UCDU_BIDI_AL:  return "AL";
-    case BC_SEQUENCE:   return "SEQ";
-    }
-    return "??";
-}
-
-static const char* bidi_cs( unsigned bidi_class )
-{
-    switch ( bidi_class )
-    {
-    case UCDU_BIDI_L:   return "L";
-    case UCDU_BIDI_R:   return "R";
-    case UCDU_BIDI_AL:  return "AL";
-    case UCDU_BIDI_LRE: return "LRE";
-    case UCDU_BIDI_LRO: return "LRO";
-    case UCDU_BIDI_RLE: return "RLE";
-    case UCDU_BIDI_RLO: return "RLO";
-    case UCDU_BIDI_PDF: return "PDF";
-    case UCDU_BIDI_EN:  return "EN";
-    case UCDU_BIDI_ES:  return "ES";
-    case UCDU_BIDI_ET:  return "ET";
-    case UCDU_BIDI_AN:  return "AN";
-    case UCDU_BIDI_CS:  return "CS";
-    case UCDU_BIDI_NSM: return "NSM";
-    case UCDU_BIDI_BN:  return "BN";
-    case UCDU_BIDI_B:   return "B";
-    case UCDU_BIDI_S:   return "S";
-    case UCDU_BIDI_WS:  return "WS";
-    case UCDU_BIDI_ON:  return "ON";
-    case UCDU_BIDI_LRI: return "LRI";
-    case UCDU_BIDI_RLI: return "RLI";
-    case UCDU_BIDI_FSI: return "FSI";
-    case UCDU_BIDI_PDI: return "PDI";
-    case BC_INVALID:    return "INV";
-    }
-
-    return "??";
-}
-
-static void debug_print_bidi( ual_buffer* ub )
-{
-    switch ( ub->bidi_analysis.complexity )
-    {
-    case BIDI_ALL_LEFT: printf( "BIDI_COMPLEXITY ALL_LEFT\n" ); break;
-    case BIDI_SOLITARY: printf( "BIDI_COMPLEXITY SOLITARY\n" ); break;
-    case BIDI_EXPLICIT: printf( "BIDI_COMPLEXITY EXPLICIT\n" ); break;
-    }
-
-    unsigned index = 0;
-    for ( ual_level_run lrun : ub->level_runs )
-    {
-        printf( "LEVEL_RUN [%u] %u %u %s %s %u\n", index++, lrun.start, lrun.level, bidi_os( lrun.sos ), bidi_os( lrun.eos ), lrun.inext );
-    }
-
-    printf( "BIDI_STRING" );
-    for ( ual_char c : ub->c )
-    {
-        printf( " %s", bidi_cs( c.bc ) );
-    }
-    printf( "\n" );
-}
-*/
 
 UAL_API void ual_bidi_runs_begin( ual_buffer* ub )
 {
@@ -1517,8 +1530,6 @@ UAL_API bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
     assert( prun->start <= index );
     assert( index < nrun->start );
 
-    unsigned level = prun->level;
-
     if ( ub->bidi_analysis.complexity == BIDI_ALL_LEFT )
     {
         // Move over level run.
@@ -1535,71 +1546,66 @@ UAL_API bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
         return true;
     }
 
-    ual_char c = ub->c[ index++ ];
-    if ( level & 1 )
+    unsigned level = prun->level;
+
+    unsigned bc = ub->c[ index ].bc;
+    ++index;
+
+    if ( ( level & 1 ) == 0 )
     {
-        // Embedding level is odd.
-        if ( c.bc == UCDU_BIDI_R )
+        // Embedding level is even.
+        if ( bc == UCDU_BIDI_L || bc == UCDU_BIDI_BN || bc == BC_INVALID )
         {
-            while ( index < nrun->start &&
-                 ( c.bc == UCDU_BIDI_R
-                || c.bc == UCDU_BIDI_BN
-                || c.bc == BC_INVALID ) )
+            while ( index < nrun->start )
             {
-                c = ub->c[ index++ ];
+                bc = ub->c[ index ].bc;
+                if ( bc != UCDU_BIDI_L && bc != UCDU_BIDI_BN && bc != BC_INVALID ) break;
+                ++index;
             }
         }
-        else
+        else if ( bc == UCDU_BIDI_R )
         {
             level += 1;
-            while ( index < nrun->start &&
-                 ( c.bc == UCDU_BIDI_L
-                || c.bc == UCDU_BIDI_EN
-                || c.bc == UCDU_BIDI_AN
-                || c.bc == UCDU_BIDI_BN
-                || c.bc == BC_INVALID ) )
+            while ( index < nrun->start )
             {
-                c = ub->c[ index++ ];
-            }
-        }
-    }
-    else
-    {
-        // Embeddiing level is even.
-        if ( c.bc == UCDU_BIDI_L )
-        {
-            while ( index < nrun->start &&
-                 ( c.bc == UCDU_BIDI_L
-                || c.bc == UCDU_BIDI_BN
-                || c.bc == BC_INVALID ) )
-            {
-                c = ub->c[ index++ ];
-            }
-        }
-        else if ( c.bc == UCDU_BIDI_R )
-        {
-            level += 1;
-            while ( index < nrun->start &&
-                 ( c.bc == UCDU_BIDI_R
-                || c.bc == UCDU_BIDI_BN
-                || c.bc == BC_INVALID ) )
-            {
-                c = ub->c[ index++ ];
+                bc = ub->c[ index ].bc;
+                if ( bc != UCDU_BIDI_R && bc != UCDU_BIDI_BN && bc != BC_INVALID ) break;
+                ++index;
             }
         }
         else
         {
             level += 2;
-            while ( index < nrun->start &&
-                 ( c.bc == UCDU_BIDI_EN
-                || c.bc == UCDU_BIDI_AN
-                || c.bc == UCDU_BIDI_BN
-                || c.bc == BC_INVALID ) )
+            while ( index < nrun->start )
             {
-                c = ub->c[ index++ ];
+                bc = ub->c[ index ].bc;
+                if ( bc != UCDU_BIDI_EN && bc != UCDU_BIDI_AN && bc != UCDU_BIDI_BN && bc != BC_INVALID ) break;
+                ++index;
             }
         }
-
+    }
+    else
+    {
+        // Embedding level is odd.
+        if ( bc == UCDU_BIDI_R || bc == UCDU_BIDI_BN || bc == BC_INVALID )
+        {
+            while ( index < nrun->start )
+            {
+                bc = ub->c[ index ].bc;
+                if ( bc != UCDU_BIDI_R && bc != UCDU_BIDI_BN && bc != BC_INVALID ) break;
+                ++index;
+            }
+        }
+        else
+        {
+            level += 1;
+            while ( index < nrun->start )
+            {
+                bc = ub->c[ index ].bc;
+                if ( bc != UCDU_BIDI_L && bc != UCDU_BIDI_EN && bc != UCDU_BIDI_AN && bc != UCDU_BIDI_BN && bc != BC_INVALID ) break;
+                ++index;
+            }
+        }
     }
 
     assert( index <= nrun->start );
