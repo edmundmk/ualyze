@@ -116,13 +116,21 @@ def line_break_test( test_cases ):
 
 def bidi_character_test( test_cases ):
 
+    index = 0
+
     for codepoints, paragraph_direction, paragraph_level, levels, visual_order in test_cases:
 
         cpoint = [ int( x.strip(), 16 ) for x in codepoints.split() ]
         string = [ chr( x ) for x in cpoint ]
+        paragraph_direction = int( paragraph_direction )
+        paragraph_level = int( paragraph_level )
         levels = [ int( x ) if x != 'x' else -1 for x in levels.split() ]
 
-        output = run_ualtest( ''.join( string ).encode( 'utf-16-le' ) )
+        args = [ 'f' ]
+        if paragraph_direction != 2:
+            args.append( str( paragraph_direction ) )
+
+        output = run_ualtest( ''.join( string ).encode( 'utf-16-le' ), *args )
         if output is None:
             return 1
 
@@ -146,6 +154,9 @@ def bidi_character_test( test_cases ):
             print( result_paragraph_level )
             print( result )
             return 1
+
+        print( "PASSED", index )
+        index += 1
 
     return 0
 
