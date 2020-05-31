@@ -966,8 +966,6 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
 
                 if ( bracket_kind == UCDU_BRACKET_OPEN )
                 {
-                    printf( "OPEN BRACKET %u\n", index );
-
                     // If the stack is full, ignore this bracket.
                     if ( stack->sp >= BIDI_BRSTACK_LIMIT )
                     {
@@ -996,7 +994,6 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                 }
 
                 assert( bracket_kind == UCDU_BRACKET_CLOSE );
-                printf( "CLOSE BRACKET %u\n", index );
 
                 // Search bracket stack for matching bracket.
                 size_t match = stack->sp;
@@ -1067,6 +1064,7 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                     // Neutral brackets.
                     b.bc = UCDU_BIDI_B;
                     c.bc = UCDU_BIDI_B;
+                    prev_strong = (ual_bidi_eo_strong)entry->prev_strong;
                 }
                 else if ( inner_contains_e || entry->prev_strong == BIDI_E )
                 {
@@ -1105,8 +1103,6 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                         rewind_o( ub, irun, entry->index, index, o );
                     }
                 }
-
-                printf( "prev_strong : %u\n", prev_strong );
             }
             break;
             }
