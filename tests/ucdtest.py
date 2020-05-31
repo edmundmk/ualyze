@@ -49,7 +49,7 @@ def run_ualtest( text, *args ):
     # Print test case and check for failure.
     output = result.stdout.decode( 'utf-8' )
     if result.returncode != 0:
-        print( kind, text.decode( 'utf-16-le', errors = 'replace' ) )
+        print( text.decode( 'utf-16-le', errors = 'replace' ) )
         print( "    FAILED:" )
         print( output )
         return None
@@ -114,11 +114,33 @@ def line_break_test( test_cases ):
 
     return 0
 
+def bidi_character_test( test_cases ):
+
+    for codepoints, paragraph_direction, paragraph_level, levels, visual_order in test_cases:
+
+        cpoint = [ int( x.strip(), 16 ) for x in codepoints.split() ]
+        string = [ chr( x ) for x in cpoint ]
+        levels = [ int( x ) if x != 'x' else -1 for x in levels.split() ]
+
+        output = run_ualtest( ''.join( string ).encode( 'utf-16-le' ) )
+        if output is None:
+            return 1
+
+        print( string )
+        print( paragraph_direction, paragraph_level )
+        print( levels )
+        print( output )
+
+
+    return 0
+
 
 if test_name.lower() == 'graphemebreaktest.txt':
     sys.exit( grapheme_break_test( test_cases ) )
 elif test_name.lower() == 'linebreaktest.txt':
     sys.exit( line_break_test( test_cases ) )
+elif test_name.lower() == 'bidicharactertest.txt':
+    sys.exit( bidi_character_test( test_cases ) )
 
 
 
