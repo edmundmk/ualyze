@@ -320,15 +320,15 @@ LB17 :
 
 -- Break after spaces.
 LB18 :
-    ZW_SP -> SP
-    OP_SP -> SP
-    EAST_ASIAN_OP_SP -> SP
-    QU_SP -> SP
-    CL_SP -> SP
-    CP_SP -> SP
-    EAST_ASIAN_CP_SP -> SP
-    B2_SP -> SP
     SP -
+    ZW_SP -
+    OP_SP -
+    EAST_ASIAN_OP_SP -
+    QU_SP -
+    CL_SP -
+    CP_SP -
+    EAST_ASIAN_CP_SP -
+    B2_SP -
 
 -- Do not break before or after quotation marks, such as ‘ ” ’.
 LB19 :
