@@ -59,6 +59,9 @@ with open( path.join( ucd_path, 'BidiBrackets.txt' ), 'r' ) as file:
 with open( path.join( ucd_path, 'emoji/emoji-data.txt' ), 'r' ) as file:
     emoji_data = parse_file( file )
 
+with open( path.join( ucd_path, 'EastAsianWidth.txt' ), 'r' ) as file:
+    east_asian_width = parse_file( file )
+
 
 # Generate lookup tables from data.
 
@@ -80,13 +83,17 @@ line_break = build_map( line_break )
 grapheme_break = build_map( grapheme_break )
 paired = { int( entry[ 0 ], 16 ) for entry in bidi_brackets }
 extended_pictographic = build_map( ( entry for entry in emoji_data if entry[ 1 ] == 'Extended_Pictographic' ) )
+east_asian_width = build_map( east_asian_width )
 
 
 # LB1: Resolve SA+Mn and SA+Mc to CM.
+# LB30: OP/CP with East_Asian_Width in F, W, H -> EAST_ASIAN_OP/EAST_ASIAN_CP
 
 def resolve_lbreak_class( c, lbreak ):
     if lbreak == 'SA' and c in mn_or_mc:
         return 'CM'
+    if ( lbreak == 'OP' or lbreak == 'CP' ) and ( east_asian_width.get( c, 'N' ) in [ 'F', 'W', 'H' ] ):
+        return 'EAST_ASIAN_' + lbreak
     else:
         return lbreak
 

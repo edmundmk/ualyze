@@ -264,6 +264,8 @@ enum ucdu_lbreak
     UCDU_LBREAK_ZWJ,
     UCDU_LBREAK_EB,
     UCDU_LBREAK_EM,
+    UCDU_LBREAK_EAST_ASIAN_OP,
+    UCDU_LBREAK_EAST_ASIAN_CP,
 };
 
 enum ucdu_cbreak_class

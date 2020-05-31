@@ -48,6 +48,8 @@ XX
 ZWJ
 EB
 EM
+EAST_ASIAN_OP
+EAST_ASIAN_CP
 
 -- Start in SOT state.
 -> SOT
@@ -105,8 +107,10 @@ LB8a :
 -- breaking class of the base character.
 LB9 :
     OP x ZWJ
+    EAST_ASIAN_OP x ZWJ
     CL x ZWJ
     CP x ZWJ
+    EAST_ASIAN_CP x ZWJ
     QU x ZWJ
     GL x ZWJ
     NS x ZWJ
@@ -139,8 +143,10 @@ LB9 :
     EM x ZWJ
     CB x ZWJ
     OP x CM
+    EAST_ASIAN_OP x CM
     CL x CM
     CP x CM
+    EAST_ASIAN_CP x CM
     QU x CM
     GL x CM
     NS x CM
@@ -173,8 +179,10 @@ LB9 :
     EM x CM
     CB x CM
     OP CM -> OP
+    EAST_ASIAN_OP CM -> EAST_ASIAN_OP
     CL CM -> CL
     CP CM -> CP
+    EAST_ASIAN_CP CM -> EAST_ASIAN_CP
     QU CM -> QU
     GL CM -> GL
     NS CM -> NS
@@ -225,8 +233,10 @@ LB12 :
 -- and hyphens.
 LB12a :
     OP x GL
+    EAST_ASIAN_OP x GL
     CL x GL
     CP x GL
+    EAST_ASIAN_CP x GL
     QU x GL
     GL x GL
     NS x GL
@@ -260,6 +270,7 @@ LB12a :
 LB13 :
     x CL
     x CP
+    x EAST_ASIAN_CP
     x EX
     x IS
     x SY
@@ -270,25 +281,35 @@ LB14 :
     OP_SP SP -> OP_SP
     OP x
     OP_SP x
+    EAST_ASIAN_OP SP -> EAST_ASIAN_OP_SP
+    EAST_ASIAN_OP_SP SP -> EAST_ASIAN_OP_SP
+    EAST_ASIAN_OP x
+    EAST_ASIAN_OP_SP x
 
 -- Do not break within ‘”[’, even with intervening spaces.
 LB15 :
     QU SP -> QU_SP
     QU_SP SP -> QU_SP
     QU x OP
+    QU x EAST_ASIAN_OP
     QU_SP x OP
+    QU_SP x EAST_ASIAN_OP
 
 -- Do not break between closing punctuation and a nonstarter, even with
 -- intervening spaces.
 LB16 :
     CL SP -> CL_SP
-    CP SP -> CP_SP
     CL_SP SP -> CL_SP
-    CP_SP SP -> CP_SP
     CL x NS
-    CP x NS
     CL_SP x NS
+    CP SP -> CP_SP
+    CP_SP SP -> CP_SP
+    CP x NS
     CP_SP x NS
+    EAST_ASIAN_CP SP -> EAST_ASIAN_CP_SP
+    EAST_ASIAN_CP_SP SP -> EAST_ASIAN_CP_SP
+    EAST_ASIAN_CP x NS
+    EAST_ASIAN_CP_SP x NS
 
 -- Do not break within ‘——’, even with intervening spaces.
 LB17 :
@@ -299,13 +320,15 @@ LB17 :
 
 -- Break after spaces.
 LB18 :
+    ZW_SP -> SP
+    OP_SP -> SP
+    EAST_ASIAN_OP_SP -> SP
+    QU_SP -> SP
+    CL_SP -> SP
+    CP_SP -> SP
+    EAST_ASIAN_CP_SP -> SP
+    B2_SP -> SP
     SP -
-    ZW_SP -
-    OP_SP -
-    QU_SP -
-    CL_SP -
-    CP_SP -
-    B2_SP -
 
 -- Do not break before or after quotation marks, such as ‘ ” ’.
 LB19 :
@@ -336,17 +359,9 @@ LB21a :
 LB21b :
     SY x HL
 
--- Do not break between two ellipses, or between letters, numbers or
--- exclamations and ellipsis.
+-- Do not break before ellipses.
 LB22 :
-    AL x IN
-    HL x IN
-    EX x IN
-    ID x IN
-    EB x IN
-    EM x IN
-    IN x IN
-    NU x IN
+    x IN
 
 -- Do not break between digits and letters.
 LB23 :
@@ -381,13 +396,17 @@ LB24 :
 LB25 :
     CL x PO
     CP x PO
+    EAST_ASIAN_CP x PO
     CL x PR
     CP x PR
+    EAST_ASIAN_CP x PR
     NU x PO
     NU x PR
     PO x OP
+    PO x EAST_ASIAN_OP
     PO x NU
     PR x OP
+    PR x EAST_ASIAN_OP
     PR x NU
     HY x NU
     HL_HY x NU
@@ -447,6 +466,8 @@ LB30 :
     CP x AL
     CP x HL
     CP x NU
+    EAST_ASIAN_OP -> OP
+    EAST_ASIAN_CP -> CP
 
 -- Break between two regional indicator symbols if and only if there are an
 -- even number of regional indicators preceding the position of the break.
