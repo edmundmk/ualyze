@@ -488,6 +488,13 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
             assert( stack.sp > 0 );
             stack_entry = stack.ss[ --stack.sp ];
 
+            // Override character class if we are in the scope of an override.
+            ual_bidi_override_isolate oi = (ual_bidi_override_isolate)stack_entry.oi;
+            if ( oi == BIDI_EMBEDDING_L || oi == BIDI_EMBEDDING_R )
+            {
+                c.bc = oi;
+            }
+
             // This character is part of the new level run.
             clevel = stack_entry.level;
 
@@ -526,8 +533,9 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
             clevel = paragraph_level;
         }
         break;
+        }
 
-        default:
+        if ( c.bc != UCDU_BIDI_BN )
         {
             // Override character class if we are in the scope of an override.
             ual_bidi_override_isolate oi = (ual_bidi_override_isolate)stack_entry.oi;
@@ -535,30 +543,28 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
             {
                 c.bc = oi;
             }
-        }
-        break;
-        }
 
-        // Check if we've arrived at an unremoved character with a new
-        // embedding level.
-        if ( c.bc != UCDU_BIDI_BN && clevel != run_level )
-        {
-            unsigned run_eos = BC_INVALID;
-            if ( valid_isolate_count <= run_isolate_count )
+            // Check if we've arrived at an unremoved character with a new
+            // embedding level.
+            if ( clevel != run_level )
             {
-                // This run ends its isolating run sequence.
-                run_eos = boundary_class( run_level, clevel );
+                unsigned run_eos = BC_INVALID;
+                if ( valid_isolate_count <= run_isolate_count )
+                {
+                    // This run ends its isolating run sequence.
+                    run_eos = boundary_class( run_level, clevel );
+                }
+
+                // Add run that ends at this character.
+                ub->level_runs.push_back( { run_start, run_level, run_sos, run_eos, 0 } );
+
+                // Next run definitely doesn't start with a matching PDI, as
+                // that case is handled above.
+                run_isolate_count = valid_isolate_count;
+                run_sos = boundary_class( run_level, clevel );
+                run_start = index;
+                run_level = clevel;
             }
-
-            // Add run that ends at this character.
-            ub->level_runs.push_back( { run_start, run_level, run_sos, run_eos, 0 } );
-
-            // Next run definitely doesn't start with a matching PDI, as
-            // that case is handled above.
-            run_isolate_count = valid_isolate_count;
-            run_sos = boundary_class( run_level, clevel );
-            run_start = index;
-            run_level = clevel;
         }
 
         // X5a-c, now initiator has been added to current level run sequence.
@@ -1276,7 +1282,6 @@ void bidi_brackets( ual_buffer* ub )
 enum ual_bidi_neutral_kind
 {
     NEUTRAL_NONE,
-    NEUTRAL_BN_ONLY,
     NEUTRAL_SPAN,
 };
 
@@ -1300,7 +1305,7 @@ static void bidi_resolve_neutrals( ual_buffer* ub, size_t irun, unsigned lower, 
 
         assert( index < upper );
         ual_char& c = ub->c[ index ];
-        if ( c.bc != BC_INVALID )
+        if ( c.bc != UCDU_BIDI_BN && c.bc != BC_INVALID )
         {
             c.bc = bc;
         }
@@ -1370,26 +1375,17 @@ static void bidi_isolating_neutral( ual_buffer* ub, size_t irun )
 
             case UCDU_BIDI_BN:
             {
-                // Track start of neutrals from BN.
-                if ( neutrals == NEUTRAL_NONE )
-                {
-                    lirun = irun;
-                    lower = index;
-                    neutrals = NEUTRAL_BN_ONLY;
-                }
+                // Ignore BN.
             }
             break;
 
             default:
             {
                 // Remaining classes are neutral.
-                if ( neutrals != NEUTRAL_SPAN )
+                if ( neutrals == NEUTRAL_NONE)
                 {
-                    if ( neutrals == NEUTRAL_NONE )
-                    {
-                        lirun = irun;
-                        lower = index;
-                    }
+                    lirun = irun;
+                    lower = index;
                     neutrals = NEUTRAL_SPAN;
                 }
             }
