@@ -57,40 +57,56 @@ def run_ualtest( text, *args ):
     return output
 
 
+def break_test( test_case, break_kind ):
+
+    break_kind += " "
+
+    offset = 0
+    breaks = []
+    string = []
+
+    for token in test_case.split():
+        if token == '÷':
+            breaks.append( offset )
+        elif token != '×':
+            codepoint = int( token, 16 )
+            string.append( chr( codepoint ) )
+            offset += 1 if codepoint <= 0xFFFF else 2
+
+    output = run_ualtest( ''.join( string ).encode( 'utf-16-le' ) )
+    if output is None:
+        return 1
+
+    pstart = 0
+    result = []
+    for line in output.splitlines():
+        if line.startswith( "PARAGRAPH " ):
+            pstart = int( line.split()[ 1 ] )
+        if line.startswith( break_kind ):
+            result.append( pstart + int( line.split()[ 1 ] ) )
+    result.append( offset )
+
+    if breaks != result:
+        print( test_case )
+        print( breaks )
+        print( output )
+        print( result )
+        return 1
+
+
 def grapheme_break_test( test_cases ):
 
     for test_case, in test_cases:
-
-        offset = 0
-        breaks = []
-        string = []
-
-        for token in test_case.split():
-            if token == '÷':
-                breaks.append( offset )
-            elif token != '×':
-                codepoint = int( token, 16 )
-                string.append( chr( codepoint ) )
-                offset += 1 if codepoint <= 0xFFFF else 2
-
-        output = run_ualtest( ''.join( string ).encode( 'utf-16-le' ) )
-        if output is None:
+        if break_test( test_case, "BREAK_CLUSTER" ):
             return 1
 
-        pstart = 0
-        result = []
-        for line in output.splitlines():
-            if line.startswith( "PARAGRAPH " ):
-                pstart = int( line.split()[ 1 ] )
-            if line.startswith( "BREAK_CLUSTER " ):
-                result.append( pstart + int( line.split()[ 1 ] ) )
-        result.append( offset )
+    return 0
 
-        if breaks != result:
-            print( test_case )
-            print( breaks )
-            print( output )
-            print( result )
+
+def line_break_test( test_cases ):
+
+    for test_case, in test_cases:
+        if break_test( test_case, "BREAK_LINE" ):
             return 1
 
     return 0
@@ -98,6 +114,8 @@ def grapheme_break_test( test_cases ):
 
 if test_name.lower() == 'graphemebreaktest.txt':
     sys.exit( grapheme_break_test( test_cases ) )
+elif test_name.lower() == 'linebreaktest.txt':
+    sys.exit( line_break_test( test_cases ) )
 
 
 
