@@ -209,10 +209,10 @@ const unsigned BIDI_INVALID_LEVEL_RUN = 0xFFFFF;
 
 enum ual_bidi_override_isolate
 {
-    BIDI_EMBEDDING_L = UCDU_BIDI_L,   // within the scope of an LRO.
-    BIDI_EMBEDDING_R = UCDU_BIDI_R,   // within the scope of an RLO.
-    BIDI_EMBEDDING_NEUTRAL,                 // within the scope of an LRE or RLE.
-    BIDI_ISOLATE,                           // within the scope of an FSI, LRI, or RLI.
+    BIDI_EMBEDDING_L = UCDU_BIDI_L,     // within the scope of an LRO.
+    BIDI_EMBEDDING_R = UCDU_BIDI_R,     // within the scope of an RLO.
+    BIDI_EMBEDDING_NEUTRAL,             // within the scope of an LRE or RLE.
+    BIDI_ISOLATE,                       // within the scope of an FSI, LRI, or RLI.
 };
 
 struct ual_bidi_exentry
@@ -542,7 +542,7 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
 
         // If the embedding level has changed since the last unremoved
         // character, then close old level run and start a new one.
-        if ( stack_entry.level != run_level )
+        if ( run_level != stack_entry.level )
         {
             unsigned run_eos = BC_INVALID;
             if ( valid_isolate_count <= run_isolate_count )
@@ -590,10 +590,6 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
         }
     }
 
-    // Close final sequence.
-    unsigned run_eos = boundary_class( run_level, paragraph_level );
-    ub->level_runs.push_back( { run_start, run_level, run_sos, run_eos, 0 } );
-
     // Close unterminated isolating run sequences.
     while ( valid_isolate_count > 0 )
     {
@@ -617,14 +613,24 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
         pprev->eos = boundary_class( pprev->level, paragraph_level );
     }
 
-    // Add a level run to contain the paragraph separator.
+    // Add paragraph separators, which have the paragraph embedding level.
     if ( index < length )
     {
-        run_sos = run_eos;
-        run_eos = boundary_class( paragraph_level, paragraph_level );
-        ub->level_runs.push_back( { (unsigned)index, paragraph_level, run_sos, run_eos, 0 } );
+        if ( run_level != paragraph_level )
+        {
+            unsigned run_eos = boundary_class( run_level, paragraph_level );
+            ub->level_runs.push_back( { run_start, run_level, run_sos, run_eos, 0 } );
+            run_sos = run_eos;
+            run_start = index;
+            run_level = paragraph_level;
+            run_isolate_count = valid_isolate_count;
+        }
         index = length;
     }
+
+    // Close final level run.
+    unsigned run_eos = boundary_class( run_level, paragraph_level );
+    ub->level_runs.push_back( { run_start, run_level, run_sos, run_eos, 0 } );
 
     // Add a final 'run' to simplify lookup of level runs.
     ub->level_runs.push_back( { (unsigned)index, paragraph_level, BC_SEQUENCE, BC_SEQUENCE, 0 } );
