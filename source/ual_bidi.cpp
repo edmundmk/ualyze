@@ -332,22 +332,26 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
     size_t valid_isolate_count = 0;
 
     // We are at the start of the string.
-    size_t run_isolate_count = 0;
     unsigned run_start = 0;
     unsigned run_level = paragraph_level;
     unsigned run_sos = boundary_class( paragraph_level, paragraph_level );
+    size_t run_isolate_count = 0;
 
     size_t index = 0;
     size_t length = ub->c.size();
     for ( ; index < length; ++index )
     {
         ual_char& c = ub->c[ index ];
-        unsigned clevel = stack_entry.level;
 
         unsigned bc = c.bc;
         if ( bc == BC_INVALID )
         {
             continue;
+        }
+
+        if ( bc == UCDU_BIDI_B )
+        {
+            break;
         }
 
         switch ( bc )
@@ -358,10 +362,6 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
         case UCDU_BIDI_LRO:
         case UCDU_BIDI_RLO:
         {
-            // This character is 'removed' by rule X9.  Don't actually remove
-            // it, instead set to BN.
-            c.bc = UCDU_BIDI_BN;
-
             // Compute the least odd (RLE/RLO) or even (LRE/LRO) embedding
             // level greater than the embedding level of the last stack entry.
             bool rl = bc == UCDU_BIDI_RLE || bc == UCDU_BIDI_RLO;
@@ -394,16 +394,17 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
             assert( stack.sp < BIDI_EXSTACK_LIMIT );
             stack.ss[ stack.sp++ ] = stack_entry;
             stack_entry = { level, oi, BIDI_INVALID_LEVEL_RUN };
+
+            // This character is 'removed' by rule X9.  Don't actually remove
+            // it, instead set to BN.
+            c.bc = UCDU_BIDI_BN;
+            continue;
         }
         break;
 
         // X7
         case UCDU_BIDI_PDF:
         {
-            // This character is 'removed' by rule X9.  Dont' actually remove
-            // it, instead set to BN.
-            c.bc = UCDU_BIDI_BN;
-
             if ( overflow_isolate_count > 0 )
             {
                 // If the overflow isolate count is greater than zero,
@@ -428,19 +429,19 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
             // Pop the last entry from the directional status stack.
             stack_entry = stack.ss[ --stack.sp ];
 
-            // If this character hadn't been removed, it would be part of
-            // the new level run.
-            clevel = stack_entry.level;
+            // This character is 'removed' by rule X9.  Dont' actually remove
+            // it, instead set to BN.
+            c.bc = UCDU_BIDI_BN;
+            continue;
         }
         break;
 
         // X5a-c
         case UCDU_BIDI_FSI:
         {
-            // Act as if it was LRI or RLI based on the first strong level.
+            // This character is part of the current level run.  Act as if it
+            // was LRI or RLI based on the first strong level inside it.
             bc = first_strong_level( ub, index + 1, true ) ? UCDU_BIDI_RLI : UCDU_BIDI_LRI;
-
-            // This character is part of the current level run.
             break;
         }
 
@@ -495,27 +496,24 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
                 c.bc = oi;
             }
 
-            // This character is part of the new level run.
-            clevel = stack_entry.level;
-
             // An isolate initiator immediately followed by a PDI does not
             // introduce any new level run.
-            if ( clevel == run_level )
+            if ( stack_entry.level == run_level )
             {
                 continue;
             }
 
             // We know this character is not removed, so the current level
             // run ends here.
-            unsigned run_eos = boundary_class( run_level, clevel );
+            unsigned run_eos = boundary_class( run_level, stack_entry.level );
             ub->level_runs.push_back( { run_start, run_level, run_sos, run_eos, 0 } );
 
             // This PDI matches an isolate initiator and therefore
             // the next level run continues an isolating run sequence.
-            run_isolate_count = valid_isolate_count;
             run_sos = BC_SEQUENCE;
             run_start = index;
-            run_level = clevel;
+            run_level = stack_entry.level;
+            run_isolate_count = valid_isolate_count;
 
             // Link the previous run to the run we're about to build.
             ual_level_run* prun = &ub->level_runs.at( iprev );
@@ -527,44 +525,41 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
         }
         break;
 
-        case UCDU_BIDI_B:
+        // X6. Remove BNs.
+        case UCDU_BIDI_BN:
         {
-            // Give all B characters the paragraph embedding level.
-            clevel = paragraph_level;
+            continue;
         }
-        break;
         }
 
-        if ( c.bc != UCDU_BIDI_BN )
+        // This character was not removed.  Override character class if we are
+        // in the scope of an override.
+        ual_bidi_override_isolate oi = (ual_bidi_override_isolate)stack_entry.oi;
+        if ( oi == BIDI_EMBEDDING_L || oi == BIDI_EMBEDDING_R )
         {
-            // Override character class if we are in the scope of an override.
-            ual_bidi_override_isolate oi = (ual_bidi_override_isolate)stack_entry.oi;
-            if ( oi == BIDI_EMBEDDING_L || oi == BIDI_EMBEDDING_R )
+            c.bc = oi;
+        }
+
+        // If the embedding level has changed since the last unremoved
+        // character, then close old level run and start a new one.
+        if ( stack_entry.level != run_level )
+        {
+            unsigned run_eos = BC_INVALID;
+            if ( valid_isolate_count <= run_isolate_count )
             {
-                c.bc = oi;
+                // This run ends its isolating run sequence.
+                run_eos = boundary_class( run_level, stack_entry.level );
             }
 
-            // Check if we've arrived at an unremoved character with a new
-            // embedding level.
-            if ( clevel != run_level )
-            {
-                unsigned run_eos = BC_INVALID;
-                if ( valid_isolate_count <= run_isolate_count )
-                {
-                    // This run ends its isolating run sequence.
-                    run_eos = boundary_class( run_level, clevel );
-                }
+            // Add run that ends at this character.
+            ub->level_runs.push_back( { run_start, run_level, run_sos, run_eos, 0 } );
 
-                // Add run that ends at this character.
-                ub->level_runs.push_back( { run_start, run_level, run_sos, run_eos, 0 } );
-
-                // Next run definitely doesn't start with a matching PDI, as
-                // that case is handled above.
-                run_isolate_count = valid_isolate_count;
-                run_sos = boundary_class( run_level, clevel );
-                run_start = index;
-                run_level = clevel;
-            }
+            // Next run definitely doesn't start with a matching PDI, as
+            // that case is handled above.
+            run_sos = boundary_class( run_level, stack_entry.level );
+            run_start = index;
+            run_level = stack_entry.level;
+            run_isolate_count = valid_isolate_count;
         }
 
         // X5a-c, now initiator has been added to current level run sequence.
@@ -620,6 +615,15 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
         assert( pprev->inext == 0 );
         assert( pprev->eos == BC_SEQUENCE );
         pprev->eos = boundary_class( pprev->level, paragraph_level );
+    }
+
+    // Add a level run to contain the paragraph separator.
+    if ( index < length )
+    {
+        run_sos = run_eos;
+        run_eos = boundary_class( paragraph_level, paragraph_level );
+        ub->level_runs.push_back( { (unsigned)index, paragraph_level, run_sos, run_eos, 0 } );
+        index = length;
     }
 
     // Add a final 'run' to simplify lookup of level runs.

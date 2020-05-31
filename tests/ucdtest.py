@@ -128,7 +128,7 @@ def bidi_character_test( test_cases ):
         levels = [ int( x ) if x != 'x' else -1 for x in levels.split() ]
 
         # Removed characters are BN in our result and bind with left run.
-        if False:
+        if True:
             bn_level = paragraph_level
             for i in range( len( levels ) ):
                 if levels[ i ] == -1:
