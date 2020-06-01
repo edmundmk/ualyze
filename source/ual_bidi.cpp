@@ -1658,6 +1658,16 @@ void bidi_whitespace( ual_buffer* ub )
         break;
         }
     }
+
+    // Set whitespace at end of paragraph to WS.
+    for ( size_t i = index_ws; i < length; ++i )
+    {
+        ual_char& k = ub->c[ i ];
+        if ( k.bc == BC_WS_R )
+        {
+            k.bc = UCDU_BIDI_WS;
+        }
+    }
 }
 
 /*
@@ -1853,8 +1863,11 @@ UAL_API bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
         break;
 
         default:
+        {
+            fprintf( stderr, "invalid surviving class: %s\n", bidi_cs( bc ) );
             assert( ! "invalid surviving bidi class" );
-            break;
+        }
+        break;
         }
     }
     else
@@ -1902,8 +1915,11 @@ UAL_API bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
         break;
 
         default:
+        {
+            fprintf( stderr, "invalid surviving class: %s\n", bidi_cs( bc ) );
             assert( ! "invalid surviving bidi class" );
-            break;
+        }
+        break;
         }
     }
 
