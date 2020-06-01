@@ -659,26 +659,10 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
     level run in the isolating run sequence.
 */
 
-static unsigned lookahead( ual_buffer* ub, size_t i, size_t upper )
-{
-    // Find class of next character, skipping over surrogates and removed
-    // characters, or BIDI_CLASS_INVALID at the end of the level run.
-    for ( ++i; i < upper; ++i )
-    {
-        unsigned bc = ub->c[ i ].bc;
-        if ( bc == BC_INVALID || bc == UCDU_BIDI_BN )
-        {
-            continue;
-        }
-
-        return bc;
-    }
-
-    return BC_INVALID;
-}
-
 void bidi_weak( ual_buffer* ub )
 {
+    const size_t INVALID_INDEX = (size_t)-1;
+
     size_t length = ub->level_runs.size() - 1;
     for ( size_t i = 0; i < length; ++i )
     {
@@ -688,14 +672,16 @@ void bidi_weak( ual_buffer* ub )
         // Previous strong class.
         unsigned prev_strong = prun->sos;
 
-        // Previous classes after applying rules.
+        // Previous classes after dealing with NSMs
         unsigned prev_w1 = prun->sos;
-        unsigned prev_w3 = prun->sos;
-        unsigned prev_w5 = prun->sos;
+
+        // Index of separator and class of number preceding it.
+        enum { NONE, MATCH_EN, MATCH_EN_XS, MATCH_AN, MATCH_AN_CS } state_w4 = NONE;
+        size_t index_w4 = INVALID_INDEX;
 
         // Index of first ET in sequence to be updated if we encounter an EN.
-        const size_t INVALID_INDEX = (size_t)-1;
-        size_t index_et = INVALID_INDEX;
+        unsigned prev_w5 = prun->sos;
+        size_t index_w5 = INVALID_INDEX;
 
         // Update each of the characters in the run.
         for ( size_t i = prun->start; i < nrun->start; ++i )
@@ -744,27 +730,75 @@ void bidi_weak( ual_buffer* ub )
                 c.bc = UCDU_BIDI_R;
             }
 
-            unsigned self_w3 = c.bc;
-
             // W4. A single ES between two ENs changes to EN. A single CS
             // between two AN/ENs changes to AN/EN.
-            if ( c.bc == UCDU_BIDI_ES && prev_w3 == UCDU_BIDI_EN
-                    && lookahead( ub, i, nrun->start ) == UCDU_BIDI_EN )
+            if ( c.bc == UCDU_BIDI_EN )
             {
-                c.bc = UCDU_BIDI_EN;
+                if ( state_w4 != MATCH_EN_XS )
+                {
+                    state_w4 = MATCH_EN;
+                }
+                else
+                {
+                    ub->c[ index_w4 ].bc = UCDU_BIDI_EN;
+                    state_w4 = NONE;
+                    index_w4 = INVALID_INDEX;
+                }
             }
-            if ( c.bc == UCDU_BIDI_CS && prev_w3 == UCDU_BIDI_EN
-                    && lookahead( ub, i, nrun->start ) == UCDU_BIDI_EN )
+            else if ( c.bc == UCDU_BIDI_AN )
             {
-                c.bc = UCDU_BIDI_EN;
+                if ( state_w4 != MATCH_AN_CS )
+                {
+                    state_w4 = MATCH_AN;
+                }
+                else
+                {
+                    ub->c[ index_w4 ].bc = UCDU_BIDI_AN;
+                    state_w4 = NONE;
+                    index_w4 = INVALID_INDEX;
+                }
             }
-            if ( c.bc == UCDU_BIDI_CS && prev_w3 == UCDU_BIDI_AN
-                    && lookahead( ub, i, nrun->start ) == UCDU_BIDI_AN )
+            else if ( c.bc == UCDU_BIDI_ES )
             {
-                c.bc = UCDU_BIDI_AN;
-            }
+                // Unmatched separators become ON.  Do this now.
+                c.bc = UCDU_BIDI_ON;
 
-            prev_w3 = self_w3;
+                // Update state.
+                if ( state_w4 == MATCH_EN )
+                {
+                    state_w4 = MATCH_EN_XS;
+                    index_w4 = i;
+                }
+                else
+                {
+                    state_w4 = NONE;
+                }
+            }
+            else if ( c.bc == UCDU_BIDI_CS )
+            {
+                // Unmatched separators become ON.  Do this now.
+                c.bc = UCDU_BIDI_ON;
+
+                // Update state.
+                if ( state_w4 == MATCH_EN )
+                {
+                    state_w4 = MATCH_EN_XS;
+                    index_w4 = i;
+                }
+                else if ( state_w4 == MATCH_AN )
+                {
+                    state_w4 = MATCH_AN_CS;
+                    index_w4 = i;
+                }
+                else
+                {
+                    state_w4 = NONE;
+                }
+            }
+            else
+            {
+                state_w4 = NONE;
+            }
 
             // W5. A sequence of ETs adjacent to EN becomes EN.
             if ( c.bc == UCDU_BIDI_ET )
@@ -775,16 +809,16 @@ void bidi_weak( ual_buffer* ub )
                 }
                 else
                 {
-                    if ( index_et == INVALID_INDEX )
+                    if ( index_w5 == INVALID_INDEX )
                     {
-                        index_et = i;
+                        index_w5 = i;
                     }
 
                     // Postpone further updates until end of ET sequence.
                     continue;
                 }
             }
-            else if ( index_et != INVALID_INDEX )
+            else if ( index_w5 != INVALID_INDEX )
             {
                 unsigned change_to;
                 if ( c.bc == UCDU_BIDI_EN )
@@ -804,9 +838,9 @@ void bidi_weak( ual_buffer* ub )
                     change_to = UCDU_BIDI_ON;
                 }
 
-                while ( index_et < i )
+                while ( index_w5 < i )
                 {
-                    ual_char& et = ub->c[ index_et++ ];
+                    ual_char& et = ub->c[ index_w5++ ];
                     if ( et.bc == BC_INVALID || et.bc == UCDU_BIDI_BN )
                     {
                         continue;
@@ -816,7 +850,7 @@ void bidi_weak( ual_buffer* ub )
                     et.bc = change_to;
                 }
 
-                index_et = INVALID_INDEX;
+                index_w5 = INVALID_INDEX;
             }
 
             prev_w5 = c.bc;
@@ -837,11 +871,11 @@ void bidi_weak( ual_buffer* ub )
         }
 
         // Deal with case where the level run ends with an ET.
-        if ( index_et != INVALID_INDEX )
+        if ( index_w5 != INVALID_INDEX )
         {
-            while ( index_et < nrun->start )
+            while ( index_w5 < nrun->start )
             {
-                ual_char& et = ub->c[ index_et++ ];
+                ual_char& et = ub->c[ index_w5++ ];
                 if ( et.bc == BC_INVALID || et.bc == UCDU_BIDI_BN )
                 {
                     continue;
