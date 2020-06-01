@@ -73,10 +73,6 @@ BIDIWEAKR
 ( R )
 
 BIDIWEAKR
-<lri><nsm>
-( LRI ON )
-
-BIDIWEAKR
 <pdi><nsm>
 ( PDI ON )
 
@@ -95,12 +91,12 @@ BIDIWEAKR
 ( PDI EN )
 
 BIDIWEAKR
-<al><l><rli><en>
-( R L RLI L )
+<al><l><pdi><en>
+( R L PDI L )
 
 BIDIWEAKR
-<al><r><fsi><en>
-( R R FSI EN )
+<al><r><pdi><en>
+( R R PDI EN )
 
 -- W4.  Use initial R to establish right-to-left context.
 
@@ -194,7 +190,7 @@ BIDINEUTRAL
 
 BIDINEUTRAL
 <r><pdi><an>
-( R R AN )
+( R WSR AN )
 
 BIDINEUTRAL
 <r><on><on><on><en>
@@ -218,7 +214,7 @@ BIDINEUTRAL
 
 BIDINEUTRAL
 <en><lri><pdi><fsi><pdi><rli><pdi><r>
-( EN R R R R R R R )
+( EN WSR WSR WSR WSR WSR WSR R )
 
 BIDIWEAK
 <l><r><en>" "<an>
@@ -226,7 +222,7 @@ BIDIWEAK
 
 BIDINEUTRAL
 <l><r><en>" "<an> -- L R context avoids conversion of EN to L by weak.
-( L R EN R AN )
+( L R EN WSR AN )
 
 BIDIWEAK
 <l><r><en><on><en>
@@ -240,27 +236,27 @@ BIDINEUTRAL
 
 BIDINEUTRAL
 <rli><l><on>" "<r><pdi>
-( L L R R R L )
+( WS L R WSR R WS )
 
 BIDINEUTRAL
 <rli><r><on>" "<l><pdi>
-( L R R R L L )
+( WS R R WSR L WS )
 
 BIDINEUTRAL
 <lri><l><on>" "<r><pdi>
-( L L L L R L )
+( WS L L WS R WS )
 
 BIDINEUTRAL
 <lri><r><on>" "<l><pdi>
-( L R L L L L )
+( WS R L WS L WS )
 
 BIDINEUTRAL
 <l><an><cyclone><on><r><fsi><r><pdi><on><on><r>
-( L AN R X R R R R R R R R )
+( L AN R X R R WSR R WSR R R R )
 
 BIDINEUTRAL
 <l><an><r><on><fsi><r><pdi><on><on><r>
-( L AN R R R R R R R R )
+( L AN R R WSR R WSR R R R )
 
 BIDINEUTRAL
 <on><on><on><r>
@@ -268,11 +264,11 @@ BIDINEUTRAL
 
 BIDINEUTRAL
 <lri><on><on><on><r><pdi>
-( L L L L R L )
+( WS L L L R WS )
 
 BIDINEUTRAL
 <r><on><on><on><lre><on><on><pdf>
-( R R R R R L L L )
+( R R R R BN L L BN )
 
 BIDIWEAK
 <l><r><pdf><r><pdf><on><on><pdf><l>
@@ -280,7 +276,7 @@ BIDIWEAK
 
 BIDINEUTRAL
 <l><r><pdf><r><pdf><on><on><pdf><l>
-( L R BN R L L L L L )
+( L R BN R BN L L BN L )
 
 -- N0 brackets
 
@@ -326,11 +322,11 @@ BIDINEUTRAL
 
 BIDINEUTRAL
 <r>"smith (fabrikam "<r><r><r><r><r><r>") "<r><r><r><r><r><r>
-( R L L L L L R R L L L L L L L L R R R R R R R R R R R R R R R )
+( R L L L L L WSR R L L L L L L L L WSR R R R R R R R WSR R R R R R R )
 
 BIDINEUTRAL
 <r><r><r><r><r><r>" book(s)"
-( R R R R R R R L L L L L L L )
+( R R R R R R WSR L L L L L L L )
 
 BIDINEUTRAL
 <r><l>"({["<on>"]"<on><l>")"<r>

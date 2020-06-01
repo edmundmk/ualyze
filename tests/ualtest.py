@@ -141,7 +141,10 @@ for case in cases:
     # Invoke test case.
     command = [ ualtest ]
     if case[ 1 ] != None:
-        command.append( case[ 1 ] )
+        if case[ 1 ] == 'wr':
+            command.extend( [ 'w', '1' ] )
+        else:
+            command.append( case[ 1 ] )
     result = subprocess.run( command, input = text, stdout = subprocess.PIPE, stderr = subprocess.STDOUT )
 
     # Print test case and check for failure.
@@ -182,6 +185,7 @@ for case in cases:
 
     if p != q:
         print( kind, text.decode( 'utf-16-le', errors = 'replace' ) )
+        print( code )
         print( "   FAILED:" )
         print( output )
         print( p )

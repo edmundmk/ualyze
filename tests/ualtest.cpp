@@ -24,11 +24,11 @@ static char boundary_class( unsigned bc )
 {
     switch ( bc )
     {
-    case UCDU_BIDI_L:     return 'L';
-    case UCDU_BIDI_R:     return 'R';
-    case UCDU_BIDI_AL:    return 'A';
-    case BC_SEQUENCE:           return '=';
-    default:                    return '?';
+    case UCDU_BIDI_L:   return 'L';
+    case UCDU_BIDI_R:   return 'R';
+    case UCDU_BIDI_AL:  return 'A';
+    case BC_SEQUENCE:   return '=';
+    default:            return '?';
     }
 }
 
@@ -36,31 +36,33 @@ static const char* bidi_class( unsigned bc )
 {
     switch ( bc )
     {
-    case UCDU_BIDI_L:     return "L";
-    case UCDU_BIDI_R:     return "R";
-    case UCDU_BIDI_AL:    return "AL";
-    case UCDU_BIDI_LRE:   return "LRE";
-    case UCDU_BIDI_LRO:   return "LRO";
-    case UCDU_BIDI_RLE:   return "RLE";
-    case UCDU_BIDI_RLO:   return "RLO";
-    case UCDU_BIDI_PDF:   return "PDF";
-    case UCDU_BIDI_EN:    return "EN";
-    case UCDU_BIDI_ES:    return "ES";
-    case UCDU_BIDI_ET:    return "ET";
-    case UCDU_BIDI_AN:    return "AN";
-    case UCDU_BIDI_CS:    return "CS";
-    case UCDU_BIDI_NSM:   return "NSM";
-    case UCDU_BIDI_BN:    return "BN";
-    case UCDU_BIDI_B:     return "B";
-    case UCDU_BIDI_S:     return "S";
-    case UCDU_BIDI_WS:    return "WS";
-    case UCDU_BIDI_ON:    return "ON";
-    case UCDU_BIDI_LRI:   return "LRI";
-    case UCDU_BIDI_RLI:   return "RLI";
-    case UCDU_BIDI_FSI:   return "FSI";
-    case UCDU_BIDI_PDI:   return "PDI";
-    case BC_INVALID:            return "X";
-    default:                    return "?";
+    case UCDU_BIDI_L:   return "L";
+    case UCDU_BIDI_R:   return "R";
+    case UCDU_BIDI_AL:  return "AL";
+    case UCDU_BIDI_LRE: return "LRE";
+    case UCDU_BIDI_LRO: return "LRO";
+    case UCDU_BIDI_RLE: return "RLE";
+    case UCDU_BIDI_RLO: return "RLO";
+    case UCDU_BIDI_PDF: return "PDF";
+    case UCDU_BIDI_EN:  return "EN";
+    case UCDU_BIDI_ES:  return "ES";
+    case UCDU_BIDI_ET:  return "ET";
+    case UCDU_BIDI_AN:  return "AN";
+    case UCDU_BIDI_CS:  return "CS";
+    case UCDU_BIDI_NSM: return "NSM";
+    case UCDU_BIDI_BN:  return "BN";
+    case UCDU_BIDI_B:   return "B";
+    case UCDU_BIDI_S:   return "S";
+    case UCDU_BIDI_WS:  return "WS";
+    case UCDU_BIDI_ON:  return "ON";
+    case UCDU_BIDI_LRI: return "LRI";
+    case UCDU_BIDI_RLI: return "RLI";
+    case UCDU_BIDI_FSI: return "FSI";
+    case UCDU_BIDI_PDI: return "PDI";
+    case BC_WS_R:       return "WSR";
+    case BC_BRACKET:    return "BRK";
+    case BC_INVALID:    return "X";
+    default:            return "?";
     }
 }
 
@@ -73,14 +75,13 @@ int main( int argc, char* argv[] )
 #endif
 
     // Check for bidi argument.
-    enum { LEVEL_RUNS, EXPLICIT, WEAK, WEAK_R, NEUTRAL, FULL } bidi_mode = FULL;
+    enum { LEVEL_RUNS, EXPLICIT, WEAK, NEUTRAL, FULL } bidi_mode = FULL;
     if ( argc > 1 )
     {
         const char* arg = argv[ 1 ];
         if ( strcmp( arg, "l" ) == 0 ) bidi_mode = LEVEL_RUNS;
         if ( strcmp( arg, "x" ) == 0 ) bidi_mode = EXPLICIT;
         if ( strcmp( arg, "w" ) == 0 ) bidi_mode = WEAK;
-        if ( strcmp( arg, "wr" ) == 0 ) bidi_mode = WEAK_R;
         if ( strcmp( arg, "n" ) == 0 ) bidi_mode = NEUTRAL;
         if ( strcmp( arg, "f" ) == 0 ) bidi_mode = FULL;
     }
@@ -183,21 +184,12 @@ int main( int argc, char* argv[] )
                 continue;
             }
 
-            if ( bidi_mode == WEAK_R )
-            {
-                // Force a single right-to-left level run.
-                ub->level_runs.clear();
-                ub->level_runs.push_back( { 0, 1, UCDU_BIDI_R, UCDU_BIDI_R, 0 } );
-                ub->level_runs.push_back( { (unsigned)ub->c.size(), 1, BC_SEQUENCE, BC_SEQUENCE, 0 } );
-                ub->bidi_analysis.complexity = BIDI_SOLITARY;
-            }
-
             if ( ub->bidi_analysis.complexity != BIDI_ALL_LEFT )
             {
                 if ( bidi_mode != EXPLICIT )
                 {
                     bidi_weak( ub );
-                    if ( bidi_mode != WEAK && bidi_mode != WEAK_R )
+                    if ( bidi_mode != WEAK )
                     {
                         bidi_brackets( ub );
                         bidi_neutral( ub );
