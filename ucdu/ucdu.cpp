@@ -2,7 +2,10 @@
 //  ucdu.cpp
 //
 //  Created by Edmund Kapusniak on 28/05/2020.
-//  Copyright © 2020 Edmund Kapusniak. All rights reserved.
+//  Copyright © 2020 Edmund Kapusniak.
+//
+//  Licensed under the MIT License. See LICENSE file in the project root for
+//  full license information.
 //
 
 #include "ucdu.h"
