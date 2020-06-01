@@ -1513,10 +1513,12 @@ static void bidi_isolating_neutral( ual_buffer* ub, size_t irun )
             {
                 // Turn these characters into WS, which is neutral.
                 c.bc = UCDU_BIDI_WS;
+                goto neutral;
             }
-            [[fallthrough]];
+            break;
 
             default:
+            neutral:
             {
                 // Remaining classes are neutral.
                 if ( neutrals == NEUTRAL_NONE)
