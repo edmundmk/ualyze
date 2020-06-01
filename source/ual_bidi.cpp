@@ -740,7 +740,15 @@ void bidi_weak( ual_buffer* ub )
                 }
                 else
                 {
-                    ub->c[ index_w4 ].bc = UCDU_BIDI_EN;
+                    // W7. Change EN to L if the left context is L.
+                    if ( prev_strong == UCDU_BIDI_L )
+                    {
+                        ub->c[ index_w4 ].bc = UCDU_BIDI_L;
+                    }
+                    else
+                    {
+                        ub->c[ index_w4 ].bc = UCDU_BIDI_EN;
+                    }
                     state_w4 = NONE;
                     index_w4 = INVALID_INDEX;
                 }
