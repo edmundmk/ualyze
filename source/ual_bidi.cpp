@@ -427,7 +427,7 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
             if ( stack_entry.oi == BIDI_ISOLATE || stack.sp == 0 )
             {
                 // The PDF does not match a valid embedding indicator.
-                break;
+                continue;
             }
 
             // Pop the last entry from the directional status stack.
