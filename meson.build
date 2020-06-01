@@ -31,12 +31,5 @@ ualyze_dep = declare_dependency( include_directories : include, link_with : ualy
 install_headers( 'include/ualyze.h' )
 
 ualtest = executable( 'ualtest', sources : sources + [ 'tests/ualtest.cpp' ], cpp_args : [ '-DUAL_BUILD_TESTS' ], include_directories : include_directories( 'include', 'ucdu' ) )
-test_script = find_program( 'tests/ualtest.py' )
-test( 'paragraph.test', test_script, args : [ ualtest.full_path(), files( 'tests/paragraph.test' ) ] )
-test( 'linebreak.test', test_script, args : [ ualtest.full_path(), files( 'tests/linebreak.test' ) ] )
-test( 'clusterbreak.test', test_script, args : [ ualtest.full_path(), files( 'tests/linebreak.test' ) ] )
-test( 'script.test', test_script, args : [ ualtest.full_path(), files( 'tests/script.test' ) ] )
-test( 'bidi.test', test_script, args : [ ualtest.full_path(), files( 'tests/bidi.test' ) ] )
-test_script = find_program( 'tests/ucdtest.py' )
-test( 'GraphemeBreakTest.txt', test_script, args : [ ualtest.full_path(), files( 'tests/GraphemeBreakTest.txt' ) ] )
-test( 'LineBreakTest.txt', test_script, args : [ ualtest.full_path(), files( 'tests/LineBreakTest.txt' ) ], timeout : 300 )
+subdir( 'tests' )
+

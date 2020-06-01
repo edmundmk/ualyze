@@ -97,6 +97,12 @@ def break_test( test_case, break_kind ):
         return 1
 
 
+if len( sys.argv ) > 3:
+    lower = min( int( sys.argv[ 3 ] ), len( test_cases ) )
+    upper = min( int( sys.argv[ 4 ] ), len( test_cases ) )
+    test_cases = test_cases[ lower : upper ]
+
+
 def grapheme_break_test( test_cases ):
 
     for test_case, in test_cases:
