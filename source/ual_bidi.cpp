@@ -405,19 +405,23 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
         // X7
         case UCDU_BIDI_PDF:
         {
+            // This character is 'removed' by rule X9.  Dont' actually remove
+            // it, instead set to BN.
+            c.bc = UCDU_BIDI_BN;
+
             if ( overflow_isolate_count > 0 )
             {
                 // If the overflow isolate count is greater than zero,
-                // do nothing.
-                break;
+                // just remove the unmatched PDF.
+                continue;
             }
 
             if ( overflow_embedding_count > 0 )
             {
                 // Otherwise, if the overflow embedding count is greater than
-                // zero, decrement it by one.
+                // zero, decrement it by one, and remove unmatched PDF.
                 overflow_embedding_count -= 1;
-                break;
+                continue;
             }
 
             if ( stack_entry.oi == BIDI_ISOLATE || stack.sp == 0 )
@@ -428,10 +432,6 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
 
             // Pop the last entry from the directional status stack.
             stack_entry = stack.ss[ --stack.sp ];
-
-            // This character is 'removed' by rule X9.  Dont' actually remove
-            // it, instead set to BN.
-            c.bc = UCDU_BIDI_BN;
             continue;
         }
         break;
