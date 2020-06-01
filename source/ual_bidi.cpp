@@ -66,6 +66,8 @@ static const char* bidi_cs( unsigned bidi_class )
     case UCDU_BIDI_RLI: return "RLI";
     case UCDU_BIDI_FSI: return "FSI";
     case UCDU_BIDI_PDI: return "PDI";
+    case BC_WS_R:       return "WSR";
+    case BC_BRACKET:    return "BRK";
     case BC_INVALID:    return "INV";
     }
 
@@ -116,9 +118,11 @@ static ual_bidi_complexity bidi_lookup( ual_buffer* ub )
             continue;
         }
 
-        c.bc = UCDU_TABLE[ c.ix ].bidi_class;
+        const ucdu_record& record = UCDU_TABLE[ c.ix ];
+        unsigned bc = record.bidi_class;
+        c.bc = bc;
 
-        switch ( c.bc )
+        switch ( bc )
         {
         case UCDU_BIDI_R:
         case UCDU_BIDI_AL:
@@ -137,6 +141,13 @@ static ual_bidi_complexity bidi_lookup( ual_buffer* ub )
         case UCDU_BIDI_PDI:
             left = false;
             solitary = false;
+            break;
+
+        case UCDU_BIDI_ON:
+            if ( record.paired )
+            {
+                c.bc = BC_BRACKET;
+            }
             break;
         }
     }
@@ -693,11 +704,11 @@ void bidi_weak( ual_buffer* ub )
             }
 
             // W1. Update class of NSM to class of previous.  We leave NSM
-            // sequences that follow an ON as NSMs, since rule N0 needs to
+            // sequences that follow an BRACKET as NSMs, since rule N0 needs to
             // differentiate them.
             if ( c.bc == UCDU_BIDI_NSM )
             {
-                if ( prev_w1 != UCDU_BIDI_ON
+                if ( prev_w1 != BC_BRACKET
                     && prev_w1 != UCDU_BIDI_FSI
                     && prev_w1 != UCDU_BIDI_LRI
                     && prev_w1 != UCDU_BIDI_RLI
@@ -705,7 +716,7 @@ void bidi_weak( ual_buffer* ub )
                 {
                     c.bc = prev_w1;
                 }
-                else if ( prev_w1 != UCDU_BIDI_ON )
+                else if ( prev_w1 != BC_BRACKET )
                 {
                     c.bc = UCDU_BIDI_ON;
                 }
@@ -969,7 +980,7 @@ void bidi_weak( ual_buffer* ub )
           - If strong type is /e-guess/, pop strong type with bracket.
           - If bracket contains /e/, so does new top.
           - If bracket contains /o/, so does new top.
-          - Set bracket to B to avoid reprocessing it.
+          - Set bracket to ON to avoid reprocessing it.
 
         If mismatched bracket was a rewind point and popped strong is /o/:
           - Resume from here.
@@ -1040,9 +1051,9 @@ static void rewind_o( ual_buffer* ub, size_t irun, unsigned lower, unsigned uppe
         }
     }
 
-    // I *think* it is sufficient to resolve all ON in the range to /o/.  All
-    // brackets that don't depend on the incorrect guess should already have
-    // been resolved.  But it requires more testing to confirm.
+    // I *think* it is sufficient to resolve all BRACKET in the range to /o/.
+    // All brackets that don't depend on the incorrect guess should already
+    // have been resolved.  But it requires more testing to confirm.
     for ( unsigned index = lower; index < upper; ++index )
     {
         while ( index >= nrun->start )
@@ -1058,7 +1069,7 @@ static void rewind_o( ual_buffer* ub, size_t irun, unsigned lower, unsigned uppe
 
         assert( index < upper );
         ual_char& c = ub->c[ index ];
-        if ( c.bc == UCDU_BIDI_ON )
+        if ( c.bc == BC_BRACKET )
         {
             c.bc = o;
         }
@@ -1103,31 +1114,28 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
             }
             break;
 
-            case UCDU_BIDI_ON:
+            case BC_BRACKET:
             {
                 // If the bracket stack overflowed even once, we've given up.
                 if ( give_up )
                 {
-                    c.bc = UCDU_BIDI_B;
+                    c.bc = UCDU_BIDI_ON;
                     break;
                 }
 
                 // Check for bracket.
-                ucdu_bracket_kind bracket_kind = UCDU_BRACKET_NONE;
-                char32_t closing_bracket = '\0';
-                char32_t uc = '\0';
-
                 const ucdu_record& record = UCDU_TABLE[ c.ix ];
-                if ( record.paired )
-                {
-                    uc = ual_codepoint( ub, index );
-                    bracket_kind = ucdu_paired_bracket( uc, &closing_bracket );
-                }
+                assert( record.paired );
+
+                char32_t closing_bracket = '\0';
+                char32_t uc = ual_codepoint( ub, index );
+                ucdu_bracket_kind bracket_kind = ucdu_paired_bracket( uc, &closing_bracket );
+                assert( bracket_kind != UCDU_BRACKET_NONE );
 
                 if ( bracket_kind == UCDU_BRACKET_NONE )
                 {
-                    // Not a bracket.  Convert to B to avoid reprocessing.
-                    c.bc = UCDU_BIDI_B;
+                    // Not a bracket.  Convert to ON to avoid reprocessing.
+                    c.bc = UCDU_BIDI_ON;
                     break;
                 }
 
@@ -1137,7 +1145,7 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                     if ( stack->sp >= BIDI_BRSTACK_LIMIT )
                     {
                         give_up = true;
-                        c.bc = UCDU_BIDI_B;
+                        c.bc = UCDU_BIDI_ON;
                         break;
                     }
 
@@ -1177,7 +1185,7 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                 if ( match >= stack->sp )
                 {
                     // Closing bracket was not matched.
-                    c.bc = UCDU_BIDI_B;
+                    c.bc = UCDU_BIDI_ON;
                     break;
                 }
 
@@ -1186,8 +1194,8 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                 {
                     ual_bidi_brentry* entry = stack->ss + stack->sp;
 
-                    // Clear opening bracket to B to avoid reprocessing.
-                    ub->c[ entry->index ].bc = UCDU_BIDI_B;
+                    // Clear opening bracket to ON to avoid reprocessing.
+                    ub->c[ entry->index ].bc = UCDU_BIDI_ON;
 
                     // Add context up until bracket to our current context.
                     contains_e |= entry->prev_contains_e;
@@ -1230,8 +1238,8 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                 if ( ! inner_contains_e && ! inner_contains_o )
                 {
                     // Neutral brackets.
-                    b.bc = UCDU_BIDI_B;
-                    c.bc = UCDU_BIDI_B;
+                    b.bc = UCDU_BIDI_ON;
+                    c.bc = UCDU_BIDI_ON;
                     prev_strong = (ual_bidi_eo_strong)entry->prev_strong;
 
                     //printf( "BIDI_BRACKET %u %u NEUTRAL\n", entry->index, index );
@@ -1305,8 +1313,8 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
     {
         ual_bidi_brentry* entry = stack->ss + stack->sp;
 
-        // Clear opening bracket to B to avoid reprocessing.
-        ub->c[ entry->index ].bc = UCDU_BIDI_B;
+        // Clear opening bracket to ON to avoid reprocessing.
+        ub->c[ entry->index ].bc = UCDU_BIDI_ON;
 
         // Deal with rewind.
         if ( entry->rewind_point )
@@ -1348,28 +1356,40 @@ void bidi_brackets( ual_buffer* ub )
 }
 
 /*
-    Perform rules N1 and N2, resolving types for runs of neutrals.
+    Perform rules N1, N2, and L1, resolving types for runs of neutrals and
+    identifying runs of whitespace before S or B.
 
     The only types remaining in the string are:
 
         strong L    -> L
         strong R    -> R, EN, AN
-        strong /e/  -> ON
+        strong /e/  -> BRACKET
         non-spacing -> NSM
-        neutral     -> B, S, WS, FSI, LRI, RLI, PDI
+        neutral     -> B, S, WS, ON, FSI, LRI, RLI, PDI
         removed     -> BN, INVALID
 
-    ON is treated as a strong type matching embedding direction, either L or R.
-    The only remaining ON characters are guessed brackets.
+    BRACKET is treated as a strong type matching embedding direction, either L
+    or R.  The only remaining BRACKET characters are guessed brackets.
 
-    The only NSMs remaining are those which originally followed an ON.  That
-    ON will have been updated to L, R, or B (meaning neutral).  Each NSM is
-    given the class of the preceding non-removed character, since rule N0
-    requires that they are updated with the class of matched brackets.
+    The only NSMs remaining are those which originally followed a BRACKET.
+    That BRACKET will have been updated to L, R, or ON.  Each NSM is given the
+    class of the preceding non-removed character, since rule N0 requires that
+    they are updated with the class of matched brackets.
 
     We resolve to the following non-neutral types:
 
-        L, R, AN, EN, BN, INVALID
+        L, R, AN, EN
+
+    The following removed types:
+
+        BN, INVALID
+
+    And whitespace is complicated:
+
+        B       is preserved
+        S       is preserved
+        WS      is WS or FSI/LRI/RLI/PDI resolved to L by neutral processing
+        WS_R    is WS or FSI/LRI/RLI/PDI resolved to R by neutral processing
 */
 
 enum ual_bidi_neutral_kind
@@ -1398,9 +1418,13 @@ static void bidi_resolve_neutrals( ual_buffer* ub, size_t irun, unsigned lower, 
 
         assert( index < upper );
         ual_char& c = ub->c[ index ];
-        if ( c.bc != UCDU_BIDI_BN && c.bc != BC_INVALID )
+        if ( c.bc == UCDU_BIDI_ON )
         {
             c.bc = bc;
+        }
+        else if ( c.bc == UCDU_BIDI_WS && bc != UCDU_BIDI_L )
+        {
+            c.bc = BC_WS_R;
         }
     }
 }
@@ -1452,7 +1476,7 @@ static void bidi_isolating_neutral( ual_buffer* ub, size_t irun )
             }
             break;
 
-            case UCDU_BIDI_ON:
+            case BC_BRACKET:
             {
                 // This is a bracket guessed as embedding direction.
                 c.bc = e;
@@ -1481,6 +1505,16 @@ static void bidi_isolating_neutral( ual_buffer* ub, size_t irun )
                 continue;
             }
             break;
+
+            case UCDU_BIDI_FSI:
+            case UCDU_BIDI_LRI:
+            case UCDU_BIDI_RLI:
+            case UCDU_BIDI_PDI:
+            {
+                // Turn these characters into WS, which is neutral.
+                c.bc = UCDU_BIDI_WS;
+            }
+            [[fallthrough]];
 
             default:
             {
@@ -1521,7 +1555,6 @@ static void bidi_isolating_neutral( ual_buffer* ub, size_t irun )
     }
 }
 
-
 void bidi_neutral( ual_buffer* ub )
 {
     // Process each isolating run sequence independently.
@@ -1536,6 +1569,92 @@ void bidi_neutral( ual_buffer* ub )
         }
 
         bidi_isolating_neutral( ub, irun );
+    }
+}
+
+/*
+    Apply rule L1 to whitespace, keeping all runs of WS preceding an S or B,
+    and turning the remaining characters into either L or R.  This happens on
+    the paragraph as a whole, not in isolating run sequences.
+
+    For convenience, turns S and B into WS.
+*/
+
+void bidi_whitespace( ual_buffer* ub )
+{
+    const size_t INVALID_INDEX = ~(size_t)0;
+    size_t index_ws = INVALID_INDEX;
+
+    size_t length = ub->c.size();
+    for ( size_t index = 0; index < length; ++index )
+    {
+        ual_char& c = ub->c[ index ];
+        if ( c.bc == BC_INVALID )
+        {
+            continue;
+        }
+
+        switch ( c.bc )
+        {
+        case UCDU_BIDI_WS:
+        case BC_WS_R:
+        {
+            // Remember start of preceding whitespace.
+            if ( index_ws == INVALID_INDEX )
+            {
+                index_ws = index;
+            }
+        }
+        break;
+
+        case UCDU_BIDI_S:
+        case UCDU_BIDI_B:
+        {
+            c.bc = UCDU_BIDI_WS;
+
+            // In run of preceding whitespace, set all WS_R to WS.
+            for ( size_t i = index_ws; i < index; ++i )
+            {
+                ual_char& k = ub->c[ i ];
+                if ( k.bc == BC_WS_R )
+                {
+                    k.bc = UCDU_BIDI_WS;
+                }
+            }
+
+            // Resolved whitespace run.
+            index_ws = INVALID_INDEX;
+        }
+        break;
+
+        case UCDU_BIDI_BN:
+        {
+            // Ignore BN.
+            continue;
+        }
+        break;
+
+        default:
+        {
+            // Non-whitespace character, so run of whitespace resolves strong.
+            for ( size_t i = index_ws; i < index; ++i )
+            {
+                ual_char&k = ub->c[ i ];
+                if ( k.bc == UCDU_BIDI_WS )
+                {
+                    k.bc = UCDU_BIDI_L;
+                }
+                else if ( k.bc == BC_WS_R )
+                {
+                    k.bc = UCDU_BIDI_R;
+                }
+            }
+
+            // No active whitespace run.
+            index_ws = INVALID_INDEX;
+        }
+        break;
+        }
     }
 }
 
@@ -1598,6 +1717,9 @@ UAL_API unsigned ual_analyze_bidi( ual_buffer* ub, unsigned override_paragraph_l
         debug_print_bidi( ub );
 
         bidi_neutral( ub );
+        debug_print_bidi( ub );
+
+        bidi_whitespace( ub );
         debug_print_bidi( ub );
     }
 
@@ -1672,7 +1794,11 @@ UAL_API bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
     if ( ( level & 1 ) == 0 )
     {
         // Embedding level is even.
-        if ( bc == UCDU_BIDI_L || bc == UCDU_BIDI_BN || bc == BC_INVALID )
+        switch ( bc )
+        {
+        case UCDU_BIDI_L:
+        case UCDU_BIDI_BN:
+        case BC_INVALID:
         {
             while ( index < nrun->start )
             {
@@ -1681,7 +1807,9 @@ UAL_API bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
                 ++index;
             }
         }
-        else if ( bc == UCDU_BIDI_R )
+        break;
+
+        case UCDU_BIDI_R:
         {
             level += 1;
             while ( index < nrun->start )
@@ -1691,7 +1819,10 @@ UAL_API bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
                 ++index;
             }
         }
-        else
+        break;
+
+        case UCDU_BIDI_EN:
+        case UCDU_BIDI_AN:
         {
             level += 2;
             while ( index < nrun->start )
@@ -1701,11 +1832,33 @@ UAL_API bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
                 ++index;
             }
         }
+        break;
+
+        case UCDU_BIDI_WS:
+        {
+            level = ub->bidi_analysis.paragraph_level;
+            while ( index < nrun->start )
+            {
+                bc = ub->c[ index ].bc;
+                if ( bc != UCDU_BIDI_WS && bc != UCDU_BIDI_BN && bc != BC_INVALID ) break;
+                ++index;
+            }
+        }
+        break;
+
+        default:
+            assert( ! "invalid surviving bidi class" );
+            break;
+        }
     }
     else
     {
         // Embedding level is odd.
-        if ( bc == UCDU_BIDI_R || bc == UCDU_BIDI_BN || bc == BC_INVALID )
+        switch ( bc )
+        {
+        case UCDU_BIDI_R:
+        case UCDU_BIDI_BN:
+        case BC_INVALID:
         {
             while ( index < nrun->start )
             {
@@ -1714,7 +1867,11 @@ UAL_API bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
                 ++index;
             }
         }
-        else
+        break;
+
+        case UCDU_BIDI_L:
+        case UCDU_BIDI_EN:
+        case UCDU_BIDI_AN:
         {
             level += 1;
             while ( index < nrun->start )
@@ -1723,6 +1880,24 @@ UAL_API bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
                 if ( bc != UCDU_BIDI_L && bc != UCDU_BIDI_EN && bc != UCDU_BIDI_AN && bc != UCDU_BIDI_BN && bc != BC_INVALID ) break;
                 ++index;
             }
+        }
+        break;
+
+        case UCDU_BIDI_WS:
+        {
+            level = ub->bidi_analysis.paragraph_level;
+            while ( index < nrun->start )
+            {
+                bc = ub->c[ index ].bc;
+                if ( bc != UCDU_BIDI_WS && bc != UCDU_BIDI_BN && bc != BC_INVALID ) break;
+                ++index;
+            }
+        }
+        break;
+
+        default:
+            assert( ! "invalid surviving bidi class" );
+            break;
         }
     }
 

@@ -166,6 +166,7 @@ def bidi_character_test( test_cases ):
 
         # Check result.
         if paragraph_level != result_paragraph_level or levels != result:
+            print( codepoints )
             print( string )
             print( paragraph_level )
             print( result_paragraph_level )

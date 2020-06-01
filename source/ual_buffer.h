@@ -17,7 +17,11 @@
 #include "ucdu.h"
 
 const uint16_t IX_INVALID = ( 1 << 11 ) - 1;
+
 const unsigned BC_SEQUENCE = 3;
+
+const uint16_t BC_WS_R    = 29;
+const uint16_t BC_BRACKET = 30;
 const uint16_t BC_INVALID = 31;
 
 const size_t INVALID_INDEX = ~(size_t)0;
