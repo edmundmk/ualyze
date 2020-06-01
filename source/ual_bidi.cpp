@@ -1710,15 +1710,19 @@ UAL_API unsigned ual_analyze_bidi( ual_buffer* ub, unsigned override_paragraph_l
 
     if ( ub->bidi_analysis.complexity != BIDI_ALL_LEFT )
     {
+        printf( "WEAK\n" );
         bidi_weak( ub );
         debug_print_bidi( ub );
 
+        printf( "BRACKETS\n" );
         bidi_brackets( ub );
         debug_print_bidi( ub );
 
+        printf( "NEUTRAL\n" );
         bidi_neutral( ub );
         debug_print_bidi( ub );
 
+        printf( "WHITESPACE\n" );
         bidi_whitespace( ub );
         debug_print_bidi( ub );
     }
