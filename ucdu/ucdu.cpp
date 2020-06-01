@@ -33,3 +33,16 @@ ucdu_bracket_kind ucdu_paired_bracket( char32_t bracket, char32_t* out_paired )
     return (ucdu_bracket_kind)i->kind;
 }
 
+char32_t ucdu_mapped_bracket( char32_t bracket )
+{
+    auto end = std::end( UCDU_MAPPINGS );
+    for ( auto i = std::begin( UCDU_MAPPINGS ); i < end; ++i )
+    {
+        if ( i->c == bracket )
+        {
+            return i->d;
+        }
+    }
+
+    return bracket;
+}

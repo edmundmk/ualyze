@@ -274,8 +274,8 @@ static unsigned lookahead( ual_buffer* ub, ual_script_brstack* stack, size_t ind
         if ( record.paired )
         {
             // Match paired bracket.
-            char32_t uc = ual_codepoint( ub, index );
             char32_t closing_bracket = '\0';
+            char32_t uc = ucdu_mapped_bracket( ual_codepoint( ub, index ) );
             ucdu_bracket_kind bracket_kind = ucdu_paired_bracket( uc, &closing_bracket );
             assert( bracket_kind != UCDU_BRACKET_NONE );
 
@@ -375,8 +375,8 @@ UAL_API bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span )
         if ( record.paired )
         {
             // Check for bracket.
-            char32_t uc = ual_codepoint( ub, index );
             char32_t closing_bracket = '\0';
+            char32_t uc = ucdu_mapped_bracket( ual_codepoint( ub, index ) );
             ucdu_bracket_kind bracket_kind = ucdu_paired_bracket( uc, &closing_bracket );
             assert( bracket_kind != UCDU_BRACKET_NONE );
 

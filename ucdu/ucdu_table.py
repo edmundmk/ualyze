@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #
 #   ucdu_table.py
 #
@@ -86,6 +87,21 @@ extended_pictographic = build_map( ( entry for entry in emoji_data if entry[ 1 ]
 east_asian_width = build_map( east_asian_width )
 
 
+# Build bracket pair table.
+
+decomp = { entry[ 0 ] : entry[ 5 ] for entry in unicode_data if int( entry[ 0 ], 16 ) in paired }
+decomp = { k : v for k, v in decomp.items() if len( v.split() ) == 1 }
+
+filter_brackets = []
+for bracket, bpaired, kind in bidi_brackets:
+    if bracket in decomp:
+        continue
+    bpaired = decomp.get( bpaired, bpaired )
+    filter_brackets.append( ( bracket, bpaired, kind ) )
+
+bidi_brackets = filter_brackets
+
+
 # LB1: Resolve SA+Mn and SA+Mc to CM.
 # LB30: OP/CP with East_Asian_Width in F, W, H -> EAST_ASIAN_OP/EAST_ASIAN_CP
 
@@ -161,8 +177,17 @@ print()
 # Print bracket pair table.
 
 print( "extern const ucdu_bracket_record UCDU_BRACKETS[] = {" )
-for bracket, paired, kind in bidi_brackets:
-    print( f"    {{ 0x{bracket}, 0x{paired}, {'UCDU_BRACKET_OPEN' if kind == 'o' else 'UCDU_BRACKET_CLOSE'} }}," )
+for bracket, bpaired, kind in bidi_brackets:
+    print( f"    {{ 0x{bracket}, 0x{bpaired}, {'UCDU_BRACKET_OPEN' if kind == 'o' else 'UCDU_BRACKET_CLOSE'} }}," )
+print( "};" )
+print()
+
+
+# Print bracket mapping table.
+
+print( "extern const ucdu_mapping_record UCDU_MAPPINGS[] = {" )
+for cp in sorted( decomp.keys() ):
+    print( f"    {{ 0x{cp}, 0x{decomp[cp]} }}," )
 print( "};" )
 print()
 

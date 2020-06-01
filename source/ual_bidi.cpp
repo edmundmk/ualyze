@@ -1128,7 +1128,7 @@ static void bidi_isolating_brackets( ual_buffer* ub, ual_bidi_brstack* stack, si
                 assert( record.paired );
 
                 char32_t closing_bracket = '\0';
-                char32_t uc = ual_codepoint( ub, index );
+                char32_t uc = ucdu_mapped_bracket( ual_codepoint( ub, index ) );
                 ucdu_bracket_kind bracket_kind = ucdu_paired_bracket( uc, &closing_bracket );
                 assert( bracket_kind != UCDU_BRACKET_NONE );
 

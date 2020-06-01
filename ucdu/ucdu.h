@@ -324,6 +324,18 @@ struct ucdu_bracket_record
 extern const ucdu_bracket_record UCDU_BRACKETS[];
 
 /*
+    Bracket canonicalisation.
+*/
+
+struct ucdu_mapping_record
+{
+    uint16_t c;
+    uint16_t d;
+};
+
+extern const ucdu_mapping_record UCDU_MAPPINGS[];
+
+/*
     Get index in table of a character's property record.
 */
 
@@ -334,6 +346,12 @@ size_t ucdu_lookup( char32_t c );
 */
 
 ucdu_bracket_kind ucdu_paired_bracket( char32_t bracket, char32_t* out_paired );
+
+/*
+    Get canonical mapping for bracket c.
+*/
+
+char32_t ucdu_mapped_bracket( char32_t bracket );
 
 
 #endif

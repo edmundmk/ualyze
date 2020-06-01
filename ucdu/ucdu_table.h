@@ -1963,8 +1963,6 @@ extern const ucdu_bracket_record UCDU_BRACKETS[] = {
     { 0x2309, 0x2308, UCDU_BRACKET_CLOSE },
     { 0x230A, 0x230B, UCDU_BRACKET_OPEN },
     { 0x230B, 0x230A, UCDU_BRACKET_CLOSE },
-    { 0x2329, 0x232A, UCDU_BRACKET_OPEN },
-    { 0x232A, 0x2329, UCDU_BRACKET_CLOSE },
     { 0x2768, 0x2769, UCDU_BRACKET_OPEN },
     { 0x2769, 0x2768, UCDU_BRACKET_CLOSE },
     { 0x276A, 0x276B, UCDU_BRACKET_OPEN },
@@ -2061,5 +2059,10 @@ extern const ucdu_bracket_record UCDU_BRACKETS[] = {
     { 0xFF60, 0xFF5F, UCDU_BRACKET_CLOSE },
     { 0xFF62, 0xFF63, UCDU_BRACKET_OPEN },
     { 0xFF63, 0xFF62, UCDU_BRACKET_CLOSE },
+};
+
+extern const ucdu_mapping_record UCDU_MAPPINGS[] = {
+    { 0x2329, 0x3008 },
+    { 0x232A, 0x3009 },
 };
 
