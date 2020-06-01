@@ -98,7 +98,7 @@ character in the paragraph.
 
 Then, bidi runs are generated using an iterator-style interface.
 
-    unsigned paragraph_level = ual_analyze_bidi( ub );
+    unsigned paragraph_level = ual_analyze_bidi( ub, UAL_FROM_TEXT );
 
     ual_bidi_run run;
     ual_bidi_runs_begin( ub );
