@@ -36,12 +36,21 @@ const size_t NO_SPACE = SIZE_MAX;
 
 static bool lookahead_nu( ual_buffer* ub, size_t index, size_t length )
 {
+    // Skip past low surrogates.
+    while ( index < length && ub->c[ index ].ix == IX_INVALID )
+    {
+        ++index;
+    }
+
+    // Check for NU linebreak class.
     if ( index < length )
     {
         const ual_char& c = ub->c[ index ];
         const ucdu_record& record = UCDU_TABLE[ c.ix ];
         return record.lbreak == UCDU_LBREAK_NU;
     }
+
+    // Not found.
     return false;
 }
 
