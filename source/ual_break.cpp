@@ -46,8 +46,8 @@ static bool lookahead_nu( ual_buffer* ub, size_t index, size_t length )
     if ( index < length )
     {
         const ual_char& c = ub->c[ index ];
-        const ucdu_record& record = UCDU_TABLE[ c.ix ];
-        return record.lbreak == UCDU_LBREAK_NU;
+        const ucdb_entry& uentry = UCDB_TABLE[ c.ix ];
+        return uentry.lbreak == UCDB_LBREAK_NU;
     }
 
     // Not found.
@@ -74,9 +74,9 @@ UAL_API void ual_analyze_breaks( ual_buffer* ub )
         }
 
         // Look up properties.
-        const ucdu_record& record = UCDU_TABLE[ c.ix ];
-        unsigned lb_class = record.lbreak;
-        unsigned cb_class = record.cbreak;
+        const ucdb_entry& uentry = UCDB_TABLE[ c.ix ];
+        unsigned lb_class = uentry.lbreak;
+        unsigned cb_class = uentry.cbreak;
 
         // Read state machine.
         lb_state = UAX14[ lb_state ][ lb_class ];
@@ -117,9 +117,9 @@ UAL_API void ual_analyze_breaks( ual_buffer* ub )
         c.bc = bc;
 
         // Check for space.
-        bool is_space = record.zspace ||
-               record.zspace                    // space characters
-            || lb_class == UCDU_LBREAK_ZW       // ZERO WIDTH SPACE
+        bool is_space =
+               uentry.zspace                    // space characters
+            || lb_class == UCDB_LBREAK_ZW       // ZERO WIDTH SPACE
             || lb_state == STATE_NL_LF_CR_BK;   // newlines
         if ( is_space && ! was_space )
         {

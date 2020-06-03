@@ -25,7 +25,7 @@ UAL_API size_t ual_analyze_paragraph( ual_buffer* ub, const char16_t* text, size
 
     // Perform analysis.
     size_t i = 0;
-    unsigned prev = UCDU_LBREAK_XX;
+    unsigned prev = UCDB_LBREAK_XX;
     while ( i < size )
     {
         // Decode character from UTF-16.
@@ -55,14 +55,14 @@ UAL_API size_t ual_analyze_paragraph( ual_buffer* ub, const char16_t* text, size
         }
 
         // Look up character in unicode database.
-        unsigned ix = ucdu_lookup( uc );
+        unsigned ix = ucdb_lookup( uc );
 
         // Check for line break.
-        unsigned curr = UCDU_TABLE[ ix ].lbreak;
-        if ( prev == UCDU_LBREAK_BK
-            || prev == UCDU_LBREAK_NL
-            || prev == UCDU_LBREAK_LF
-            || ( prev == UCDU_LBREAK_CR && curr != UCDU_LBREAK_LF ) )
+        unsigned curr = UCDB_TABLE[ ix ].lbreak;
+        if ( prev == UCDB_LBREAK_BK
+            || prev == UCDB_LBREAK_NL
+            || prev == UCDB_LBREAK_LF
+            || ( prev == UCDB_LBREAK_CR && curr != UCDB_LBREAK_LF ) )
         {
             break;
         }

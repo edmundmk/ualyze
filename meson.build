@@ -17,7 +17,9 @@ sources = [
     'source/ual_buffer.cpp',
     'source/ual_paragraph.cpp',
     'source/ual_script.cpp',
-    'ucdu/ucdu.cpp',
+    'ucdb/ucdb_bracket.cpp',
+    'ucdb/ucdb_script.cpp',
+    'ucdb/ucdb_table.cpp',
 ]
 
 cpp_args = [ '-DUAL_BUILD' ]
@@ -25,11 +27,11 @@ cpp_args = [ '-DUAL_BUILD' ]
 break_machine = generator( find_program( 'source/break_machine.py' ), output : '@BASENAME@.h', arguments : [ '@INPUT@', '@OUTPUT@' ] )
 sources += break_machine.process( 'source/uax14.rules', 'source/uax29p3.rules' )
 
-ualyze_lib = library( 'ualyze', sources : sources, include_directories : include_directories( 'include', 'ucdu' ), cpp_args : cpp_args, gnu_symbol_visibility : 'hidden', install : true )
+ualyze_lib = library( 'ualyze', sources : sources, include_directories : include_directories( 'include', 'ucdb' ), cpp_args : cpp_args, gnu_symbol_visibility : 'hidden', install : true )
 ualyze_lic = files( 'LICENSE' )
 ualyze_dep = declare_dependency( include_directories : include, link_with : ualyze_lib )
 install_headers( 'include/ualyze.h' )
 
-ualtest = executable( 'ualtest', sources : sources + [ 'tests/ualtest.cpp' ], cpp_args : [ '-DUAL_BUILD_TESTS' ], include_directories : include_directories( 'include', 'ucdu' ) )
+ualtest = executable( 'ualtest', sources : sources + [ 'tests/ualtest.cpp' ], cpp_args : [ '-DUAL_BUILD_TESTS' ], include_directories : include_directories( 'include', 'ucdb' ) )
 subdir( 'tests' )
 

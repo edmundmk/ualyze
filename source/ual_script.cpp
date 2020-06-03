@@ -11,175 +11,8 @@
 #include "ualyze.h"
 #include <assert.h>
 #include "ual_buffer.h"
-
-// https://unicode.org/iso15924/
-
-#ifndef _MSVC
-#define MAKE_SCRIPT_CODE( x, a, b, c, d ) [ UCDU_SCRIPT_ ## x ] = ( (uint32_t)a << 24 ) | ( (uint32_t)b << 16 ) | ( (uint32_t)c << 8 ) | (uint32_t)d
-#else
-#define MAKE_SCRIPT_CODE( x, a, b, c, d ) ( (uint32_t)a << 24 ) | ( (uint32_t)b << 16 ) | ( (uint32_t)c << 8 ) | (uint32_t)d
-#endif
-
-static const uint32_t SCRIPT_CODE[] =
-{
-    MAKE_SCRIPT_CODE( COMMON, 'Z', 'y', 'y', 'y' ),
-    MAKE_SCRIPT_CODE( INHERITED, 'Z', 'i', 'n', 'h' ),
-    MAKE_SCRIPT_CODE( UNKNOWN, 'Z', 'z', 'z', 'z' ),
-    MAKE_SCRIPT_CODE( LATIN, 'L', 'a', 't', 'n' ),
-    MAKE_SCRIPT_CODE( GREEK, 'G', 'r', 'e', 'k' ),
-    MAKE_SCRIPT_CODE( CYRILLIC, 'C', 'y', 'r', 'l' ),
-    MAKE_SCRIPT_CODE( ARMENIAN, 'A', 'r', 'm', 'n' ),
-    MAKE_SCRIPT_CODE( HEBREW, 'H', 'e', 'b', 'r' ),
-    MAKE_SCRIPT_CODE( ARABIC, 'A', 'r', 'a', 'b' ),
-    MAKE_SCRIPT_CODE( SYRIAC, 'S', 'y', 'r', 'c' ),
-    MAKE_SCRIPT_CODE( THAANA, 'T', 'h', 'a', 'a' ),
-    MAKE_SCRIPT_CODE( DEVANAGARI, 'D', 'e', 'v', 'a' ),
-    MAKE_SCRIPT_CODE( BENGALI, 'B', 'e', 'n', 'g' ),
-    MAKE_SCRIPT_CODE( GURMUKHI, 'G', 'u', 'r', 'u' ),
-    MAKE_SCRIPT_CODE( GUJARATI, 'G', 'u', 'j', 'r' ),
-    MAKE_SCRIPT_CODE( ORIYA, 'O', 'r', 'y', 'a' ),
-    MAKE_SCRIPT_CODE( TAMIL, 'T', 'a', 'm', 'l' ),
-    MAKE_SCRIPT_CODE( TELUGU, 'T', 'e', 'l', 'u' ),
-    MAKE_SCRIPT_CODE( KANNADA, 'K', 'n', 'd', 'a' ),
-    MAKE_SCRIPT_CODE( MALAYALAM, 'M', 'l', 'y', 'm' ),
-    MAKE_SCRIPT_CODE( SINHALA, 'S', 'i', 'n', 'h' ),
-    MAKE_SCRIPT_CODE( THAI, 'T', 'h', 'a', 'i' ),
-    MAKE_SCRIPT_CODE( LAO, 'L', 'a', 'o', 'o' ),
-    MAKE_SCRIPT_CODE( TIBETAN, 'T', 'i', 'b', 't' ),
-    MAKE_SCRIPT_CODE( MYANMAR, 'M', 'y', 'm', 'r' ),
-    MAKE_SCRIPT_CODE( GEORGIAN, 'G', 'e', 'o', 'r' ),
-    MAKE_SCRIPT_CODE( HANGUL, 'H', 'a', 'n', 'g' ),
-    MAKE_SCRIPT_CODE( ETHIOPIC, 'E', 't', 'h', 'i' ),
-    MAKE_SCRIPT_CODE( CHEROKEE, 'C', 'h', 'e', 'r' ),
-    MAKE_SCRIPT_CODE( CANADIAN_ABORIGINAL, 'C', 'a', 'n', 's' ),
-    MAKE_SCRIPT_CODE( OGHAM, 'O', 'g', 'a', 'm' ),
-    MAKE_SCRIPT_CODE( RUNIC, 'R', 'u', 'n', 'r' ),
-    MAKE_SCRIPT_CODE( KHMER, 'K', 'h', 'm', 'r' ),
-    MAKE_SCRIPT_CODE( MONGOLIAN, 'M', 'o', 'n', 'g' ),
-    MAKE_SCRIPT_CODE( HIRAGANA, 'H', 'i', 'r', 'a' ),
-    MAKE_SCRIPT_CODE( KATAKANA, 'K', 'a', 'n', 'a' ),
-    MAKE_SCRIPT_CODE( BOPOMOFO, 'B', 'o', 'p', 'o' ),
-    MAKE_SCRIPT_CODE( HAN, 'H', 'a', 'n', 'i' ),
-    MAKE_SCRIPT_CODE( YI, 'Y', 'i', 'i', 'i' ),
-    MAKE_SCRIPT_CODE( OLD_ITALIC, 'I', 't', 'a', 'l' ),
-    MAKE_SCRIPT_CODE( GOTHIC, 'G', 'o', 't', 'h' ),
-    MAKE_SCRIPT_CODE( DESERET, 'D', 's', 'r', 't' ),
-    MAKE_SCRIPT_CODE( TAGALOG, 'T', 'g', 'l', 'g' ),
-    MAKE_SCRIPT_CODE( HANUNOO, 'H', 'a', 'n', 'o' ),
-    MAKE_SCRIPT_CODE( BUHID, 'B', 'u', 'h', 'd' ),
-    MAKE_SCRIPT_CODE( TAGBANWA, 'T', 'a', 'g', 'b' ),
-    MAKE_SCRIPT_CODE( LIMBU, 'L', 'i', 'm', 'b' ),
-    MAKE_SCRIPT_CODE( TAI_LE, 'T', 'a', 'l', 'e' ),
-    MAKE_SCRIPT_CODE( LINEAR_B, 'L', 'i', 'n', 'b' ),
-    MAKE_SCRIPT_CODE( UGARITIC, 'U', 'g', 'a', 'r' ),
-    MAKE_SCRIPT_CODE( SHAVIAN, 'S', 'h', 'a', 'w' ),
-    MAKE_SCRIPT_CODE( OSMANYA, 'O', 's', 'm', 'a' ),
-    MAKE_SCRIPT_CODE( CYPRIOT, 'C', 'p', 'r', 't' ),
-    MAKE_SCRIPT_CODE( BRAILLE, 'B', 'r', 'a', 'i' ),
-    MAKE_SCRIPT_CODE( BUGINESE, 'B', 'u', 'g', 'i' ),
-    MAKE_SCRIPT_CODE( COPTIC, 'C', 'o', 'p', 't' ),
-    MAKE_SCRIPT_CODE( NEW_TAI_LUE, 'T', 'a', 'l', 'u' ),
-    MAKE_SCRIPT_CODE( GLAGOLITIC, 'G', 'l', 'a', 'g' ),
-    MAKE_SCRIPT_CODE( TIFINAGH, 'T', 'f', 'n', 'g' ),
-    MAKE_SCRIPT_CODE( SYLOTI_NAGRI, 'S', 'y', 'l', 'o' ),
-    MAKE_SCRIPT_CODE( OLD_PERSIAN, 'X', 'p', 'e', 'o' ),
-    MAKE_SCRIPT_CODE( KHAROSHTHI, 'K', 'h', 'a', 'r' ),
-    MAKE_SCRIPT_CODE( BALINESE, 'B', 'a', 'l', 'i' ),
-    MAKE_SCRIPT_CODE( CUNEIFORM, 'X', 's', 'u', 'x' ),
-    MAKE_SCRIPT_CODE( PHOENICIAN, 'P', 'h', 'n', 'x' ),
-    MAKE_SCRIPT_CODE( PHAGS_PA, 'P', 'h', 'a', 'g' ),
-    MAKE_SCRIPT_CODE( NKO, 'N', 'k', 'o', 'o' ),
-    MAKE_SCRIPT_CODE( SUNDANESE, 'S', 'u', 'n', 'd' ),
-    MAKE_SCRIPT_CODE( LEPCHA, 'L', 'e', 'p', 'c' ),
-    MAKE_SCRIPT_CODE( OL_CHIKI, 'O', 'l', 'c', 'k' ),
-    MAKE_SCRIPT_CODE( VAI, 'V', 'a', 'i', 'i' ),
-    MAKE_SCRIPT_CODE( SAURASHTRA, 'S', 'a', 'u', 'r' ),
-    MAKE_SCRIPT_CODE( KAYAH_LI, 'K', 'a', 'l', 'i' ),
-    MAKE_SCRIPT_CODE( REJANG, 'R', 'j', 'n', 'g' ),
-    MAKE_SCRIPT_CODE( LYCIAN, 'L', 'y', 'c', 'i' ),
-    MAKE_SCRIPT_CODE( CARIAN, 'C', 'a', 'r', 'i' ),
-    MAKE_SCRIPT_CODE( LYDIAN, 'L', 'y', 'd', 'i' ),
-    MAKE_SCRIPT_CODE( CHAM, 'C', 'h', 'a', 'm' ),
-    MAKE_SCRIPT_CODE( TAI_THAM, 'L', 'a', 'n', 'a' ),
-    MAKE_SCRIPT_CODE( TAI_VIET, 'T', 'a', 'v', 't' ),
-    MAKE_SCRIPT_CODE( AVESTAN, 'A', 'v', 's', 't' ),
-    MAKE_SCRIPT_CODE( EGYPTIAN_HIEROGLYPHS, 'E', 'g', 'y', 'p' ),
-    MAKE_SCRIPT_CODE( SAMARITAN, 'S', 'a', 'm', 'r' ),
-    MAKE_SCRIPT_CODE( LISU, 'L', 'i', 's', 'u' ),
-    MAKE_SCRIPT_CODE( BAMUM, 'B', 'a', 'm', 'u' ),
-    MAKE_SCRIPT_CODE( JAVANESE, 'J', 'a', 'v', 'a' ),
-    MAKE_SCRIPT_CODE( MEETEI_MAYEK, 'M', 't', 'e', 'i' ),
-    MAKE_SCRIPT_CODE( IMPERIAL_ARAMAIC, 'A', 'r', 'm', 'i' ),
-    MAKE_SCRIPT_CODE( OLD_SOUTH_ARABIAN, 'S', 'a', 'r', 'b' ),
-    MAKE_SCRIPT_CODE( INSCRIPTIONAL_PARTHIAN, 'P', 'r', 't', 'i' ),
-    MAKE_SCRIPT_CODE( INSCRIPTIONAL_PAHLAVI, 'P', 'h', 'l', 'i' ),
-    MAKE_SCRIPT_CODE( OLD_TURKIC, 'O', 'r', 'k', 'h' ),
-    MAKE_SCRIPT_CODE( KAITHI, 'K', 't', 'h', 'i' ),
-    MAKE_SCRIPT_CODE( BATAK, 'B', 'a', 't', 'k' ),
-    MAKE_SCRIPT_CODE( BRAHMI, 'B', 'r', 'a', 'h' ),
-    MAKE_SCRIPT_CODE( MANDAIC, 'M', 'a', 'n', 'd' ),
-    MAKE_SCRIPT_CODE( CHAKMA, 'C', 'a', 'k', 'm' ),
-    MAKE_SCRIPT_CODE( MEROITIC_CURSIVE, 'M', 'e', 'r', 'c' ),
-    MAKE_SCRIPT_CODE( MEROITIC_HIEROGLYPHS, 'M', 'e', 'r', 'o' ),
-    MAKE_SCRIPT_CODE( MIAO, 'P', 'l', 'r', 'd' ),
-    MAKE_SCRIPT_CODE( SHARADA, 'S', 'h', 'r', 'd' ),
-    MAKE_SCRIPT_CODE( SORA_SOMPENG, 'S', 'o', 'r', 'a' ),
-    MAKE_SCRIPT_CODE( TAKRI, 'T', 'a', 'k', 'r' ),
-    MAKE_SCRIPT_CODE( BASSA_VAH, 'B', 'a', 's', 's' ),
-    MAKE_SCRIPT_CODE( CAUCASIAN_ALBANIAN, 'A', 'g', 'h', 'b' ),
-    MAKE_SCRIPT_CODE( DUPLOYAN, 'D', 'u', 'p', 'l' ),
-    MAKE_SCRIPT_CODE( ELBASAN, 'E', 'l', 'b', 'a' ),
-    MAKE_SCRIPT_CODE( GRANTHA, 'G', 'r', 'a', 'n' ),
-    MAKE_SCRIPT_CODE( KHOJKI, 'K', 'h', 'o', 'j' ),
-    MAKE_SCRIPT_CODE( KHUDAWADI, 'S', 'i', 'n', 'd' ),
-    MAKE_SCRIPT_CODE( LINEAR_A, 'L', 'i', 'n', 'a' ),
-    MAKE_SCRIPT_CODE( MAHAJANI, 'M', 'a', 'h', 'j' ),
-    MAKE_SCRIPT_CODE( MANICHAEAN, 'M', 'a', 'n', 'i' ),
-    MAKE_SCRIPT_CODE( MENDE_KIKAKUI, 'M', 'e', 'n', 'd' ),
-    MAKE_SCRIPT_CODE( MODI, 'M', 'o', 'd', 'i' ),
-    MAKE_SCRIPT_CODE( MRO, 'M', 'r', 'o', 'o' ),
-    MAKE_SCRIPT_CODE( NABATAEAN, 'N', 'b', 'a', 't' ),
-    MAKE_SCRIPT_CODE( OLD_NORTH_ARABIAN, 'N', 'a', 'r', 'b' ),
-    MAKE_SCRIPT_CODE( OLD_PERMIC, 'P', 'e', 'r', 'm' ),
-    MAKE_SCRIPT_CODE( PAHAWH_HMONG, 'H', 'm', 'n', 'g' ),
-    MAKE_SCRIPT_CODE( PALMYRENE, 'P', 'a', 'l', 'm' ),
-    MAKE_SCRIPT_CODE( PAU_CIN_HAU, 'P', 'a', 'u', 'c' ),
-    MAKE_SCRIPT_CODE( PSALTER_PAHLAVI, 'P', 'h', 'l', 'p' ),
-    MAKE_SCRIPT_CODE( SIDDHAM, 'S', 'i', 'd', 'd' ),
-    MAKE_SCRIPT_CODE( TIRHUTA, 'T', 'i', 'r', 'h' ),
-    MAKE_SCRIPT_CODE( WARANG_CITI, 'W', 'a', 'r', 'a' ),
-    MAKE_SCRIPT_CODE( AHOM, 'A', 'h', 'o', 'm' ),
-    MAKE_SCRIPT_CODE( ANATOLIAN_HIEROGLYPHS, 'H', 'l', 'u', 'w' ),
-    MAKE_SCRIPT_CODE( HATRAN, 'H', 'a', 't', 'r' ),
-    MAKE_SCRIPT_CODE( MULTANI, 'M', 'u', 'l', 't' ),
-    MAKE_SCRIPT_CODE( OLD_HUNGARIAN, 'H', 'u', 'n', 'g' ),
-    MAKE_SCRIPT_CODE( SIGNWRITING, 'S', 'g', 'n', 'w' ),
-    MAKE_SCRIPT_CODE( ADLAM, 'A', 'd', 'l', 'm' ),
-    MAKE_SCRIPT_CODE( BHAIKSUKI, 'B', 'h', 'k', 's' ),
-    MAKE_SCRIPT_CODE( MARCHEN, 'M', 'a', 'r', 'c' ),
-    MAKE_SCRIPT_CODE( NEWA, 'N', 'e', 'w', 'a' ),
-    MAKE_SCRIPT_CODE( OSAGE, 'O', 's', 'g', 'e' ),
-    MAKE_SCRIPT_CODE( TANGUT, 'T', 'a', 'n', 'g' ),
-    MAKE_SCRIPT_CODE( MASARAM_GONDI, 'G', 'o', 'n', 'm' ),
-    MAKE_SCRIPT_CODE( NUSHU, 'N', 's', 'h', 'u' ),
-    MAKE_SCRIPT_CODE( SOYOMBO, 'S', 'o', 'y', 'o' ),
-    MAKE_SCRIPT_CODE( ZANABAZAR_SQUARE, 'Z', 'a', 'n', 'b' ),
-    MAKE_SCRIPT_CODE( DOGRA, 'D', 'o', 'g', 'r' ),
-    MAKE_SCRIPT_CODE( GUNJALA_GONDI, 'G', 'o', 'n', 'g' ),
-    MAKE_SCRIPT_CODE( HANIFI_ROHINGYA, 'R', 'o', 'h', 'g' ),
-    MAKE_SCRIPT_CODE( MAKASAR, 'M', 'a', 'k', 'a' ),
-    MAKE_SCRIPT_CODE( MEDEFAIDRIN, 'M', 'e', 'd', 'f' ),
-    MAKE_SCRIPT_CODE( OLD_SOGDIAN, 'S', 'o', 'g', 'o' ),
-    MAKE_SCRIPT_CODE( SOGDIAN, 'S', 'o', 'g', 'd' ),
-    MAKE_SCRIPT_CODE( ELYMAIC, 'E', 'l', 'y', 'm' ),
-    MAKE_SCRIPT_CODE( NANDINAGARI, 'N', 'a', 'n', 'd' ),
-    MAKE_SCRIPT_CODE( NYIAKENG_PUACHUE_HMONG, 'H', 'm', 'n', 'p' ),
-    MAKE_SCRIPT_CODE( WANCHO, 'W', 'c', 'h', 'o' ),
-    MAKE_SCRIPT_CODE( YEZIDI, 'Y', 'e', 'z', 'i' ),
-    MAKE_SCRIPT_CODE( CHORASMIAN, 'C', 'h', 'r', 's' ),
-    MAKE_SCRIPT_CODE( DIVES_AKURU, 'D', 'i', 'a', 'k' ),
-    MAKE_SCRIPT_CODE( KHITAN_SMALL_SCRIPT, 'K', 'i', 't', 's' ),
-};
+#include "ucdb_script.h"
+#include "ucdb_bracket.h"
 
 /*
     Bracket stack.
@@ -257,7 +90,7 @@ static unsigned match_bracket( ual_script_brstack* stack, size_t bracket_level, 
 static unsigned lookahead( ual_buffer* ub, ual_script_brstack* stack, size_t index, unsigned curr_script )
 {
     size_t bracket_level = stack->sp;
-    unsigned fallback = UCDU_SCRIPT_COMMON;
+    unsigned fallback = UCDB_SCRIPT_COMMON;
 
     size_t length = ub->c.size();
     for ( ; index < length; ++index )
@@ -268,33 +101,33 @@ static unsigned lookahead( ual_buffer* ub, ual_script_brstack* stack, size_t ind
             continue;
         }
 
-        const ucdu_record& record = UCDU_TABLE[ c.ix ];
-        unsigned char_script = record.script;
+        const ucdb_entry& uentry = UCDB_TABLE[ c.ix ];
+        unsigned char_script = uentry.script;
 
-        if ( record.paired )
+        if ( uentry.paired )
         {
             // Match paired bracket.
             char32_t closing_bracket = '\0';
-            char32_t uc = ucdu_mapped_bracket( ual_codepoint( ub, index ) );
-            ucdu_bracket_kind bracket_kind = ucdu_paired_bracket( uc, &closing_bracket );
-            assert( bracket_kind != UCDU_BRACKET_NONE );
+            char32_t uc = ucdb_mapped_bracket( ual_codepoint( ub, index ) );
+            ucdb_bracket_kind bracket_kind = ucdb_paired_bracket( uc, &closing_bracket );
+            assert( bracket_kind != UCDB_BRACKET_NONE );
 
-            if ( bracket_kind == UCDU_BRACKET_OPEN )
+            if ( bracket_kind == UCDB_BRACKET_OPEN )
             {
                 // Opening bracket.
-                push_bracket( stack, { closing_bracket, UCDU_SCRIPT_COMMON } );
+                push_bracket( stack, { closing_bracket, UCDB_SCRIPT_COMMON } );
             }
-            else if ( bracket_kind == UCDU_BRACKET_CLOSE )
+            else if ( bracket_kind == UCDB_BRACKET_CLOSE )
             {
                 // Closing bracket.
-                if ( match_bracket( stack, bracket_level, uc, UCDU_SCRIPT_COMMON ) == BELOW_BRACKET_LEVEL )
+                if ( match_bracket( stack, bracket_level, uc, UCDB_SCRIPT_COMMON ) == BELOW_BRACKET_LEVEL )
                 {
                     break;
                 }
             }
         }
 
-        if ( char_script == UCDU_SCRIPT_COMMON || char_script == UCDU_SCRIPT_INHERITED )
+        if ( char_script == UCDB_SCRIPT_COMMON || char_script == UCDB_SCRIPT_INHERITED )
         {
             continue;
         }
@@ -306,14 +139,14 @@ static unsigned lookahead( ual_buffer* ub, ual_script_brstack* stack, size_t ind
         }
 
         // Otherwise, remember first actual script, even inside brackets.
-        if ( fallback == UCDU_SCRIPT_COMMON )
+        if ( fallback == UCDB_SCRIPT_COMMON )
         {
             fallback = char_script;
         }
     }
 
     // Fall back to current script.
-    if ( fallback == UCDU_SCRIPT_COMMON )
+    if ( fallback == UCDB_SCRIPT_COMMON )
     {
         fallback = curr_script;
     }
@@ -330,11 +163,11 @@ static unsigned lookahead( ual_buffer* ub, ual_script_brstack* stack, size_t ind
 UAL_API void ual_script_spans_begin( ual_buffer* ub )
 {
     // Start at beginning of paragraph.
-    ub->script_analysis = { 0, UCDU_SCRIPT_LATIN, 0 };
+    ub->script_analysis = { 0, UCDB_SCRIPT_LATIN, 0 };
 
     // Lookahead to determine script of first character.
     ual_script_brstack stack = get_brstack( ub );
-    ub->script_analysis.script = lookahead( ub, &stack, 0, UCDU_SCRIPT_LATIN );
+    ub->script_analysis.script = lookahead( ub, &stack, 0, UCDB_SCRIPT_LATIN );
 }
 
 UAL_API bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span )
@@ -352,7 +185,7 @@ UAL_API bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span )
     if ( index >= length )
     {
         out_span->upper = index;
-        out_span->script = SCRIPT_CODE[ UCDU_SCRIPT_LATIN ];
+        out_span->script = UCDB_SCRIPT_CODE[ UCDB_SCRIPT_LATIN ];
         return false;
     }
 
@@ -368,19 +201,19 @@ UAL_API bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span )
         }
 
         // Look up script for character.
-        const ucdu_record& record = UCDU_TABLE[ c.ix ];
-        char_script = record.script;
+        const ucdb_entry& uentry = UCDB_TABLE[ c.ix ];
+        char_script = uentry.script;
 
         // Check for brackets.
-        if ( record.paired )
+        if ( uentry.paired )
         {
             // Check for bracket.
             char32_t closing_bracket = '\0';
-            char32_t uc = ucdu_mapped_bracket( ual_codepoint( ub, index ) );
-            ucdu_bracket_kind bracket_kind = ucdu_paired_bracket( uc, &closing_bracket );
-            assert( bracket_kind != UCDU_BRACKET_NONE );
+            char32_t uc = ucdb_mapped_bracket( ual_codepoint( ub, index ) );
+            ucdb_bracket_kind bracket_kind = ucdb_paired_bracket( uc, &closing_bracket );
+            assert( bracket_kind != UCDB_BRACKET_NONE );
 
-            if ( bracket_kind == UCDU_BRACKET_OPEN )
+            if ( bracket_kind == UCDB_BRACKET_OPEN )
             {
                 // This bracket inherits the current script.  Move past it.
                 index += 1;
@@ -399,7 +232,7 @@ UAL_API bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span )
                 // Determine script of now-current character by lookahead.
                 char_script = lookahead( ub, &stack, index, curr_script );
             }
-            else if ( bracket_kind == UCDU_BRACKET_CLOSE )
+            else if ( bracket_kind == UCDB_BRACKET_CLOSE )
             {
                 // Closing bracket.  Might change script here.
                 char_script = match_bracket( &stack, 0, uc, curr_script );
@@ -407,7 +240,7 @@ UAL_API bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span )
         }
 
         // Common and inherited characters do not change script.
-        if ( char_script == UCDU_SCRIPT_COMMON || char_script == UCDU_SCRIPT_INHERITED )
+        if ( char_script == UCDB_SCRIPT_COMMON || char_script == UCDB_SCRIPT_INHERITED )
         {
             continue;
         }
@@ -429,7 +262,7 @@ UAL_API bool ual_script_spans_next( ual_buffer* ub, ual_script_span* out_span )
 
     // Return resulting span.
     out_span->upper = index;
-    out_span->script = SCRIPT_CODE[ curr_script ];
+    out_span->script = UCDB_SCRIPT_CODE[ curr_script ];
     return true;
 }
 

@@ -4,22 +4,22 @@
 --  Extended grapheme cluster boundaries, from UAX #29
 --
 
--- Classes.  Must match order declared in ucdu.h.
-CR
-LF
+-- Classes.  Must be in alphabetical order.
 CONTROL
+CR
 EXTEND
-ZWJ
-REGIONAL_INDICATOR
-PREPEND
-SPACINGMARK
+EXTENDED_PICTOGRAPHIC
 L
-V
-T
+LF
 LV
 LVT
+PREPEND
+REGIONAL_INDICATOR
+SPACINGMARK
+T
+V
 XX
-EXTENDED_PICTOGRAPHIC
+ZWJ
 
 -- Start in CONTROL state.
 -> CONTROL

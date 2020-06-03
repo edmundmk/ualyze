@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-#   ucdu_table.py
+#   ucdb_table.py
 #
 #   Created by Edmund Kapusniak on 28/05/2020.
 #   Copyright © 2020 Edmund Kapusniak.
@@ -12,7 +12,7 @@
 #
 # Run this script to generate the property table:
 #
-#       python3 ucdu_table.py <path-to-unidata-directory>
+#       python3 ucdb_table.py <path-to-unidata-directory>
 #
 # Uses packTab https://github.com/harfbuzz/packtab/.  Note that as of the
 # time of writing, the pip version of packTab is outdated and does not work.
@@ -87,21 +87,6 @@ extended_pictographic = build_map( ( entry for entry in emoji_data if entry[ 1 ]
 east_asian_width = build_map( east_asian_width )
 
 
-# Build bracket pair table.
-
-decomp = { entry[ 0 ] : entry[ 5 ] for entry in unicode_data if int( entry[ 0 ], 16 ) in paired }
-decomp = { k : v for k, v in decomp.items() if len( v.split() ) == 1 }
-
-filter_brackets = []
-for bracket, bpaired, kind in bidi_brackets:
-    if bracket in decomp:
-        continue
-    bpaired = decomp.get( bpaired, bpaired )
-    filter_brackets.append( ( bracket, bpaired, kind ) )
-
-bidi_brackets = filter_brackets
-
-
 # LB1: Resolve SA+Mn and SA+Mc to CM.
 # LB30: OP/CP with East_Asian_Width in F, W, H -> EAST_ASIAN_OP/EAST_ASIAN_CP
 
@@ -148,46 +133,68 @@ for c in range( 0x110000 ):
     data.append( insert_record( record ) )
 
 
-# Output
+if len( sys.argv ) < 3 or sys.argv[ 2 ] != 'enum':
 
-print( "#include <stdint.h>" )
-print( "#include \"ucdu.h\"" )
-print()
+    # Output table
 
+    print()
 
-# Print records.
-
-print( "extern const ucdu_record UCDU_TABLE[] = {" )
-for script, bidi, lbreak, zspace, cbreak, paired in records:
-    print( f"    {{ UCDU_SCRIPT_{script.upper()}, UCDU_BIDI_{bidi}, UCDU_LBREAK_{lbreak}, {'true' if zspace else 'false'}, UCDU_CBREAK_{cbreak.upper()}, {'true' if paired else 'false'} }}," )
-print( "};" )
-print()
+    print( "extern const ucdb_entry UCDB_TABLE[] = {" )
+    for script, bclass, lbreak, zspace, cbreak, paired in records:
+        print( f"    {{ UCDB_SCRIPT_{script.upper()}, UCDB_BIDI_{bclass}, UCDB_LBREAK_{lbreak}, {'true' if zspace else 'false'}, UCDB_CBREAK_{cbreak.upper()}, {'true' if paired else 'false'} }}," )
+    print( "};" )
+    print()
 
 
-# Use packTab to build an index mapping a character to a record.
+    # Use packTab to build an index mapping a character to a record.
 
-solutions = packTab.pack_table( data, 0, None )
-solution = packTab.pick_solution( solutions, compression=1 )
-code = packTab.Code( 'ucdu' )
-expr = solution.genCode( code, 'index' )
-code.print_c()
-print()
+    solutions = packTab.pack_table( data, 0, None )
+    solution = packTab.pick_solution( solutions, compression=1 )
+    code = packTab.Code( 'ucdb' )
+    expr = solution.genCode( code, 'index' )
+    code.print_c()
+    print()
 
+else:
 
-# Print bracket pair table.
+    # Build enums
 
-print( "extern const ucdu_bracket_record UCDU_BRACKETS[] = {" )
-for bracket, bpaired, kind in bidi_brackets:
-    print( f"    {{ 0x{bracket}, 0x{bpaired}, {'UCDU_BRACKET_OPEN' if kind == 'o' else 'UCDU_BRACKET_CLOSE'} }}," )
-print( "};" )
-print()
+    cbreak_enum = { record[ 4 ] for record in records }
 
+    print()
 
-# Print bracket mapping table.
+    bclass_enum = { record[ 1 ].upper() for record in records }
+    bclass_enum.remove( "L" )
+    bclass_enum.remove( "R" )
+    bclass_enum.remove( "AL" )
+    bclass_enum = [ "L", "R", "AL" ] + sorted( bclass_enum )
 
-print( "extern const ucdu_mapping_record UCDU_MAPPINGS[] = {" )
-for cp in sorted( decomp.keys() ):
-    print( f"    {{ 0x{cp}, 0x{decomp[cp]} }}," )
-print( "};" )
-print()
+    print( "enum ucdb_bclass" )
+    print( "{" )
+    for bclass in bclass_enum:
+        print( f"    UCDB_BIDI_{bclass}," )
+    print( "};" )
+
+    print()
+
+    lbreak_enum = { record[ 2 ].upper() for record in records }
+    lbreak_enum.add( "EAST_ASIAN_CP" )
+    lbreak_enum.add( "EAST_ASIAN_OP" )
+
+    print( "enum ucdb_lbreak" )
+    print( "{" )
+    for lbreak in sorted( lbreak_enum ):
+        print( f"    UCDB_LBREAK_{lbreak}," )
+    print( "};" )
+
+    print()
+
+    cbreak_enum = { record[ 4 ].upper() for record in records }
+    print( "enum ucdb_cbreak" )
+    print( "{" )
+    for cbreak in sorted( cbreak_enum ):
+        print( f"    UCDB_CBREAK_{cbreak}," )
+    print( "};" )
+
+    print()
 

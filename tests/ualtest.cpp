@@ -24,9 +24,9 @@ static char boundary_class( unsigned bc )
 {
     switch ( bc )
     {
-    case UCDU_BIDI_L:   return 'L';
-    case UCDU_BIDI_R:   return 'R';
-    case UCDU_BIDI_AL:  return 'A';
+    case UCDB_BIDI_L:   return 'L';
+    case UCDB_BIDI_R:   return 'R';
+    case UCDB_BIDI_AL:  return 'A';
     case BC_SEQUENCE:   return '=';
     default:            return '?';
     }
@@ -36,29 +36,29 @@ static const char* bidi_class( unsigned bc )
 {
     switch ( bc )
     {
-    case UCDU_BIDI_L:   return "L";
-    case UCDU_BIDI_R:   return "R";
-    case UCDU_BIDI_AL:  return "AL";
-    case UCDU_BIDI_LRE: return "LRE";
-    case UCDU_BIDI_LRO: return "LRO";
-    case UCDU_BIDI_RLE: return "RLE";
-    case UCDU_BIDI_RLO: return "RLO";
-    case UCDU_BIDI_PDF: return "PDF";
-    case UCDU_BIDI_EN:  return "EN";
-    case UCDU_BIDI_ES:  return "ES";
-    case UCDU_BIDI_ET:  return "ET";
-    case UCDU_BIDI_AN:  return "AN";
-    case UCDU_BIDI_CS:  return "CS";
-    case UCDU_BIDI_NSM: return "NSM";
-    case UCDU_BIDI_BN:  return "BN";
-    case UCDU_BIDI_B:   return "B";
-    case UCDU_BIDI_S:   return "S";
-    case UCDU_BIDI_WS:  return "WS";
-    case UCDU_BIDI_ON:  return "ON";
-    case UCDU_BIDI_LRI: return "LRI";
-    case UCDU_BIDI_RLI: return "RLI";
-    case UCDU_BIDI_FSI: return "FSI";
-    case UCDU_BIDI_PDI: return "PDI";
+    case UCDB_BIDI_L:   return "L";
+    case UCDB_BIDI_R:   return "R";
+    case UCDB_BIDI_AL:  return "AL";
+    case UCDB_BIDI_LRE: return "LRE";
+    case UCDB_BIDI_LRO: return "LRO";
+    case UCDB_BIDI_RLE: return "RLE";
+    case UCDB_BIDI_RLO: return "RLO";
+    case UCDB_BIDI_PDF: return "PDF";
+    case UCDB_BIDI_EN:  return "EN";
+    case UCDB_BIDI_ES:  return "ES";
+    case UCDB_BIDI_ET:  return "ET";
+    case UCDB_BIDI_AN:  return "AN";
+    case UCDB_BIDI_CS:  return "CS";
+    case UCDB_BIDI_NSM: return "NSM";
+    case UCDB_BIDI_BN:  return "BN";
+    case UCDB_BIDI_B:   return "B";
+    case UCDB_BIDI_S:   return "S";
+    case UCDB_BIDI_WS:  return "WS";
+    case UCDB_BIDI_ON:  return "ON";
+    case UCDB_BIDI_LRI: return "LRI";
+    case UCDB_BIDI_RLI: return "RLI";
+    case UCDB_BIDI_FSI: return "FSI";
+    case UCDB_BIDI_PDI: return "PDI";
     case BC_WS_R:       return "WSR";
     case BC_BRACKET:    return "BRK";
     case BC_INVALID:    return "X";

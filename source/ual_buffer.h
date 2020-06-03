@@ -14,7 +14,7 @@
 #include "ualyze.h"
 #include <string>
 #include <vector>
-#include "ucdu.h"
+#include "ucdb_table.h"
 
 const uint16_t IX_INVALID = ( 1 << 11 ) - 1;
 

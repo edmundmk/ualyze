@@ -137,12 +137,16 @@ Ualyze is based on code I've been working on for a while, but hasn't been used
 in anger yet.  I make no promises about its stability or correctness.
 
 
+## Acknowledgements
+
+Previous versions of this project used [UCDN](https://github.com/grigorig/ucdn)
+by Grigori Goronzy <greg@kinoho.net> to query Unicode character properties.
+It has been updated to use an internal set of Unicode property values generated
+from the Unicode Character Database.
+
+
 ## License
 
-Copyright © 2019 Edmund Kapusniak.  Licensed under the MIT License. See the
+Copyright © 2020 Edmund Kapusniak.  Licensed under the MIT License. See the
 LICENSE file in the project root for full license information.
-
-The ucdu module contains ideas from [UCDN](https://github.com/grigorig/ucdn),
-which is licenced under the ISC license.  See the LICENSE file in the project
-root for full license information.
 

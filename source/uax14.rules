@@ -4,52 +4,52 @@
 --  Line breaking algorithm, from UAX #19
 --
 
--- Classes.  Must match order declared in ucdu.h.
-OP
-CL
-CP
-QU
-GL
-NS
-EX
-SY
-IS
-PR
-PO
-NU
+-- Classes.  Must be in alphabetical order.
+AI
 AL
-HL
-ID
-IN
-HY
+B2
 BA
 BB
-B2
-ZW
-CM
-WJ
-H2
-H3
-JL
-JV
-JT
-RI
-AI
 BK
 CB
 CJ
+CL
+CM
+CP
 CR
+EAST_ASIAN_CP
+EAST_ASIAN_OP
+EB
+EM
+EX
+GL
+H2
+H3
+HL
+HY
+ID
+IN
+IS
+JL
+JT
+JV
 LF
 NL
+NS
+NU
+OP
+PO
+PR
+QU
+RI
 SA
 SG
 SP
+SY
+WJ
 XX
+ZW
 ZWJ
-EB
-EM
-EAST_ASIAN_OP
-EAST_ASIAN_CP
 
 -- Start in SOT state.
 -> SOT
