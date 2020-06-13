@@ -9,6 +9,7 @@
 //
 
 #include "ucdb_bracket.h"
+#include <stdint.h>
 #include <algorithm>
 
 struct ucdb_mapped_entry
