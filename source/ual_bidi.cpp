@@ -27,7 +27,7 @@ static_assert( BC_SEQUENCE == 3 );
     Debug print.
 */
 
-
+/*
 static const char* bidi_os( unsigned bidi_class )
 {
     switch ( bidi_class )
@@ -97,6 +97,7 @@ static void debug_print_bidi( ual_buffer* ub )
     }
     printf( "\n" );
 }
+*/
 
 
 /*
@@ -155,7 +156,7 @@ static ual_bidi_complexity bidi_lookup( ual_buffer* ub )
 
     ub->bc_usage = BC_BIDI_CLASS;
 
-    debug_print_bidi( ub );
+    //debug_print_bidi( ub );
 
     if ( left )
         return BIDI_ALL_LEFT;
@@ -1716,25 +1717,25 @@ void bidi_initial( ual_buffer* ub, unsigned override_paragraph_level )
 UAL_API unsigned ual_analyze_bidi( ual_buffer* ub, unsigned override_paragraph_level )
 {
     bidi_initial( ub, override_paragraph_level );
-    debug_print_bidi( ub );
+    //debug_print_bidi( ub );
 
     if ( ub->bidi_analysis.complexity != BIDI_ALL_LEFT )
     {
         printf( "WEAK\n" );
         bidi_weak( ub );
-        debug_print_bidi( ub );
+        //debug_print_bidi( ub );
 
         printf( "BRACKETS\n" );
         bidi_brackets( ub );
-        debug_print_bidi( ub );
+        //debug_print_bidi( ub );
 
         printf( "NEUTRAL\n" );
         bidi_neutral( ub );
-        debug_print_bidi( ub );
+        //debug_print_bidi( ub );
 
         printf( "WHITESPACE\n" );
         bidi_whitespace( ub );
-        debug_print_bidi( ub );
+        //debug_print_bidi( ub );
     }
 
     return ub->bidi_analysis.paragraph_level;
@@ -1862,7 +1863,7 @@ UAL_API bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
 
         default:
         {
-            fprintf( stderr, "invalid surviving class: %s\n", bidi_cs( bc ) );
+            //fprintf( stderr, "invalid surviving class: %s\n", bidi_cs( bc ) );
             assert( ! "invalid surviving bidi class" );
         }
         break;
@@ -1914,7 +1915,7 @@ UAL_API bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
 
         default:
         {
-            fprintf( stderr, "invalid surviving class: %s\n", bidi_cs( bc ) );
+            //fprintf( stderr, "invalid surviving class: %s\n", bidi_cs( bc ) );
             assert( ! "invalid surviving bidi class" );
         }
         break;
