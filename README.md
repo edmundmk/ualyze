@@ -140,13 +140,13 @@ in anger yet.  I make no promises about its stability or correctness.
 ## Acknowledgements
 
 Previous versions of this project used [UCDN](https://github.com/grigorig/ucdn)
-by Grigori Goronzy <greg@kinoho.net> to query Unicode character properties.
-It has been updated to use an internal set of Unicode property values generated
-from the Unicode Character Database.
+by Grigori Goronzy to query Unicode character properties.  It has been updated
+to use an internal set of Unicode property values generated from the Unicode
+Character Database.
 
 
 ## License
 
-Licensed under the ISC License. See the LICENSE file in the project root for
+Licensed under the ISC License.  See the LICENSE file in the project root for
 full license information.
 
