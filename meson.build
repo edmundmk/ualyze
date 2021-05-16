@@ -3,7 +3,7 @@
 #
 #  Created by Edmund Kapusniak on 22/08/2019.
 #
-#  Licensed under the MIT License. See LICENSE file in the project root for
+#  Licensed under the ISC License. See LICENSE file in the project root for
 #  full license information.
 #
 

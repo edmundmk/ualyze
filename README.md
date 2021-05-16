@@ -147,6 +147,6 @@ from the Unicode Character Database.
 
 ## License
 
-Copyright © 2020 Edmund Kapusniak.  Licensed under the MIT License. See the
-LICENSE file in the project root for full license information.
+Licensed under the ISC License. See the LICENSE file in the project root for
+full license information.
 

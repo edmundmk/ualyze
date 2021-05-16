@@ -5,7 +5,7 @@
 #  Created by Edmund Kapusniak on 26/08/2019.
 #  Copyright (c) 2019 Edmund Kapusniak.
 #
-#  Licensed under the MIT License. See LICENSE file in the project root for
+#  Licensed under the ISC License. See LICENSE file in the project root for
 #  full license information.
 #
 

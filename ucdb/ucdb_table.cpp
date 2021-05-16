@@ -4,7 +4,7 @@
 //  Created by Edmund Kapusniak on 03/06/2020.
 //  Copyright © 2020 Edmund Kapusniak.
 //
-//  Licensed under the MIT License. See LICENSE file in the project root for
+//  Licensed under the ISC License. See LICENSE file in the project root for
 //  full license information.
 //
 
