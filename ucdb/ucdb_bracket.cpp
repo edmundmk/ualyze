@@ -22,6 +22,7 @@
 #include "ucdb_bracket.h"
 #include <stdint.h>
 #include <algorithm>
+#include <iterator>
 
 struct ucdb_mapped_entry
 {
