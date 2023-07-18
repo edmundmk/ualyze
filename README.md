@@ -150,3 +150,5 @@ Character Database.
 Licensed under the ISC License.  See the LICENSE file in the project root for
 full license information.
 
+Embedded Unicode data is derived from Unicode's DATA FILES.  See LICENSE file
+in the project root for full license information.
