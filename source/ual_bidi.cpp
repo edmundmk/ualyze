@@ -603,29 +603,6 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
         }
     }
 
-    // Close unterminated isolating run sequences.
-    while ( valid_isolate_count > 0 )
-    {
-        // Pop down to the level of the isolate.
-        while ( stack_entry.oi != BIDI_ISOLATE )
-        {
-            assert( stack.sp > 0 );
-            stack_entry = stack.ss[ --stack.sp ];
-        }
-
-        // Pop to get to the level of the isolate initiator.
-        valid_isolate_count -= 1;
-        unsigned iprev = stack_entry.iprev;
-        assert( stack.sp > 0 );
-        stack_entry = stack.ss[ --stack.sp ];
-
-        // Update run to close it.
-        ual_level_run* pprev = &ub->level_runs.at( iprev );
-        assert( pprev->inext == 0 );
-        assert( pprev->eos == BC_SEQUENCE );
-        pprev->eos = boundary_class( pprev->level, paragraph_level );
-    }
-
     // Add paragraph separators, which have the paragraph embedding level.
     if ( index < length )
     {
@@ -644,6 +621,30 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
     // Close final level run.
     unsigned run_eos = boundary_class( run_level, paragraph_level );
     ub->level_runs.push_back( { run_start, run_level, run_sos, run_eos, 0 } );
+
+    // Close unterminated isolating run sequences.
+    while ( valid_isolate_count > 0 )
+    {
+        // Pop down to the level of the isolate.
+        while ( stack_entry.oi != BIDI_ISOLATE )
+        {
+            assert( stack.sp > 0 );
+            stack_entry = stack.ss[ --stack.sp ];
+        }
+
+        // Pop to get to the level of the isolate initiator.
+        valid_isolate_count -= 1;
+        unsigned iprev = stack_entry.iprev;
+        assert( stack.sp > 0 );
+        stack_entry = stack.ss[ --stack.sp ];
+
+        // Update run to close it.
+        ual_level_run* pprev = &ub->level_runs.at( iprev );
+        unsigned run_eos = boundary_class( pprev->level, paragraph_level );
+        assert( pprev->inext == 0 );
+        assert( pprev->eos == BC_SEQUENCE || pprev->eos == run_eos );
+        pprev->eos = run_eos;
+    }
 
     // Add a final 'run' to simplify lookup of level runs.
     ub->level_runs.push_back( { (unsigned)index, paragraph_level, BC_SEQUENCE, BC_SEQUENCE, 0 } );
@@ -1721,19 +1722,15 @@ UAL_API unsigned ual_analyze_bidi( ual_buffer* ub, unsigned override_paragraph_l
 
     if ( ub->bidi_analysis.complexity != BIDI_ALL_LEFT )
     {
-        printf( "WEAK\n" );
         bidi_weak( ub );
         //debug_print_bidi( ub );
 
-        printf( "BRACKETS\n" );
         bidi_brackets( ub );
         //debug_print_bidi( ub );
 
-        printf( "NEUTRAL\n" );
         bidi_neutral( ub );
         //debug_print_bidi( ub );
 
-        printf( "WHITESPACE\n" );
         bidi_whitespace( ub );
         //debug_print_bidi( ub );
     }
