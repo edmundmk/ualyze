@@ -58,7 +58,13 @@ UAL_API size_t ual_analyze_paragraph( ual_buffer* ub, const char16_t* text, size
         unsigned ix = ucdb_lookup( uc );
 
         // Check for line break.
-        unsigned curr = UCDB_TABLE[ ix ].lbreak;
+        const ucdb_entry& entry = UCDB_TABLE[ ix ];
+        unsigned curr = entry.lbreak;
+        if ( curr == UCDB_LBREAK_CM && entry.bclass == UCDB_BIDI_B )
+        {
+            curr = UCDB_LBREAK_BK;
+        }
+
         if ( prev == UCDB_LBREAK_BK
             || prev == UCDB_LBREAK_NL
             || prev == UCDB_LBREAK_LF
