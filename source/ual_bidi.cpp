@@ -67,7 +67,6 @@ static const char* bidi_cs( unsigned bidi_class )
     case UCDB_BIDI_RLI: return "RLI";
     case UCDB_BIDI_FSI: return "FSI";
     case UCDB_BIDI_PDI: return "PDI";
-    case BC_WS_R:       return "WSR";
     case BC_BRACKET:    return "BRK";
     case BC_INVALID:    return "INV";
     }
@@ -375,6 +374,10 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
         case UCDB_BIDI_LRO:
         case UCDB_BIDI_RLO:
         {
+            // This character is 'removed' by rule X9.  Don't actually remove
+            // it, instead set to BN.
+            c.bc = UCDB_BIDI_BN;
+
             // Compute the least odd (RLE/RLO) or even (LRE/LRO) embedding
             // level greater than the embedding level of the last stack entry.
             bool rl = bc == UCDB_BIDI_RLE || bc == UCDB_BIDI_RLO;
@@ -389,7 +392,7 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
                 {
                     overflow_embedding_count += 1;
                 }
-                break;
+                continue;
             }
 
             // Determine directional override depending on embedding type.
@@ -407,10 +410,6 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
             assert( stack.sp < BIDI_EXSTACK_LIMIT );
             stack.ss[ stack.sp++ ] = stack_entry;
             stack_entry = { level, oi, BIDI_INVALID_LEVEL_RUN };
-
-            // This character is 'removed' by rule X9.  Don't actually remove
-            // it, instead set to BN.
-            c.bc = UCDB_BIDI_BN;
             continue;
         }
         break;
@@ -455,15 +454,15 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
             // This character is part of the current level run.  Act as if it
             // was LRI or RLI based on the first strong level inside it.
             bc = first_strong_level( ub, index + 1, true ) ? UCDB_BIDI_RLI : UCDB_BIDI_LRI;
-            break;
         }
+        break;
 
         case UCDB_BIDI_LRI:
         case UCDB_BIDI_RLI:
         {
             // This character is part of the current level run.
-            break;
         }
+        break;
 
         // X6a
         case UCDB_BIDI_PDI:
@@ -511,38 +510,36 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
 
             // An isolate initiator immediately followed by a PDI does not
             // introduce any new level run.
-            if ( stack_entry.level == run_level )
+            if ( stack_entry.level != run_level )
             {
-                continue;
+                // We know this character is not removed, so the current level
+                // run ends here.
+                unsigned run_eos = boundary_class( run_level, stack_entry.level );
+                ub->level_runs.push_back( { run_start, run_level, run_sos, run_eos, 0 } );
+
+                // This PDI matches an isolate initiator and therefore
+                // the next level run continues an isolating run sequence.
+                run_sos = BC_SEQUENCE;
+                run_start = index;
+                run_level = stack_entry.level;
+                run_isolate_count = valid_isolate_count;
+
+                // Link the previous run to the run we're about to build.
+                ual_level_run* prun = &ub->level_runs.at( iprev );
+                assert( prun->inext == 0 );
+                assert( prun->eos == BC_SEQUENCE );
+                prun->inext = (unsigned)ub->level_runs.size();
             }
-
-            // We know this character is not removed, so the current level
-            // run ends here.
-            unsigned run_eos = boundary_class( run_level, stack_entry.level );
-            ub->level_runs.push_back( { run_start, run_level, run_sos, run_eos, 0 } );
-
-            // This PDI matches an isolate initiator and therefore
-            // the next level run continues an isolating run sequence.
-            run_sos = BC_SEQUENCE;
-            run_start = index;
-            run_level = stack_entry.level;
-            run_isolate_count = valid_isolate_count;
-
-            // Link the previous run to the run we're about to build.
-            ual_level_run* prun = &ub->level_runs.at( iprev );
-            assert( prun->inext == 0 );
-            assert( prun->eos == BC_SEQUENCE );
-            prun->inext = (unsigned)ub->level_runs.size();
-
-            continue;
         }
         break;
 
-        // X6. Remove BNs.
+        // X6. Do not override B or BN.
+        case UCDB_BIDI_B:
         case UCDB_BIDI_BN:
         {
             continue;
         }
+        break;
         }
 
         // This character was not removed.  Override character class if we are
@@ -588,7 +585,7 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
                 // Increment the overflow isolate count by one, and leave all
                 // other variables unchanged.
                 overflow_isolate_count += 1;
-                break;
+                continue;
             }
 
             // Increment the valid isolate count by one.
@@ -675,8 +672,6 @@ static unsigned bidi_explicit( ual_buffer* ub, unsigned override_paragraph_level
 
 void bidi_weak( ual_buffer* ub )
 {
-    const size_t INVALID_INDEX = (size_t)-1;
-
     size_t length = ub->level_runs.size() - 1;
     for ( size_t i = 0; i < length; ++i )
     {
@@ -1356,8 +1351,7 @@ void bidi_brackets( ual_buffer* ub )
 }
 
 /*
-    Perform rules N1, N2, and L1, resolving types for runs of neutrals and
-    identifying runs of whitespace before S or B.
+    Perform rules N1 and N2, resolving types for runs of neutrals.
 
     The only types remaining in the string are:
 
@@ -1380,16 +1374,11 @@ void bidi_brackets( ual_buffer* ub )
 
         L, R, AN, EN
 
-    The following removed types:
+    And keep the following removed/ignored types:
 
         BN, INVALID
 
-    And whitespace is complicated:
 
-        B       is preserved
-        S       is preserved
-        WS      is WS or FSI/LRI/RLI/PDI resolved to L by neutral processing
-        WS_R    is WS or FSI/LRI/RLI/PDI resolved to R by neutral processing
 */
 
 enum ual_bidi_neutral_kind
@@ -1421,10 +1410,6 @@ static void bidi_resolve_neutrals( ual_buffer* ub, size_t irun, unsigned lower, 
         if ( c.bc == UCDB_BIDI_ON )
         {
             c.bc = bc;
-        }
-        else if ( c.bc == UCDB_BIDI_WS && bc != UCDB_BIDI_L )
-        {
-            c.bc = BC_WS_R;
         }
     }
 }
@@ -1506,21 +1491,24 @@ static void bidi_isolating_neutral( ual_buffer* ub, size_t irun )
             }
             break;
 
+            case UCDB_BIDI_B:
+            case UCDB_BIDI_S:
+            case UCDB_BIDI_WS:
             case UCDB_BIDI_FSI:
             case UCDB_BIDI_LRI:
             case UCDB_BIDI_RLI:
             case UCDB_BIDI_PDI:
             {
-                // Turn these characters into WS, which is neutral.
-                c.bc = UCDB_BIDI_WS;
+                // Turn these characters into ON.
+                c.bc = UCDB_BIDI_ON;
                 goto neutral;
             }
             break;
 
-            default:
             neutral:
+            case UCDB_BIDI_ON:
             {
-                // Remaining classes are neutral.
+                // Deal with neutrals.
                 if ( neutrals == NEUTRAL_NONE)
                 {
                     lirun = irun;
@@ -1563,7 +1551,7 @@ void bidi_neutral( ual_buffer* ub )
     size_t length = ub->level_runs.size() - 1;
     for ( size_t irun = 0; irun < length; ++irun )
     {
-        // Skip runs that continue an isolating runs equence.
+        // Skip runs that continue an isolating run sequence.
         ual_level_run* prun = &ub->level_runs[ irun ];
         if ( prun->sos == BC_SEQUENCE )
         {
@@ -1575,34 +1563,38 @@ void bidi_neutral( ual_buffer* ub )
 }
 
 /*
-    Apply rule L1 to whitespace, keeping all runs of WS preceding an S or B,
-    and turning the remaining characters into either L or R.  This happens on
-    the paragraph as a whole, not in isolating run sequences.
+    Apply rule L1, reinstating all runs of WS or isloate formatting characters
+    preceding S, B, or the end of the paragraph as WS.  S and B are also
+    converted to WS.
 
-    For convenience, turns S and B into WS.
+    This rule ignores isolating run sequences and acts on the original bidi
+    class of the character.
 */
 
 void bidi_whitespace( ual_buffer* ub )
 {
-    const size_t INVALID_INDEX = ~(size_t)0;
-    size_t index_ws = INVALID_INDEX;
-
     size_t length = ub->c.size();
+    size_t index_ws = length;
+
     for ( size_t index = 0; index < length; ++index )
     {
         ual_char& c = ub->c[ index ];
-        if ( c.bc == BC_INVALID )
+        if ( c.ix == IX_INVALID )
         {
             continue;
         }
 
-        switch ( c.bc )
+        unsigned bc = UCDB_TABLE[ c.ix ].bclass;
+        switch ( bc )
         {
         case UCDB_BIDI_WS:
-        case BC_WS_R:
+        case UCDB_BIDI_FSI:
+        case UCDB_BIDI_LRI:
+        case UCDB_BIDI_RLI:
+        case UCDB_BIDI_PDI:
         {
             // Remember start of preceding whitespace.
-            if ( index_ws == INVALID_INDEX )
+            if ( index_ws == length )
             {
                 index_ws = index;
             }
@@ -1612,58 +1604,50 @@ void bidi_whitespace( ual_buffer* ub )
         case UCDB_BIDI_S:
         case UCDB_BIDI_B:
         {
-            c.bc = UCDB_BIDI_WS;
-
-            // In run of preceding whitespace, set all WS_R to WS.
+            // Restore run of preceding whitespace.
             for ( size_t i = index_ws; i < index; ++i )
             {
                 ual_char& k = ub->c[ i ];
-                if ( k.bc == BC_WS_R )
+                if ( k.bc != UCDB_BIDI_BN )
                 {
                     k.bc = UCDB_BIDI_WS;
                 }
             }
 
+            // And this character also becomes WS.
+            c.bc = UCDB_BIDI_WS;
+
             // Resolved whitespace run.
-            index_ws = INVALID_INDEX;
+            index_ws = length;
         }
         break;
 
         case UCDB_BIDI_BN:
+        case UCDB_BIDI_RLE:
+        case UCDB_BIDI_LRE:
+        case UCDB_BIDI_RLO:
+        case UCDB_BIDI_LRO:
+        case UCDB_BIDI_PDF:
         {
-            // Ignore BN.
+            // Ignore BN and characters that will have been removed.
             continue;
         }
         break;
 
         default:
         {
-            // Non-whitespace character, so run of whitespace resolves strong.
-            for ( size_t i = index_ws; i < index; ++i )
-            {
-                ual_char&k = ub->c[ i ];
-                if ( k.bc == UCDB_BIDI_WS )
-                {
-                    k.bc = UCDB_BIDI_L;
-                }
-                else if ( k.bc == BC_WS_R )
-                {
-                    k.bc = UCDB_BIDI_R;
-                }
-            }
-
             // No active whitespace run.
-            index_ws = INVALID_INDEX;
+            index_ws = length;
         }
         break;
         }
     }
 
-    // Set whitespace at end of paragraph to WS.
+    // Restore WS at end of paragraph.
     for ( size_t i = index_ws; i < length; ++i )
     {
         ual_char& k = ub->c[ i ];
-        if ( k.bc == BC_WS_R )
+        if ( k.bc != UCDB_BIDI_BN )
         {
             k.bc = UCDB_BIDI_WS;
         }
@@ -1717,20 +1701,25 @@ void bidi_initial( ual_buffer* ub, unsigned override_paragraph_level )
 
 UAL_API unsigned ual_analyze_bidi( ual_buffer* ub, unsigned override_paragraph_level )
 {
+    //printf( "INITIAL\n" );
     bidi_initial( ub, override_paragraph_level );
     //debug_print_bidi( ub );
 
     if ( ub->bidi_analysis.complexity != BIDI_ALL_LEFT )
     {
+        //printf( "WEAK\n" );
         bidi_weak( ub );
         //debug_print_bidi( ub );
 
+        //printf( "BRACKETS\n" );
         bidi_brackets( ub );
         //debug_print_bidi( ub );
 
+        //printf( "NEUTRAL\n" );
         bidi_neutral( ub );
         //debug_print_bidi( ub );
 
+        //printf( "WHITESPACE\n" );
         bidi_whitespace( ub );
         //debug_print_bidi( ub );
     }
@@ -1764,178 +1753,106 @@ UAL_API bool ual_bidi_runs_next( ual_buffer* ub, ual_bidi_run* out_run )
 
     // Run starts at index.
     out_run->lower = index;
+    unsigned level = ub->bidi_analysis.paragraph_level;
+    bool linit = true;
 
-    // Check if we've reached the end.
-    if ( index >= ub->c.size() )
+    while ( ilrun < ub->level_runs.size() - 1 )
     {
-        out_run->upper = index;
-        out_run->level = ub->bidi_analysis.paragraph_level;
-        return false;
-    }
+        ual_level_run* prun = &ub->level_runs[ ilrun ];
+        ual_level_run* nrun = &ub->level_runs[ ilrun + 1 ];
 
-    // Start at the level of the run.
-    ual_level_run* prun = &ub->level_runs[ ilrun ];
-    ual_level_run* nrun = &ub->level_runs[ ilrun + 1 ];
+        assert( prun->start < nrun->start );
+        assert( nrun->start <= ub->c.size() );
+        assert( prun->start <= index );
+        assert( index < nrun->start );
 
-    assert( prun->start < nrun->start );
-    assert( nrun->start <= ub->c.size() );
-    assert( prun->start <= index );
-    assert( index < nrun->start );
-
-    if ( ub->bidi_analysis.complexity == BIDI_ALL_LEFT )
-    {
-        // Move over level run.
-        ilrun += 1;
-        index = nrun->start;
-
-        // Save state.
-        ub->bidi_analysis.index = index;
-        ub->bidi_analysis.ilrun = ilrun;
-
-        // Return run.
-        out_run->upper = index;
-        out_run->level = prun->level;
-        return true;
-    }
-
-    unsigned level = prun->level;
-
-    unsigned bc = ub->c[ index ].bc;
-    ++index;
-
-    if ( ( level & 1 ) == 0 )
-    {
-        // Embedding level is even.
-        switch ( bc )
+        if ( ub->bidi_analysis.complexity == BIDI_ALL_LEFT )
         {
-        case UCDB_BIDI_L:
-        case UCDB_BIDI_BN:
-        case BC_INVALID:
+            // Move over level run.
+            ilrun += 1;
+            index = nrun->start;
+
+            // Save state.
+            ub->bidi_analysis.index = index;
+            ub->bidi_analysis.ilrun = ilrun;
+
+            // Return run.
+            out_run->upper = index;
+            out_run->level = prun->level;
+            return true;
+        }
+
+        unsigned rlevel = prun->level;
+        while ( index < nrun->start )
         {
-            while ( index < nrun->start )
+            unsigned bc = ub->c[ index ].bc;
+
+            unsigned clevel;
+            switch ( bc )
             {
-                bc = ub->c[ index ].bc;
-                if ( bc != UCDB_BIDI_L && bc != UCDB_BIDI_BN && bc != BC_INVALID ) break;
+            case UCDB_BIDI_BN:
+            case BC_INVALID:
                 ++index;
-            }
-        }
-        break;
+                continue;
 
-        case UCDB_BIDI_R:
-        {
-            level += 1;
-            while ( index < nrun->start )
+            case UCDB_BIDI_L:
+                clevel = rlevel + ( ( rlevel & 1 ) == 0 ? 0 : 1 );
+                break;
+
+            case UCDB_BIDI_R:
+                clevel = rlevel + ( ( rlevel & 1 ) == 0 ? 1 : 0 );
+                break;
+
+            case UCDB_BIDI_EN:
+            case UCDB_BIDI_AN:
+                clevel = rlevel + ( ( rlevel & 1 ) == 0 ? 2 : 1 );
+                break;
+
+            case UCDB_BIDI_WS:
+                clevel = ub->bidi_analysis.paragraph_level;
+                break;
+
+            default:
+                //fprintf( stderr, "invalid surviving class: %s\n", bidi_cs( bc ) );
+                assert( ! "invalid surviving bidi class" );
+                break;
+            }
+
+            if ( linit )
             {
-                bc = ub->c[ index ].bc;
-                if ( bc != UCDB_BIDI_R && bc != UCDB_BIDI_BN && bc != BC_INVALID ) break;
-                ++index;
+                level = clevel;
+                linit = false;
             }
-        }
-        break;
 
-        case UCDB_BIDI_EN:
-        case UCDB_BIDI_AN:
-        {
-            level += 2;
-            while ( index < nrun->start )
+            if ( clevel != level )
             {
-                bc = ub->c[ index ].bc;
-                if ( bc != UCDB_BIDI_EN && bc != UCDB_BIDI_AN && bc != UCDB_BIDI_BN && bc != BC_INVALID ) break;
-                ++index;
+                break;
             }
-        }
-        break;
 
-        case UCDB_BIDI_WS:
-        {
-            level = ub->bidi_analysis.paragraph_level;
-            while ( index < nrun->start )
-            {
-                bc = ub->c[ index ].bc;
-                if ( bc != UCDB_BIDI_WS && bc != UCDB_BIDI_BN && bc != BC_INVALID ) break;
-                ++index;
-            }
+            ++index;
         }
-        break;
 
-        default:
-        {
-            //fprintf( stderr, "invalid surviving class: %s\n", bidi_cs( bc ) );
-            assert( ! "invalid surviving bidi class" );
-        }
-        break;
-        }
-    }
-    else
-    {
-        // Embedding level is odd.
-        switch ( bc )
-        {
-        case UCDB_BIDI_R:
-        case UCDB_BIDI_BN:
-        case BC_INVALID:
-        {
-            while ( index < nrun->start )
-            {
-                bc = ub->c[ index ].bc;
-                if ( bc != UCDB_BIDI_R && bc != UCDB_BIDI_BN && bc != BC_INVALID ) break;
-                ++index;
-            }
-        }
-        break;
+        assert( index <= nrun->start );
+        assert( out_run->lower < index );
 
-        case UCDB_BIDI_L:
-        case UCDB_BIDI_EN:
-        case UCDB_BIDI_AN:
+        if ( index < nrun->start )
         {
-            level += 1;
-            while ( index < nrun->start )
-            {
-                bc = ub->c[ index ].bc;
-                if ( bc != UCDB_BIDI_L && bc != UCDB_BIDI_EN && bc != UCDB_BIDI_AN && bc != UCDB_BIDI_BN && bc != BC_INVALID ) break;
-                ++index;
-            }
+            break;
         }
-        break;
 
-        case UCDB_BIDI_WS:
-        {
-            level = ub->bidi_analysis.paragraph_level;
-            while ( index < nrun->start )
-            {
-                bc = ub->c[ index ].bc;
-                if ( bc != UCDB_BIDI_WS && bc != UCDB_BIDI_BN && bc != BC_INVALID ) break;
-                ++index;
-            }
-        }
-        break;
-
-        default:
-        {
-            //fprintf( stderr, "invalid surviving class: %s\n", bidi_cs( bc ) );
-            assert( ! "invalid surviving bidi class" );
-        }
-        break;
-        }
-    }
-
-    assert( index <= nrun->start );
-    assert( out_run->lower < index );
-
-    // Move to next run.
-    if ( index >= nrun->start )
-    {
         ilrun += 1;
     }
 
     // Save state.
-    ub->bidi_analysis.index = index;
     ub->bidi_analysis.ilrun = ilrun;
+    ub->bidi_analysis.index = index;
 
     // Return resulting run.
     out_run->upper = index;
     out_run->level = level;
-    return true;
+
+    // Check if we've reached the end.
+    return out_run->lower < ub->c.size();
 }
 
 UAL_API void ual_bidi_runs_end( ual_buffer* ub )
