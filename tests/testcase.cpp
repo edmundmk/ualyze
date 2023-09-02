@@ -1,5 +1,5 @@
 //
-//  ualtest.cpp
+//  testcase.cpp
 //
 //  Created by Edmund Kapusniak on 15/12/2019.
 //  Copyright © 2019 Edmund Kapusniak.
@@ -59,7 +59,6 @@ static const char* bidi_class( unsigned bc )
     case UCDB_BIDI_RLI: return "RLI";
     case UCDB_BIDI_FSI: return "FSI";
     case UCDB_BIDI_PDI: return "PDI";
-    case BC_WS_R:       return "WSR";
     case BC_BRACKET:    return "BRK";
     case BC_INVALID:    return "X";
     default:            return "?";
@@ -75,7 +74,7 @@ int main( int argc, char* argv[] )
 #endif
 
     // Check for bidi argument.
-    enum { LEVEL_RUNS, EXPLICIT, WEAK, NEUTRAL, FULL } bidi_mode = FULL;
+    enum { NONE, LEVEL_RUNS, EXPLICIT, WEAK, NEUTRAL } bidi_mode = NONE;
     if ( argc > 1 )
     {
         const char* arg = argv[ 1 ];
@@ -83,7 +82,6 @@ int main( int argc, char* argv[] )
         if ( strcmp( arg, "x" ) == 0 ) bidi_mode = EXPLICIT;
         if ( strcmp( arg, "w" ) == 0 ) bidi_mode = WEAK;
         if ( strcmp( arg, "n" ) == 0 ) bidi_mode = NEUTRAL;
-        if ( strcmp( arg, "f" ) == 0 ) bidi_mode = FULL;
     }
 
     // Get paragraph override level.
@@ -160,7 +158,7 @@ int main( int argc, char* argv[] )
         ual_script_spans_end( ub );
 
         // Analyze bidi stages.
-        if ( bidi_mode != FULL )
+        if ( bidi_mode != NONE )
         {
             bidi_initial( ub, override_paragraph_level );
             size_t lrun_length = ub->level_runs.size() - 1;
@@ -206,19 +204,6 @@ int main( int argc, char* argv[] )
             }
             printf( "\n" );
             continue;
-        }
-        else if ( bidi_mode == FULL )
-        {
-            unsigned paragraph_level = ual_analyze_bidi( ub, override_paragraph_level );
-            printf( "PARAGRAPH_LEVEL %u\n", paragraph_level );
-
-            ual_bidi_run run;
-            ual_bidi_runs_begin( ub );
-            while ( ual_bidi_runs_next( ub, &run ) )
-            {
-                printf( "BIDI_RUN %zu %zu %u\n", run.lower, run.upper, run.level );
-            }
-            ual_bidi_runs_end( ub );
         }
     }
 

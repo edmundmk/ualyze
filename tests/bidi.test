@@ -190,7 +190,7 @@ BIDINEUTRAL
 
 BIDINEUTRAL
 <r><pdi><an>
-( R WSR AN )
+( R R AN )
 
 BIDINEUTRAL
 <r><on><on><on><en>
@@ -214,7 +214,7 @@ BIDINEUTRAL
 
 BIDINEUTRAL
 <en><lri><pdi><fsi><pdi><rli><pdi><r>
-( EN WSR WSR WSR WSR WSR WSR R )
+( EN R R R R R R R )
 
 BIDIWEAK
 <l><r><en>" "<an>
@@ -222,7 +222,7 @@ BIDIWEAK
 
 BIDINEUTRAL
 <l><r><en>" "<an> -- L R context avoids conversion of EN to L by weak.
-( L R EN WSR AN )
+( L R EN R AN )
 
 BIDIWEAK
 <l><r><en><on><en>
@@ -236,27 +236,27 @@ BIDINEUTRAL
 
 BIDINEUTRAL
 <rli><l><on>" "<r><pdi>
-( WS L R WSR R WS )
+( L L R R R L )
 
 BIDINEUTRAL
 <rli><r><on>" "<l><pdi>
-( WS R R WSR L WS )
+( L R R R L L )
 
 BIDINEUTRAL
 <lri><l><on>" "<r><pdi>
-( WS L L WS R WS )
+( L L L L R L )
 
 BIDINEUTRAL
 <lri><r><on>" "<l><pdi>
-( WS R L WS L WS )
+( L R L L L L )
 
 BIDINEUTRAL
 <l><an><cyclone><on><r><fsi><r><pdi><on><on><r>
-( L AN R X R R WSR R WSR R R R )
+( L AN R X R R R R R R R R )
 
 BIDINEUTRAL
 <l><an><r><on><fsi><r><pdi><on><on><r>
-( L AN R R WSR R WSR R R R )
+( L AN R R R R R R R R )
 
 BIDINEUTRAL
 <on><on><on><r>
@@ -264,7 +264,7 @@ BIDINEUTRAL
 
 BIDINEUTRAL
 <lri><on><on><on><r><pdi>
-( WS L L L R WS )
+( L L L L R L )
 
 BIDINEUTRAL
 <r><on><on><on><lre><on><on><pdf>
@@ -322,11 +322,11 @@ BIDINEUTRAL
 
 BIDINEUTRAL
 <r>"smith (fabrikam "<r><r><r><r><r><r>") "<r><r><r><r><r><r>
-( R L L L L L WSR R L L L L L L L L WSR R R R R R R R WSR R R R R R R )
+( R L L L L L R R L L L L L L L L R R R R R R R R R R R R R R R )
 
 BIDINEUTRAL
 <r><r><r><r><r><r>" book(s)"
-( R R R R R R WSR L L L L L L L )
+( R R R R R R R L L L L L L L )
 
 BIDINEUTRAL
 <r><l>"({["<on>"]"<on><l>")"<r>

@@ -32,6 +32,7 @@ ualyze_lic = files( 'LICENSE' )
 ualyze_dep = declare_dependency( include_directories : include, link_with : ualyze_lib )
 install_headers( 'include/ualyze.h' )
 
-ualtest = executable( 'ualtest', sources : sources + [ 'tests/ualtest.cpp' ], cpp_args : [ '-DUAL_BUILD_TESTS' ], include_directories : include_directories( 'include', 'ucdb' ) )
+testbidi = executable( 'testbidi', sources : sources + [ 'tests/testbidi.cpp' ], include_directories : include_directories( 'include', 'ucdb' ) )
+testcase = executable( 'testcase', sources : sources + [ 'tests/testcase.cpp' ], cpp_args : [ '-DUAL_BUILD_TESTS' ], include_directories : include_directories( 'include', 'ucdb' ) )
+testfuzz = executable( 'testfuzz', sources : sources + [ 'tests/testfuzz.cpp' ], include_directories : include_directories( 'include', 'ucdb' ) )
 subdir( 'tests' )
-
